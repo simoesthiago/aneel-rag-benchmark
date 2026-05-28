@@ -1,0 +1,32 @@
+# --- Ingestão ---
+requests>=2.32
+beautifulsoup4>=4.12
+lxml>=5.2
+# PyMuPDF e pdfplumber rodam no Google Colab — não instalar localmente
+# PyMuPDF>=1.24
+# pdfplumber>=0.11
+tqdm>=4.66
+
+# --- Dados e armazenamento ---
+pandas>=2.2
+pyarrow>=16.0
+huggingface_hub>=0.23
+datasets>=2.20
+
+# --- Embeddings e vector store ---
+sentence-transformers>=3.0
+# faiss-cpu não tem wheel para Python 3.14 — instalar no Colab
+# faiss-cpu>=1.8
+
+# --- RAG e LLM ---
+langchain>=0.2
+langchain-community>=0.2
+openai>=1.35
+
+# --- Interface ---
+streamlit>=1.36
+
+# --- Infra ---
+python-dotenv>=1.0
+pytest>=8.2
+jupyter>=1.0

@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "aneel-rag-benchmark"
+version = "0.1.0"
+description = "Benchmark comparativo de estratégias RAG sobre documentos regulatórios da ANEEL"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

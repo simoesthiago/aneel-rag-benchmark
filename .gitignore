@@ -1,0 +1,35 @@
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDEs
+.vscode/
+.idea/
+
+# Variáveis de ambiente (nunca commitar o .env real)
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dados — nunca devem entrar no repositório
+*.pdf
+*.parquet
+*.faiss
+*.index
+data/
+
+# macOS
+.DS_Store
+
+# Build/distribuição
+dist/
+build/
+*.egg-info/
