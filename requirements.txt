@@ -1,32 +1,41 @@
-# --- Ingestão ---
-requests>=2.32
-beautifulsoup4>=4.12
-lxml>=5.2
-# PyMuPDF e pdfplumber rodam no Google Colab — não instalar localmente
-# PyMuPDF>=1.24
-# pdfplumber>=0.11
-tqdm>=4.66
+# =============================================================================
+# requirements.txt — DEPENDÊNCIAS DE EXECUÇÃO (Google Colab + GitHub Actions)
+# =============================================================================
+#
+# Estas são as bibliotecas usadas pelo pipeline real, que roda em Colab
+# (desenvolvimento) e GitHub Actions (produção recorrente). Inclui pacotes que
+# exigem compilação nativa (PyMuPDF, faiss-cpu) — eles funcionam direto nesses
+# ambientes porque o Python lá é 3.10/3.11 e há wheels prontas.
+#
+# Para desenvolvimento LOCAL (rodar testes, formatar código, abrir notebooks),
+# use requirements-dev.txt no lugar deste.
+# =============================================================================
+
+# --- Ingestão: scraping e extração de PDFs ---
+requests>=2.32           # cliente HTTP para o scraper
+beautifulsoup4>=4.12     # parsing de HTML do portal ANEEL
+lxml>=5.2                # backend rápido do BeautifulSoup
+PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)
+pdfplumber>=0.11         # extração alternativa, melhor para tabelas
+tqdm>=4.66               # barras de progresso (essencial para scraping longo)
 
 # --- Dados e armazenamento ---
-pandas>=2.2
-pyarrow>=16.0
-huggingface_hub>=0.23
-datasets>=2.20
+pandas>=2.2              # manipulação tabular
+pyarrow>=16.0            # leitura/escrita de Parquet
+huggingface_hub>=0.23    # upload/download do HuggingFace Hub
+datasets>=2.20           # biblioteca HF para datasets
 
 # --- Embeddings e vector store ---
-sentence-transformers>=3.0
-# faiss-cpu não tem wheel para Python 3.14 — instalar no Colab
-# faiss-cpu>=1.8
+sentence-transformers>=3.0   # modelos de embedding
+faiss-cpu>=1.8               # indexação vetorial (CPU; faiss-gpu não é portável)
 
 # --- RAG e LLM ---
-langchain>=0.2
-langchain-community>=0.2
-openai>=1.35
+langchain>=0.2           # orquestração de RAG
+langchain-community>=0.2 # integrações da comunidade
+openai>=1.35             # cliente da API OpenAI
 
 # --- Interface ---
-streamlit>=1.36
+streamlit>=1.36          # chatbot hospedado no HF Spaces
 
-# --- Infra ---
-python-dotenv>=1.0
-pytest>=8.2
-jupyter>=1.0
+# --- Infra mínima compartilhada ---
+python-dotenv>=1.0       # carrega variáveis de ambiente do .env

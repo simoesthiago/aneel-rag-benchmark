@@ -1,0 +1,32 @@
+# =============================================================================
+# requirements-dev.txt — DEPENDÊNCIAS DE DESENVOLVIMENTO LOCAL
+# =============================================================================
+#
+# Use este arquivo na sua máquina local. Ele NÃO inclui PyMuPDF, faiss-cpu,
+# sentence-transformers etc. — porque:
+#   1. Esses pacotes podem não ter wheel pré-compilada para Python 3.14
+#   2. O pipeline de dados NÃO roda local (premissa do projeto)
+#   3. Localmente você só precisa: escrever código, rodar testes, formatar
+#
+# Quando o código for executado de verdade, é no Colab/Actions — lá entra o
+# requirements.txt completo.
+#
+# Instalação:
+#   pip install -r requirements-dev.txt
+# =============================================================================
+
+# --- Bibliotecas leves de runtime (necessárias para imports nos testes) ---
+requests>=2.32
+beautifulsoup4>=4.12
+lxml>=5.2
+tqdm>=4.66
+pandas>=2.2
+pyarrow>=16.0
+huggingface_hub>=0.23
+python-dotenv>=1.0
+
+# --- Ferramentas de desenvolvimento ---
+pytest>=8.2              # testes unitários
+black>=24.0              # formatador de código
+flake8>=7.0              # linter
+jupyter>=1.0             # notebooks exploratórios
