@@ -9,49 +9,85 @@ as Camadas 2-5 estiverem implementadas tem custo alto — decidir antes.**
 ## Dataset no HuggingFace Hub
 
 **Repositório:** `simoesthiago/aneel-corpus`
-**Formato:** Parquet (particionado por ano)
-**Cobertura planejada:** Resoluções Normativas (REN) de 1996 até hoje
+**Formato:** Parquet (particionado por tipo de documento)
+**Cobertura:** Ecossistema regulatório completo da ANEEL
 
 ---
 
-## Tabela principal: `resolutions`
+## Escopo do corpus (4 fontes)
 
-Cada linha é **uma Resolução Normativa**.
+| Fonte | Tipo | Exemplos | Volume estimado |
+|---|---|---|---|
+| Gestão do Estoque Regulatório | Atos normativos | RENs, REHs, Despachos | ~1.460 atos (193 RENs vigentes) |
+| Procedimentos Regulatórios | Procedimentos técnicos | PRODIST (11 mód.), PRORET, Proc. Rede, EE/P&D, Transmissão | ~50 documentos |
+| Manuais, Modelos e Instruções | Guias operacionais | Manuais de distribuição, tarifas, geração | ~100+ documentos |
+| Leis estruturantes | Legislação federal | Lei 9.427, Lei 8.987, Lei 9.074, Lei 13.848 | 4 documentos |
+
+---
+
+## Tabela principal: `documents`
+
+Cada linha é **um documento** do corpus, independente da fonte.
 
 | Coluna | Tipo Python | Nullable | Descrição |
 |---|---|---|---|
-| `numero` | `int` | Não | Número da resolução (ex.: 1000) |
-| `ano` | `int` | Não | Ano de publicação (ex.: 2021) |
-| `id` | `str` | Não | Identificador único: `"REN-{ano}-{numero:04d}"` |
-| `ementa` | `str` | Não | Descrição oficial do ato (do índice do portal) |
-| `assunto` | `str` | Sim | Assunto classificado pelo portal |
-| `situacao` | `str` | Não | `"vigente"` ou `"revogada"` |
+| `id` | `str` | Não | Identificador único (ver padrão abaixo) |
+| `tipo` | `str` | Não | Categoria: `"ato_normativo"`, `"procedimento"`, `"manual"`, `"lei"` |
+| `subtipo` | `str` | Sim | Ex.: `"ren"`, `"reh"`, `"prodist"`, `"proret"`, `"lei_federal"` |
+| `numero` | `str` | Sim | Número do documento (ex.: `"1000"`, `"Módulo 8"`) |
+| `ano` | `int` | Sim | Ano de publicação ou última atualização |
+| `titulo` | `str` | Não | Nome/ementa do documento |
+| `assunto` | `str` | Sim | Assunto ou área (quando disponível no metadado) |
+| `situacao` | `str` | Sim | `"vigente"`, `"revogada"`, `"consolidada"` (atos) ou `null` (manuais/leis) |
 | `data_publicacao` | `str` | Sim | Data no formato `"YYYY-MM-DD"` (quando disponível) |
-| `pdf_url` | `str` | Não | URL original no portal ANEEL |
-| `pdf_consolidado_url` | `str` | Sim | URL da versão consolidada (`bren...`), se existir |
-| `texto_bruto` | `str` | Não | Texto completo extraído do PDF |
-| `num_paginas` | `int` | Sim | Número de páginas do PDF |
-| `metodo_extracao` | `str` | Não | `"pymupdf"`, `"pdfplumber"` ou `"ocr"` |
+| `fonte` | `str` | Não | Origem: `"cedoc"`, `"gitlab"`, `"gov_br"`, `"planalto"` |
+| `url_original` | `str` | Não | URL do documento na fonte original |
+| `url_consolidado` | `str` | Sim | URL da versão consolidada (atos: `bren...`), se existir |
+| `formato_original` | `str` | Não | `"pdf"`, `"html"`, `"docx"`, `"xlsx"` |
+| `texto_bruto` | `str` | Não | Texto completo extraído do documento |
+| `num_paginas` | `int` | Sim | Número de páginas (PDFs) ou `null` (HTML) |
+| `metodo_extracao` | `str` | Não | `"pymupdf"`, `"pdfplumber"`, `"ocr"`, `"html_parser"`, `"python_docx"` |
 | `qualidade_extracao` | `float` | Sim | Score 0-1 estimado (% de páginas sem anomalia) |
-| `hf_pdf_path` | `str` | Sim | Caminho do PDF bruto no HF Hub (LFS) |
+| `hf_path` | `str` | Sim | Caminho do arquivo bruto no HF Hub (LFS) |
 | `scraped_at` | `str` | Não | Timestamp da extração: `"YYYY-MM-DDTHH:MM:SSZ"` |
+
+### Padrão de `id`
+
+O `id` é composto pelo tipo + identificador legível:
+
+```
+Atos normativos:    "ren-2021-1000", "reh-2026-3589"
+Procedimentos:      "prodist-modulo-08", "proret-submódulo-2.1"
+Manuais:            "manual-distribuicao-cartilha-gd"
+Leis:               "lei-9427-1996", "lei-8987-1995"
+```
+
+**Por que string?** Facilita joins, lookup e debugging. `"ren-2021-1000"` é
+autoexplicativo em logs — um número puro `1000` não é.
 
 ### Notas de design
 
-**Por que `id` como string?**
-Facilita joins e lookup sem risco de colisão entre anos. `"REN-2021-1000"` é
-autoexplicativo em logs e erros — número puro `1000` não é.
+**Por que uma tabela única em vez de tabelas separadas por tipo?**
+O pipeline de RAG trata todos os documentos da mesma forma: texto → chunks →
+embeddings → índice. Tabelas separadas complicariam sem benefício — a coluna
+`tipo` + `subtipo` permite filtrar quando necessário.
 
 **Por que `metodo_extracao`?**
 PDFs antigos (< 2005) são frequentemente escaneados — texto extraído via OCR
-tem qualidade diferente. A Camada 4 (avaliação) precisa saber isso para
-interpretar diferenças de faithfulness entre documentos.
+tem qualidade diferente. Manuais em DOCX/XLSX exigem extratores diferentes.
+A Camada 4 (avaliação) precisa saber isso para interpretar diferenças de
+faithfulness entre documentos.
 
 **Por que `qualidade_extracao`?**
 Permite filtrar documentos problemáticos antes do benchmark. Um PDF com 30%
 de páginas ilegíveis não deve entrar no conjunto de avaliação.
 
-**Por que `pdf_consolidado_url` separado?**
+**Por que `formato_original`?**
+Documentos vêm em formatos diferentes (PDF, HTML, DOCX, XLSX). O extrator
+precisa saber qual parser usar, e a Camada 4 pode querer analisar qualidade
+por formato.
+
+**Por que `url_consolidado` separado?**
 Versões consolidadas (`bren...`) incorporam alterações posteriores — são mais
 úteis para RAG (texto completo e atualizado). Mas a versão original é
 necessária para rastreabilidade histórica.
@@ -63,15 +99,15 @@ necessária para rastreabilidade histórica.
 ```
 aneel-corpus/
   data/
-    resolutions/
-      ano=1996/part-0.parquet
-      ano=1997/part-0.parquet
-      ...
-      ano=2026/part-0.parquet
+    documents/
+      tipo=ato_normativo/part-0.parquet
+      tipo=procedimento/part-0.parquet
+      tipo=manual/part-0.parquet
+      tipo=lei/part-0.parquet
 ```
 
-Particionado por `ano` para que queries como "RENs de 2020-2023" não precisem
-ler o dataset inteiro — pandas e `datasets` da HF suportam predicate pushdown.
+Particionado por `tipo` para que queries como "todos os procedimentos" ou
+"apenas atos normativos vigentes" não precisem ler o dataset inteiro.
 
 ---
 

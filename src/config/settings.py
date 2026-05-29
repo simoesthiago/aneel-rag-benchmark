@@ -19,9 +19,9 @@ A solução padrão de mercado:
 
 Como usar
 ---------
-    from src.config.settings import ANEEL_BASE_URL, get_hf_token
+    from src.config.settings import ANEEL_CEDOC_URL, LEIS_ESTRUTURANTES, get_hf_token
 
-    response = requests.get(ANEEL_BASE_URL + "/algum-endpoint")
+    response = requests.get(f"{ANEEL_CEDOC_URL}/ren20211000.pdf")
     token = get_hf_token()  # só é lido aqui, falha cedo se faltar
 """
 
@@ -90,21 +90,51 @@ LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-4o-mini")
 # -----------------------------------------------------------------------------
 # Constantes do domínio (fixas no código — não são segredos)
 # -----------------------------------------------------------------------------
-# Portal da ANEEL onde os PDFs ficam hospedados.
-ANEEL_BASE_URL: str = "https://www2.aneel.gov.br/cedoc"
 
-# Tipos de documento publicados no CEDOC.
-# Foco do projeto: Resoluções Normativas ('ren'). Os demais ficam aqui
-# como referência caso o escopo seja ampliado no futuro.
+# --- Fonte 1: Atos normativos (Power BI + cedoc/) ---
+# Portal da ANEEL onde os PDFs ficam hospedados.
+ANEEL_CEDOC_URL: str = "https://www2.aneel.gov.br/cedoc"
+
+# Endpoint da API REST do Power BI "Gestão do Estoque Regulatório".
+# O Power BI é o índice mestre: lista todos os atos normativos com metadados
+# (situação vigente/revogada, ementa, assunto). O diretório cedoc/ retorna 403.
+ANEEL_POWERBI_URL: str = (
+    "https://wabi-south-central-us-api.analysis.windows.net"
+    "/public/reports/querydata?synchronous=true"
+)
+
+# Tipos de ato normativo publicados no CEDOC.
 ANEEL_DOC_TYPES: dict[str, str] = {
-    "ren": "Resolução Normativa",   # core regulatório — foco
-    "res": "Resolução",             # decisões administrativas
-    "dea": "Despacho",              # atos pontuais
-    "por": "Portaria",              # estrutura organizacional
+    "ren": "Resolução Normativa",
+    "reh": "Resolução Homologatória",
+    "rea": "Resolução Autorizativa",
+    "res": "Resolução",
+    "dea": "Despacho",
+    "por": "Portaria",
 }
 
 # Range temporal do corpus. A ANEEL existe desde 1996 (Lei 9.427/1996).
 ANEEL_YEAR_RANGE: tuple[int, int] = (1996, 2026)
+
+# --- Fonte 2: Procedimentos regulatórios (GitLab público) ---
+# PRODIST, PRORET e outros procedimentos vivem neste GitLab.
+ANEEL_GITLAB_URL: str = "https://git.aneel.gov.br"
+ANEEL_GITLAB_PROJECT: str = "publico/centralconteudo"
+
+# --- Fonte 3: Manuais, Modelos e Instruções (gov.br) ---
+ANEEL_MANUAIS_URL: str = (
+    "https://www.gov.br/aneel/pt-br/centrais-de-conteudos"
+    "/manuais-modelos-e-instrucoes"
+)
+
+# --- Fonte 4: Leis estruturantes (planalto.gov.br) ---
+# HTML estático — 4 leis de base do setor elétrico.
+LEIS_ESTRUTURANTES: dict[str, str] = {
+    "lei-9427-1996": "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm",
+    "lei-8987-1995": "https://www.planalto.gov.br/ccivil_03/leis/l8987compilada.htm",
+    "lei-9074-1995": "https://www.planalto.gov.br/ccivil_03/leis/l9074compilada.htm",
+    "lei-13848-2019": "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/lei/l13848.htm",
+}
 
 
 # -----------------------------------------------------------------------------

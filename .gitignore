@@ -39,3 +39,6 @@ data/
 dist/
 build/
 *.egg-info/
+
+#MCPs
+.playwright-mcp

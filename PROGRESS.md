@@ -8,7 +8,7 @@ Atualizar este arquivo ao início e fim de cada sessão de trabalho.
 ## Status geral
 
 ```
-Camada 1 — Ingestão       ▓▓░░░░░░░░  20%  ← AQUI AGORA
+Camada 1 — Ingestão       ▓▓▓░░░░░░░  25%  ← AQUI AGORA
 Camada 2 — Processamento  ░░░░░░░░░░   0%
 Camada 3 — RAG            ░░░░░░░░░░   0%
 Camada 4 — Avaliação      ░░░░░░░░░░   0%
@@ -29,13 +29,27 @@ Camada 5 — Interface      ░░░░░░░░░░   0%
 - [x] `src/config/settings.py` — configurações centralizadas com lazy loading
 - [x] `DECISIONS.md`, `PROGRESS.md`, `docs/schema.md` — controle de evolução
 - [x] Repositório publicado no GitHub (`simoesthiago/aneel-rag-benchmark`)
+- [x] Reconhecimento do portal ANEEL (via Playwright)
+- [x] Definição do escopo do corpus (4 fontes, ver DECISIONS.md)
+
+### Achados do reconhecimento (2026-05-28)
+- `www2.aneel.gov.br/cedoc/` retorna **HTTP 403.14** — sem índice HTML
+- **Power BI** "Gestão do Estoque Regulatório" é o índice real de atos normativos (~1.460 atos, API REST)
+- **PRODIST/PRORET** estão em `git.aneel.gov.br/publico/centralconteudo/` (GitLab público com API)
+- **Procedimentos Regulatórios** tem 5 subcategorias: PRODIST, PRORET, Proc. de Rede, EE/P&D, Transmissão
+- **Manuais** tem 19 subcategorias com formatos variados (PDF, Excel, Word)
+- **Leis estruturantes** estão em `planalto.gov.br` (HTML estático, 4 leis)
+- `leis.org` é agregador terceiro — NÃO é fonte de dados (útil só como referência de categorias)
 
 ### Em progresso
-- [ ] Reconhecimento do portal ANEEL (`notebooks/exploration/01_aneel_portal_recon.ipynb`)
+- [ ] Reconhecimento detalhado do notebook (`notebooks/exploration/01_aneel_portal_recon.ipynb`) — rodar no Colab
 
 ### Pendente
-- [ ] `src/ingestion/scraper.py` — scraping do índice do portal CEDOC
-- [ ] `src/ingestion/extractor.py` — extração de texto dos PDFs
+- [ ] `src/ingestion/scraper.py` — scraping dos atos normativos via Power BI API + cedoc/
+- [ ] `src/ingestion/scraper_procedimentos.py` — coleta de procedimentos via GitLab API
+- [ ] `src/ingestion/scraper_manuais.py` — coleta de manuais via gov.br
+- [ ] `src/ingestion/scraper_leis.py` — coleta de leis via planalto.gov.br (HTML)
+- [ ] `src/ingestion/extractor.py` — extração de texto (PDF, HTML, DOCX, XLSX)
 - [ ] `src/ingestion/parser.py` — parsing de estrutura (seções, artigos)
 - [ ] `src/ingestion/uploader.py` — publicação no HuggingFace Hub
 - [ ] `tests/test_ingestion.py` — testes unitários de ingestão
@@ -69,11 +83,12 @@ Camada 5 — Interface      ░░░░░░░░░░   0%
 
 ## Próximo passo concreto
 
-> **Criar `notebooks/exploration/01_aneel_portal_recon.ipynb` no Google Colab.**
+> **Rodar o notebook `01_aneel_portal_recon.ipynb` no Google Colab.**
 >
-> Objetivo: inspecionar o HTML do portal `www2.aneel.gov.br/cedoc/` manualmente antes de escrever qualquer código de scraping. Entender paginação, estrutura da tabela de índice, campos disponíveis, padrão de URL dos PDFs.
+> Objetivo: validar as descobertas do Playwright (Power BI API, padrões de URL do cedoc/, GitLab API)
+> com código Python real. Testar extração de texto de um PDF de exemplo.
 >
-> Anti-padrão a evitar: começar `scraper.py` sem este reconhecimento.
+> Depois: implementar `src/ingestion/scraper.py` começando pela fonte mais estruturada (Power BI API → cedoc/).
 
 ---
 
@@ -81,6 +96,9 @@ Camada 5 — Interface      ░░░░░░░░░░   0%
 
 | Risco | Probabilidade | Mitigação |
 |---|---|---|
-| Portal ANEEL muda estrutura HTML | Média | Scraper com seletores nomeados, fácil de atualizar |
+| Power BI API muda estrutura do payload | Média | Documentar formato atual, validação no scraper |
+| Portal ANEEL aplica rate limiting | Média | `time.sleep()` entre requisições + checkpoint |
 | PDFs antigos (< 2005) são scanned (imagem) | Alta | `extractor.py` com OCR fallback via Tesseract |
-| Rate limiting do portal | Média | `time.sleep()` entre requisições + checkpoint |
+| Manuais em DOCX/XLSX exigem extratores extras | Alta | `python-docx`, `openpyxl` no requirements.txt |
+| GitLab ANEEL muda estrutura de pastas | Baixa | API REST com listagem dinâmica, não paths hardcoded |
+| Volume total muito grande para Colab gratuito | Média | Processamento em batches com checkpointing |
