@@ -163,14 +163,12 @@ def extrair_texto(conteudo: bytes | str, formato: str) -> dict:
 
     elif formato_lower == "docx":
         raise NotImplementedError(
-            "Extração de DOCX será implementada na Wave 3. "
-            "Biblioteca: python-docx."
+            "Extração de DOCX será implementada na Wave 3. " "Biblioteca: python-docx."
         )
 
     elif formato_lower == "xlsx":
         raise NotImplementedError(
-            "Extração de XLSX será implementada na Wave 3. "
-            "Biblioteca: openpyxl."
+            "Extração de XLSX será implementada na Wave 3. " "Biblioteca: openpyxl."
         )
 
     else:

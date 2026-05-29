@@ -29,7 +29,6 @@ Como usar:
     documentos = coletar_prodist_modulo(1)
 """
 
-import time
 import urllib.parse
 from datetime import datetime, timezone
 
@@ -37,7 +36,6 @@ import requests
 
 from src.config.settings import ANEEL_GITLAB_URL, ANEEL_GITLAB_PROJECT
 from src.ingestion.extractor import extrair_texto
-
 
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
@@ -56,8 +54,7 @@ def listar_arquivos_gitlab(path: str = "") -> list[dict]:
         lista de dicts com: name, path, type ("tree" ou "blob")
     """
     url = (
-        f"{ANEEL_GITLAB_URL}/api/v4/projects/"
-        f"{_GITLAB_PROJECT_PATH}/repository/tree"
+        f"{ANEEL_GITLAB_URL}/api/v4/projects/" f"{_GITLAB_PROJECT_PATH}/repository/tree"
     )
     params = {"path": path, "per_page": 100}
 
@@ -124,7 +121,7 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
     documentos = []
 
     # Encontrar a pasta PRODIST na raiz do repositório
-    print(f"  Procurando PRODIST no GitLab...")
+    print("  Procurando PRODIST no GitLab...")
     try:
         itens_raiz = listar_arquivos_gitlab("")
     except Exception as e:
@@ -153,7 +150,7 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
                 break
 
     if prodist_path is None:
-        print(f"    ❌ Pasta PRODIST não encontrada no GitLab.")
+        print("    ❌ Pasta PRODIST não encontrada no GitLab.")
         return []
 
     print(f"    ✅ PRODIST encontrado em: {prodist_path}")
@@ -208,31 +205,32 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
 
         doc_id = f"prodist-modulo-{modulo:02d}"
         url_blob = (
-            f"{ANEEL_GITLAB_URL}/{ANEEL_GITLAB_PROJECT}"
-            f"/-/blob/master/{pdf_path}"
+            f"{ANEEL_GITLAB_URL}/{ANEEL_GITLAB_PROJECT}" f"/-/blob/master/{pdf_path}"
         )
 
-        documentos.append({
-            "id": doc_id,
-            "tipo": "procedimento",
-            "subtipo": "prodist",
-            "numero": f"Módulo {modulo}",
-            "ano": None,  # PRODIST é atualizado continuamente
-            "titulo": f"PRODIST — Módulo {modulo}",
-            "assunto": "Procedimentos de Distribuição",
-            "situacao": None,
-            "data_publicacao": None,
-            "fonte": "gitlab",
-            "url_original": url_blob,
-            "url_consolidado": None,
-            "formato_original": "pdf",
-            "texto_bruto": resultado["texto"],
-            "num_paginas": resultado["num_paginas"],
-            "metodo_extracao": resultado["metodo"],
-            "qualidade_extracao": resultado["qualidade_extracao"],
-            "hf_path": None,
-            "scraped_at": scraped_at,
-        })
+        documentos.append(
+            {
+                "id": doc_id,
+                "tipo": "procedimento",
+                "subtipo": "prodist",
+                "numero": f"Módulo {modulo}",
+                "ano": None,  # PRODIST é atualizado continuamente
+                "titulo": f"PRODIST — Módulo {modulo}",
+                "assunto": "Procedimentos de Distribuição",
+                "situacao": None,
+                "data_publicacao": None,
+                "fonte": "gitlab",
+                "url_original": url_blob,
+                "url_consolidado": None,
+                "formato_original": "pdf",
+                "texto_bruto": resultado["texto"],
+                "num_paginas": resultado["num_paginas"],
+                "metodo_extracao": resultado["metodo"],
+                "qualidade_extracao": resultado["qualidade_extracao"],
+                "hf_path": None,
+                "scraped_at": scraped_at,
+            }
+        )
 
     except Exception as e:
         print(f"    ❌ Erro: {e}")

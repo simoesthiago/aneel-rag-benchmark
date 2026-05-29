@@ -28,7 +28,6 @@ import requests
 from src.config.settings import LEIS_ESTRUTURANTES
 from src.ingestion.extractor import extrair_texto
 
-
 # Headers HTTP — identificação como navegador para evitar bloqueios
 _HEADERS = {
     "User-Agent": (
@@ -94,30 +93,34 @@ def coletar_leis() -> list[dict]:
             # Extrair texto usando o extractor centralizado
             resultado = extrair_texto(resp.text, "html")
 
-            print(f"    OK: {resultado['qualidade_extracao']} qualidade, "
-                  f"{len(resultado['texto'])} chars")
+            print(
+                f"    OK: {resultado['qualidade_extracao']} qualidade, "
+                f"{len(resultado['texto'])} chars"
+            )
 
-            documentos.append({
-                "id": lei_id,
-                "tipo": "lei",
-                "subtipo": "lei_federal",
-                "numero": meta["numero"],
-                "ano": meta["ano"],
-                "titulo": meta["titulo"],
-                "assunto": None,
-                "situacao": None,
-                "data_publicacao": None,
-                "fonte": "planalto",
-                "url_original": url,
-                "url_consolidado": None,
-                "formato_original": "html",
-                "texto_bruto": resultado["texto"],
-                "num_paginas": resultado["num_paginas"],
-                "metodo_extracao": resultado["metodo"],
-                "qualidade_extracao": resultado["qualidade_extracao"],
-                "hf_path": None,
-                "scraped_at": scraped_at,
-            })
+            documentos.append(
+                {
+                    "id": lei_id,
+                    "tipo": "lei",
+                    "subtipo": "lei_federal",
+                    "numero": meta["numero"],
+                    "ano": meta["ano"],
+                    "titulo": meta["titulo"],
+                    "assunto": None,
+                    "situacao": None,
+                    "data_publicacao": None,
+                    "fonte": "planalto",
+                    "url_original": url,
+                    "url_consolidado": None,
+                    "formato_original": "html",
+                    "texto_bruto": resultado["texto"],
+                    "num_paginas": resultado["num_paginas"],
+                    "metodo_extracao": resultado["metodo"],
+                    "qualidade_extracao": resultado["qualidade_extracao"],
+                    "hf_path": None,
+                    "scraped_at": scraped_at,
+                }
+            )
 
         except Exception as e:
             # Não queremos que 1 lei falhando trave as outras 3

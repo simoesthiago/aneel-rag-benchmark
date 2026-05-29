@@ -39,7 +39,6 @@ import requests
 from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
 from src.ingestion.extractor import extrair_texto
 
-
 # --- Constantes do Power BI ---
 # Capturadas via Playwright inspecionando as requisições de rede (2026-05-28).
 # Se a ANEEL atualizar o relatório, esses IDs podem mudar.
@@ -60,6 +59,7 @@ _HEADERS = {
 # =========================================================================
 # POWER BI — consulta e decodificação
 # =========================================================================
+
 
 def consultar_powerbi(
     propriedades: list[str] | None = None,
@@ -90,13 +90,15 @@ def consultar_powerbi(
     select = []
     projections = []
     for i, prop in enumerate(propriedades):
-        select.append({
-            "Column": {
-                "Expression": {"SourceRef": {"Source": "d"}},
-                "Property": prop,
-            },
-            "Name": f"DIM Atos Normativos.{prop}",
-        })
+        select.append(
+            {
+                "Column": {
+                    "Expression": {"SourceRef": {"Source": "d"}},
+                    "Property": prop,
+                },
+                "Name": f"DIM Atos Normativos.{prop}",
+            }
+        )
         projections.append(i)
 
     payload = {
@@ -148,9 +150,7 @@ def consultar_powerbi(
         "Content-Type": "application/json;charset=UTF-8",
     }
 
-    resp = requests.post(
-        ANEEL_POWERBI_URL, headers=headers, json=payload, timeout=30
-    )
+    resp = requests.post(ANEEL_POWERBI_URL, headers=headers, json=payload, timeout=30)
     resp.raise_for_status()
 
     return _decodificar_dsr(resp.json(), propriedades)
@@ -221,6 +221,7 @@ def _decodificar_dsr(resposta_json: dict, propriedades: list[str]) -> list[dict]
 # Filtros e URLs
 # =========================================================================
 
+
 def filtrar_vigentes(atos: list[dict], sigla: str | None = None) -> list[dict]:
     """
     Filtra atos normativos vigentes (não revogados).
@@ -238,16 +239,12 @@ def filtrar_vigentes(atos: list[dict], sigla: str | None = None) -> list[dict]:
     """
     situacoes_vigentes = {"Não consta revogação expressa", "Vacatio Legis"}
 
-    resultado = [
-        a for a in atos
-        if a.get("Situação") in situacoes_vigentes
-    ]
+    resultado = [a for a in atos if a.get("Situação") in situacoes_vigentes]
 
     if sigla:
         sigla_upper = sigla.upper()
         resultado = [
-            a for a in resultado
-            if a.get("Resolução", "").startswith(sigla_upper + " ")
+            a for a in resultado if a.get("Resolução", "").startswith(sigla_upper + " ")
         ]
 
     return resultado
@@ -291,6 +288,7 @@ def _parsear_resolucao(resolucao: str) -> tuple[str, int, int] | None:
 # =========================================================================
 # Download e coleta
 # =========================================================================
+
 
 def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     """
@@ -349,7 +347,7 @@ def coletar_atos(atos: list[dict]) -> list[dict]:
 
         pdf_bytes = baixar_ato(sigla, ano, numero)
         if pdf_bytes is None:
-            print(f"    ❌ PDF não encontrado")
+            print("    ❌ PDF não encontrado")
             continue
 
         try:
@@ -373,27 +371,29 @@ def coletar_atos(atos: list[dict]) -> list[dict]:
             url_original = montar_url_ato(sigla, ano, numero)
             url_consolidada = montar_url_consolidada(sigla, ano, numero)
 
-            documentos.append({
-                "id": doc_id,
-                "tipo": "ato_normativo",
-                "subtipo": sigla.lower(),
-                "numero": str(numero),
-                "ano": ano,
-                "titulo": ato.get("Ementa") or resolucao,
-                "assunto": None,
-                "situacao": "vigente",
-                "data_publicacao": data_pub,
-                "fonte": "cedoc",
-                "url_original": url_original,
-                "url_consolidado": url_consolidada,
-                "formato_original": "pdf",
-                "texto_bruto": resultado["texto"],
-                "num_paginas": resultado["num_paginas"],
-                "metodo_extracao": resultado["metodo"],
-                "qualidade_extracao": resultado["qualidade_extracao"],
-                "hf_path": None,
-                "scraped_at": scraped_at,
-            })
+            documentos.append(
+                {
+                    "id": doc_id,
+                    "tipo": "ato_normativo",
+                    "subtipo": sigla.lower(),
+                    "numero": str(numero),
+                    "ano": ano,
+                    "titulo": ato.get("Ementa") or resolucao,
+                    "assunto": None,
+                    "situacao": "vigente",
+                    "data_publicacao": data_pub,
+                    "fonte": "cedoc",
+                    "url_original": url_original,
+                    "url_consolidado": url_consolidada,
+                    "formato_original": "pdf",
+                    "texto_bruto": resultado["texto"],
+                    "num_paginas": resultado["num_paginas"],
+                    "metodo_extracao": resultado["metodo"],
+                    "qualidade_extracao": resultado["qualidade_extracao"],
+                    "hf_path": None,
+                    "scraped_at": scraped_at,
+                }
+            )
 
         except Exception as e:
             print(f"    ❌ Erro na extração: {e}")

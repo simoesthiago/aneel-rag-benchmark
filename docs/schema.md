@@ -94,6 +94,45 @@ necessária para rastreabilidade histórica.
 
 ---
 
+## Tabela derivada: `chunks`
+
+Cada linha representa um trecho recuperável do corpus. Esta tabela é derivada
+de `documents`; a tabela principal não muda e continua sendo a fonte de verdade
+da Camada 1.
+
+| Coluna | Tipo Python | Nullable | Descrição |
+|---|---|---|---|
+| `chunk_id` | `str` | Não | Identificador único do chunk: `{document_id}::{strategy}::{index}` |
+| `document_id` | `str` | Não | FK lógica para `documents.id` |
+| `parent_chunk_id` | `str` | Sim | Chunk pai em estratégias hierárquicas |
+| `chunk_strategy` | `str` | Não | `"fixed-size"`, `"article-aware"`, `"hierarchical"` ou `"hierarchical-child"` |
+| `chunk_level` | `str` | Não | `"chunk"`, `"article"`, `"section"` ou `"paragraph"` |
+| `chunk_index` | `int` | Não | Ordem do chunk dentro do documento/estratégia |
+| `texto` | `str` | Não | Texto do chunk usado em retrieval e geração |
+| `secao` | `str` | Sim | Título/capítulo/seção mais próximo |
+| `artigo` | `str` | Sim | Ex.: `"Art. 353"` |
+| `paragrafo` | `str` | Sim | Ex.: `"§ 1º"` |
+| `inciso` | `str` | Sim | Ex.: `"III"` |
+| `alinea` | `str` | Sim | Ex.: `"a"` |
+| `citation_label` | `str` | Não | Rótulo curto para citação na resposta |
+| `tipo` | `str` | Não | Herdado de `documents.tipo` |
+| `subtipo` | `str` | Sim | Herdado de `documents.subtipo` |
+| `numero` | `str` | Sim | Herdado de `documents.numero` |
+| `ano` | `int` | Sim | Herdado de `documents.ano` |
+| `situacao` | `str` | Sim | Herdado de `documents.situacao` |
+| `url_original` | `str` | Não | Herdado de `documents.url_original` |
+| `url_consolidado` | `str` | Sim | Herdado de `documents.url_consolidado` |
+
+### Estratégias de chunking
+
+| Estratégia | Uso no benchmark | Observação |
+|---|---|---|
+| `fixed-size` | Baseline simples | Divide por janela de palavras com overlap |
+| `article-aware` | Baseline regulatório | Prioriza `Art.`, `§`, incisos e alíneas |
+| `hierarchical` | Parent context | Recupera filhos pequenos e responde com pai mais amplo |
+
+---
+
 ## Particionamento do Parquet
 
 ```

@@ -13,10 +13,10 @@ import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 
-
 # =========================================================================
 # Testes do extractor.py
 # =========================================================================
+
 
 class TestExtrairTextoHtml:
     """Testes da extração de HTML — roda local, sem dependências pesadas."""
@@ -104,7 +104,11 @@ class TestExtrairTextoDispatcher:
         """extrair_texto("html") decodifica bytes UTF-8 automaticamente."""
         from src.ingestion.extractor import extrair_texto
 
-        html_bytes = "<html><body><p>Resolução normativa da ANEEL.</p></body></html>".encode("utf-8")
+        html_bytes = (
+            "<html><body><p>Resolução normativa da ANEEL.</p></body></html>".encode(
+                "utf-8"
+            )
+        )
         resultado = extrair_texto(html_bytes, "html")
         assert "Resolução" in resultado["texto"]
 
@@ -119,6 +123,7 @@ class TestExtrairTextoDispatcher:
 # =========================================================================
 # Testes do scraper_atos.py
 # =========================================================================
+
 
 class TestMontarUrlAto:
     """Testes da construção de URLs do cedoc/."""
@@ -208,7 +213,11 @@ class TestConsultarPowerbiMock:
                                                 "DM0": [
                                                     {
                                                         "S": [
-                                                            {"N": "G0", "T": 1, "DN": "D0"},
+                                                            {
+                                                                "N": "G0",
+                                                                "T": 1,
+                                                                "DN": "D0",
+                                                            },
                                                         ],
                                                         "C": [0],
                                                     },
@@ -239,6 +248,7 @@ class TestConsultarPowerbiMock:
 # =========================================================================
 # Testes do scraper_leis.py
 # =========================================================================
+
 
 class TestColetarLeisMock:
     """Testa a coleta de leis com mock HTTP."""
@@ -278,6 +288,7 @@ class TestColetarLeisMock:
 # =========================================================================
 # Testes do parser.py
 # =========================================================================
+
 
 class TestLimparTexto:
     """Testes de limpeza de texto."""
@@ -322,32 +333,37 @@ class TestLimparTexto:
 # Testes do uploader.py
 # =========================================================================
 
+
 class TestValidarSchema:
     """Testes de validação do schema do DataFrame."""
 
     def _criar_df_valido(self) -> pd.DataFrame:
         """Cria um DataFrame mínimo válido para testes."""
-        return pd.DataFrame([{
-            "id": "lei-9427-1996",
-            "tipo": "lei",
-            "subtipo": "lei_federal",
-            "numero": "9427",
-            "ano": 1996,
-            "titulo": "Lei 9.427/1996 — Criação da ANEEL",
-            "assunto": None,
-            "situacao": None,
-            "data_publicacao": None,
-            "fonte": "planalto",
-            "url_original": "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm",
-            "url_consolidado": None,
-            "formato_original": "html",
-            "texto_bruto": "A" * 200,
-            "num_paginas": None,
-            "metodo_extracao": "html_parser",
-            "qualidade_extracao": 1.0,
-            "hf_path": None,
-            "scraped_at": "2026-05-29T00:00:00Z",
-        }])
+        return pd.DataFrame(
+            [
+                {
+                    "id": "lei-9427-1996",
+                    "tipo": "lei",
+                    "subtipo": "lei_federal",
+                    "numero": "9427",
+                    "ano": 1996,
+                    "titulo": "Lei 9.427/1996 — Criação da ANEEL",
+                    "assunto": None,
+                    "situacao": None,
+                    "data_publicacao": None,
+                    "fonte": "planalto",
+                    "url_original": "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm",
+                    "url_consolidado": None,
+                    "formato_original": "html",
+                    "texto_bruto": "A" * 200,
+                    "num_paginas": None,
+                    "metodo_extracao": "html_parser",
+                    "qualidade_extracao": 1.0,
+                    "hf_path": None,
+                    "scraped_at": "2026-05-29T00:00:00Z",
+                }
+            ]
+        )
 
     def test_df_valido_nao_levanta_erro(self):
         """DataFrame válido passa sem erro."""

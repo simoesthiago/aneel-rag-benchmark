@@ -30,19 +30,40 @@ from huggingface_hub import HfApi
 
 from src.config.settings import HF_DATASET_REPO, get_hf_token
 
-
 # Colunas obrigatórias do schema (ver docs/schema.md)
 _SCHEMA_COLUNAS = [
-    "id", "tipo", "subtipo", "numero", "ano", "titulo", "assunto",
-    "situacao", "data_publicacao", "fonte", "url_original", "url_consolidado",
-    "formato_original", "texto_bruto", "num_paginas", "metodo_extracao",
-    "qualidade_extracao", "hf_path", "scraped_at",
+    "id",
+    "tipo",
+    "subtipo",
+    "numero",
+    "ano",
+    "titulo",
+    "assunto",
+    "situacao",
+    "data_publicacao",
+    "fonte",
+    "url_original",
+    "url_consolidado",
+    "formato_original",
+    "texto_bruto",
+    "num_paginas",
+    "metodo_extracao",
+    "qualidade_extracao",
+    "hf_path",
+    "scraped_at",
 ]
 
 # Colunas que NUNCA devem ser nulas
 _COLUNAS_NOT_NULL = [
-    "id", "tipo", "titulo", "fonte", "url_original",
-    "formato_original", "texto_bruto", "metodo_extracao", "scraped_at",
+    "id",
+    "tipo",
+    "titulo",
+    "fonte",
+    "url_original",
+    "formato_original",
+    "texto_bruto",
+    "metodo_extracao",
+    "scraped_at",
 ]
 
 
