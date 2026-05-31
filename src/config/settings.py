@@ -82,17 +82,30 @@ def get_llm_api_key() -> str:
 
 def get_aneel_proxy_url() -> str | None:
     """
-    URL opcional de um proxy HTTP que mascara o IP de origem ao baixar do cedoc/.
+    URL do Cloudflare Worker que faz proxy do cedoc/ a partir de IP brasileiro.
 
     Por quê? O cedoc/ bloqueia IPs de datacenter estrangeiros (Azure, Google
-    Cloud) com HTTP 403, mesmo com curl_cffi. A solução do projeto é um
-    proxy próprio hospedado em região brasileira — ver `proxies/aneel-proxy-fly/`
-    (Fly.io GRU/São Paulo).
+    Cloud) com HTTP 403. O Worker com Service Placement em www2.aneel.gov.br:443
+    força a execução na edge brasileira — ver `workers/aneel-proxy/`.
 
-    Em rede residencial ou local brasileira, deixe vazio — curl_cffi + URL
-    correta bastam.
+    Em rede residencial ou local brasileira, deixe vazio — curl_cffi basta.
     """
     value = os.environ.get("ANEEL_PROXY_URL", "").strip()
+    return value or None
+
+
+def get_aneel_gitlab_proxy_url() -> str | None:
+    """
+    URL do Cloudflare Worker que faz proxy da API do GitLab da ANEEL.
+
+    Por quê? O git.aneel.gov.br bloqueia IPs de datacenter estrangeiros com
+    timeout de conexão — mesmo comportamento do cedoc/. O Worker com Service
+    Placement em git.aneel.gov.br:443 força a execução na edge brasileira
+    — ver `workers/aneel-gitlab-proxy/`.
+
+    Em rede residencial ou local brasileira, deixe vazio — acesso direto basta.
+    """
+    value = os.environ.get("ANEEL_GITLAB_PROXY_URL", "").strip()
     return value or None
 
 

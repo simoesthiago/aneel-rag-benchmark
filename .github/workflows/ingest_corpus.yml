@@ -4,13 +4,14 @@
 #
 # Secrets:
 #   HF_TOKEN          — escrita no HuggingFace Hub (obrigatório)
-#   ANEEL_PROXY_URL   — Cloudflare Worker com Smart Placement (obrigatório em Actions)
-#                       Ver workers/aneel-proxy/README.md para deploy + ativação.
-#                       ⚠️  Smart Placement DEVE estar ativo — sem ele o Worker
-#                       executa na edge americana e recebe 403 do cedoc/.
+#   ANEEL_PROXY_URL        — Worker CF para cedoc/ (obrigatório em Actions)
+#                            Ver workers/aneel-proxy/README.md
+#                            ⚠️  Service Placement deve estar ativo (www2.aneel.gov.br:443)
+#   ANEEL_GITLAB_PROXY_URL — Worker CF para GitLab da ANEEL (obrigatório em Actions)
+#                            Ver workers/aneel-gitlab-proxy/README.md
+#                            ⚠️  Service Placement deve estar ativo (git.aneel.gov.br:443)
 #
-# Se o preflight falhar: verifique Smart Placement em Workers & Pages → aneel-proxy
-# → Settings → Runtime → Placement → Smart. Em último caso, rode localmente.
+# Se o preflight falhar: verifique Service Placement nos dois Workers.
 # =============================================================================
 
 name: Ingest ANEEL corpus → HuggingFace Hub
@@ -97,5 +98,6 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
+          ANEEL_GITLAB_PROXY_URL: ${{ secrets.ANEEL_GITLAB_PROXY_URL }}
           WAVE: ${{ inputs.wave || '1' }}
         run: python -m src.ingestion.run_wave --wave "$WAVE"
