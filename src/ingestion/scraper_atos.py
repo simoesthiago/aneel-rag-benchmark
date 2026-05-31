@@ -36,7 +36,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import requests
 
-from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
+from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL, ANEEL_PROXY_URL
 from src.ingestion.extractor import extrair_texto
 
 # --- Constantes do Power BI ---
@@ -297,6 +297,16 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Tenta primeiro a versão consolidada (mais completa, inclui alterações),
     depois a original. Retorna None para 404 (não crasha).
 
+    Roteamento da requisição:
+    - Se ANEEL_PROXY_URL estiver configurado → usa o Cloudflare Worker
+      (necessário em Colab, GitHub Actions, e qualquer IP de data center)
+    - Se vazio → tenta download direto (só funciona em IP residencial)
+
+    Por que o Worker? O cedoc/ tem Cloudflare Bot Management que bloqueia
+    IPs de data center com HTTP 403, independente de TLS fingerprint ou
+    User-Agent. O Worker roda no edge da Cloudflare, que passa pelo bot
+    management do próprio cedoc/. Ver DECISIONS.md.
+
     Args:
         sigla: tipo do ato (ex.: "ren")
         ano: ano de publicação
@@ -305,14 +315,20 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Returns:
         bytes do PDF, ou None se não encontrado
     """
-    urls = [
+    urls_cedoc = [
         (montar_url_consolidada(sigla, ano, numero), "consolidada"),
         (montar_url_ato(sigla, ano, numero), "original"),
     ]
 
-    for url, label in urls:
+    for url_cedoc, _label in urls_cedoc:
+        # Se há proxy configurado, encapsula a URL no parâmetro ?url= do Worker
+        if ANEEL_PROXY_URL:
+            url_efetiva = f"{ANEEL_PROXY_URL.rstrip('/')}/?url={url_cedoc}"
+        else:
+            url_efetiva = url_cedoc
+
         try:
-            resp = requests.get(url, headers=_HEADERS, timeout=60)
+            resp = requests.get(url_efetiva, headers=_HEADERS, timeout=60)
             if resp.status_code == 200 and len(resp.content) > 1000:
                 return resp.content
         except requests.RequestException:

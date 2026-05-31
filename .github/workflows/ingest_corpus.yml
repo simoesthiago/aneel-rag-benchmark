@@ -1,0 +1,80 @@
+# =============================================================================
+# ingest_corpus.yml — Pipeline mensal de ingestão do corpus ANEEL
+# =============================================================================
+#
+# Por que este workflow existe?
+# -----------------------------
+# Este é o pipeline de produção da Camada 1. Roda mensalmente (no dia 1, 03h
+# UTC) e republica o corpus no HuggingFace Hub com qualquer ato novo, ementa
+# atualizada ou módulo PRODIST revisado.
+#
+# Pode também ser disparado manualmente para iteração via "Run workflow".
+#
+# Arquitetura:
+#   Actions runner (Azure)
+#     ├─ Power BI API     ──► direto (sem CF)
+#     ├─ Planalto         ──► direto (sem CF)
+#     ├─ GitLab ANEEL     ──► direto (sem CF)
+#     └─ cedoc/ (RENs)    ──► via Cloudflare Worker (única forma de passar)
+#
+# Secrets necessários:
+#   HF_TOKEN          → token de escrita no HuggingFace Hub
+#   ANEEL_PROXY_URL   → URL do Cloudflare Worker aneel-proxy
+#
+# Configure em: Settings → Secrets and variables → Actions → New secret
+# =============================================================================
+
+name: Ingest ANEEL corpus → HuggingFace Hub
+
+on:
+  schedule:
+    # Dia 1 de cada mês, 03h UTC (= 00h Brasília)
+    - cron: "0 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      wave:
+        description: "Wave a executar (1, 2 ou 3)"
+        type: choice
+        options: ["1", "2", "3"]
+        default: "1"
+        required: true
+
+jobs:
+  ingest:
+    name: Ingest corpus (Wave ${{ inputs.wave || '1' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate Worker is alive
+        env:
+          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
+        run: |
+          if [ -z "$ANEEL_PROXY_URL" ]; then
+            echo "❌ Secret ANEEL_PROXY_URL não configurado."
+            exit 1
+          fi
+          HEALTH=$(curl -s "${ANEEL_PROXY_URL%/}/health")
+          echo "Worker health: $HEALTH"
+          echo "$HEALTH" | grep -q '"status":"ok"' || (echo "❌ Worker unhealthy"; exit 1)
+
+      - name: Run ingestion pipeline
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
+          WAVE: ${{ inputs.wave || '1' }}
+        run: |
+          python -m src.ingestion.run_wave --wave "$WAVE"

@@ -28,6 +28,11 @@ name: Test cedoc/ access from GitHub runners
 
 on:
   workflow_dispatch:  # disparo manual via UI
+    inputs:
+      worker_url:
+        description: "URL do Worker (ex: https://aneel-proxy.user.workers.dev). Vazio = pula Teste 5."
+        required: false
+        default: ""
   # NOTA: não rodamos em push porque é só diagnóstico, não CI
 
 jobs:
@@ -126,6 +131,46 @@ jobs:
                   print(f"  ❌ {imp}: ERROR {e}")
           EOF
 
+      - name: Test 5 — Cloudflare Worker proxy (a solução proposta)
+        if: ${{ inputs.worker_url != '' }}
+        continue-on-error: true
+        run: |
+          WORKER="${{ inputs.worker_url }}"
+          echo "=== Teste 5: proxy via Cloudflare Worker ==="
+          echo "Worker URL: $WORKER"
+          echo ""
+
+          # Health check primeiro
+          echo "-- Health check --"
+          curl -s "${WORKER}/health" | head -1
+          echo ""
+
+          # Tentativa real
+          echo "-- Download via Worker --"
+          PDF_URL="https://www2.aneel.gov.br/cedoc/ren20211000.pdf"
+          curl -sI "${WORKER}/?url=${PDF_URL}" | head -10
+          echo ""
+
+          # Confirma que veio PDF de verdade
+          STATUS=$(curl -s -o /tmp/test.pdf -w "%{http_code}" \
+            "${WORKER}/?url=${PDF_URL}")
+          SIZE=$(stat -c%s /tmp/test.pdf 2>/dev/null || stat -f%z /tmp/test.pdf)
+          MAGIC=$(head -c 4 /tmp/test.pdf | xxd -p)
+
+          echo "HTTP Status: $STATUS"
+          echo "Tamanho recebido: $SIZE bytes"
+          echo "Magic bytes (hex): $MAGIC (esperado: 25504446 = '%PDF')"
+
+          if [ "$STATUS" = "200" ] && [ "$MAGIC" = "25504446" ]; then
+            echo ""
+            echo "✅✅✅ SUCESSO — Worker passa pelo Cloudflare!"
+            echo "→ Arquitetura: Actions + Worker para o cedoc/"
+          else
+            echo ""
+            echo "❌ Worker também foi bloqueado."
+            echo "→ Plano C: ScrapingBee ou similar"
+          fi
+
       - name: Summary
         if: always()
         run: |
@@ -133,6 +178,7 @@ jobs:
           echo "=========================================================="
           echo " VEREDITO"
           echo "=========================================================="
-          echo " Se o Teste 3 mostrou HTTP 200 → GitHub Actions é viável"
-          echo " Se o Teste 3 mostrou HTTP 403 → precisa de proxy"
+          echo " Teste 3 (curl_cffi direto): se HTTP 200 → Actions direto é viável"
+          echo " Teste 5 (via Worker):       se HTTP 200 → arquitetura final OK"
+          echo " Se ambos 403 → precisa de ScrapingBee/proxy comercial"
           echo "=========================================================="

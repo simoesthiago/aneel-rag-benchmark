@@ -95,6 +95,13 @@ LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-4o-mini")
 # Portal da ANEEL onde os PDFs ficam hospedados.
 ANEEL_CEDOC_URL: str = "https://www2.aneel.gov.br/cedoc"
 
+# URL do Cloudflare Worker que faz proxy do cedoc/.
+# Necessário porque o cedoc/ usa Cloudflare Bot Management que bloqueia IPs
+# de data center (Colab, GitHub Actions, AWS, etc.). O Worker roda no edge
+# da própria Cloudflare e passa pelo bot management. Ver DECISIONS.md.
+# Se vazio, o scraper tenta download direto (só funciona em IP residencial).
+ANEEL_PROXY_URL: str = _get_optional("ANEEL_PROXY_URL", "")
+
 # Endpoint da API REST do Power BI "Gestão do Estoque Regulatório".
 # O Power BI é o índice mestre: lista todos os atos normativos com metadados
 # (situação vigente/revogada, ementa, assunto). O diretório cedoc/ retorna 403.
