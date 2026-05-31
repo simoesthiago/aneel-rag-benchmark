@@ -4,12 +4,13 @@
 #
 # Secrets:
 #   HF_TOKEN          — escrita no HuggingFace Hub (obrigatório)
-#   ANEEL_PROXY_URL   — proxy HTTP em Fly.io GRU (obrigatório em Actions)
-#                       Ver proxies/aneel-proxy-fly/ para o código + deploy.
+#   ANEEL_PROXY_URL   — Cloudflare Worker com Smart Placement (obrigatório em Actions)
+#                       Ver workers/aneel-proxy/README.md para deploy + ativação.
+#                       ⚠️  Smart Placement DEVE estar ativo — sem ele o Worker
+#                       executa na edge americana e recebe 403 do cedoc/.
 #
-# Se o preflight falhar após várias tentativas, o proxy pode precisar de
-# redeploy: `cd proxies/aneel-proxy-fly && fly deploy`. Em último caso,
-# rode localmente: python -m src.ingestion.run_wave --wave 1
+# Se o preflight falhar: verifique Smart Placement em Workers & Pages → aneel-proxy
+# → Settings → Runtime → Placement → Smart. Em último caso, rode localmente.
 # =============================================================================
 
 name: Ingest ANEEL corpus → HuggingFace Hub
@@ -62,7 +63,7 @@ jobs:
           health=$(curl -sf "${ANEEL_PROXY_URL%/}/health" || true)
           if [ "$health" != "aneel-proxy ok" ]; then
             echo "::warning::GET /health não retornou 'aneel-proxy ok' (got: $health)"
-            echo "Redeploy: cd proxies/aneel-proxy-fly && fly deploy"
+            echo "Verifique o Worker: Workers & Pages → aneel-proxy → Edit code → Deploy"
           else
             echo "Proxy health OK"
           fi
@@ -86,8 +87,8 @@ jobs:
             sleep 5
           done
           echo "::error::Preflight falhou após 12 tentativas."
-          echo "1) Redeploy do proxy: cd proxies/aneel-proxy-fly && fly deploy"
-          echo "2) Verifique status do app: fly status -a <nome-do-app>"
+          echo "1) Verifique Smart Placement: Workers & Pages → aneel-proxy → Settings → Runtime → Placement → Smart"
+          echo "2) Redeploye o Worker: cole workers/aneel-proxy/worker.js no dashboard e clique Deploy"
           echo "3) Em último caso, rode localmente: python -m src.ingestion.run_wave --wave 1"
           echo "4) Ou reexecute com skip_preflight=true (só leis/PRODIST se GitLab responder)"
           exit 1

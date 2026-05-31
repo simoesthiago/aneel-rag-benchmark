@@ -1,17 +1,28 @@
 # aneel-proxy-fly
 
-Proxy HTTP no [Fly.io](https://fly.io) (região GRU/São Paulo) para download do
-cedoc/ da ANEEL a partir de IP brasileiro fixo.
+> ⚠️ **NÃO USAR PARA cedoc/** — IPs do Fly.io também são bloqueados pelo cedoc/
+> com HTTP 403, mesmo na região GRU (São Paulo). O cedoc/ bloqueia **qualquer IP
+> de datacenter**, não só estrangeiros. Testado e confirmado em 2026-05-31.
+>
+> **A solução correta para cedoc/ é o Cloudflare Worker com Smart Placement.**
+> Ver `workers/aneel-proxy/README.md`.
+>
+> Este diretório fica documentado como referência histórica e pode ser útil
+> para outros proxies que não dependam do cedoc/.
 
-## Por que existe?
+---
 
-O cedoc/ (`www2.aneel.gov.br`) bloqueia IPs de datacenter estrangeiros (Azure
-US, Google Cloud US). A Cloudflare Worker que tínhamos antes roda na edge mais
-próxima do chamador — quando o GitHub Actions chama de Azure US, a edge
-americana da Cloudflare é bloqueada pelo cedoc/.
+Proxy HTTP no [Fly.io](https://fly.io) (região GRU/São Paulo).
 
-Este proxy roda no Fly.io na região GRU (São Paulo). IP fixo brasileiro →
-cedoc/ aceita.
+## Por que existe? (histórico)
+
+Tentativa de substituir o Cloudflare Worker depois de descobrirmos que o Worker,
+sem Smart Placement, executava na edge mais próxima do chamador (edge americana
+quando chamado do GitHub Actions). A hipótese era que um IP fixo brasileiro (Fly.io
+GRU) resolveria o problema.
+
+**Por que não funcionou:** o cedoc/ bloqueia IPs de datacenter em geral, não apenas
+estrangeiros. O Fly.io GRU tem IPs de datacenter → bloqueado com HTTP 403.
 
 ## Endpoints
 
