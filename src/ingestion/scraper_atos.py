@@ -299,7 +299,7 @@ def _parsear_resolucao(resolucao: str) -> tuple[str, int, int] | None:
 
 
 def _resposta_e_pdf_valido(status: int, content: bytes) -> bool:
-    """True se HTTP 200 e corpo parece PDF (não página HTML do Cloudflare)."""
+    """True se HTTP 200 e corpo parece PDF (não página HTML de erro/bloqueio)."""
     return status == 200 and len(content) > 1000 and content[:4] == b"%PDF"
 
 
@@ -314,9 +314,10 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
     Baixa uma URL do cedoc/.
 
     Ordem de tentativa:
-    1. Cloudflare Worker (ANEEL_PROXY_URL) — necessário em Colab/Actions (IP DC)
-       O edge às vezes recebe 403 intermitente; fazemos até 3 tentativas.
-    2. curl_cffi direto — funciona em rede residencial / Mac local
+    1. Proxy HTTP (ANEEL_PROXY_URL) — necessário em IPs de datacenter
+       estrangeiros (Colab US, GitHub Actions Azure). Apontar para o proxy
+       em Fly.io GRU (ver `proxies/aneel-proxy-fly/`).
+    2. curl_cffi direto — funciona em rede residencial / Mac local brasileiro.
     """
     proxy_base = get_aneel_proxy_url()
     proxy_fetch = None
@@ -326,7 +327,7 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
         )
 
     if proxy_fetch:
-        # O edge do Worker pode devolver 403 intermitente — até 6 tentativas.
+        # O proxy pode devolver 403 intermitente em janelas curtas — até 6 tentativas.
         for attempt in range(6):
             try:
                 resp = requests.get(proxy_fetch, timeout=90)
@@ -362,8 +363,9 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
 
     O cedoc/ usa Cloudflare Bot Management:
     - TLS fingerprinting → curl_cffi com impersonate="chrome120"
-    - Bloqueio de IP de datacenter (Colab, GitHub Actions) → ANEEL_PROXY_URL
-      apontando para um Worker na edge da Cloudflare (ver workers/aneel-proxy/)
+    - Bloqueio de IP de datacenter estrangeiro (Colab US, GitHub Actions Azure)
+      → ANEEL_PROXY_URL apontando para o proxy em Fly.io GRU/São Paulo
+      (ver proxies/aneel-proxy-fly/)
 
     Args:
         sigla: tipo do ato (ex.: "ren")

@@ -1,0 +1,47 @@
+# =============================================================================
+# fly.toml — Configuração do app aneel-proxy-fly no Fly.io
+# =============================================================================
+#
+# Por que GRU?
+# ------------
+# O cedoc/ (www2.aneel.gov.br) bloqueia IPs de datacenter estrangeiros.
+# A região GRU = São Paulo, Brasil. IP fixo brasileiro → cedoc/ aceita.
+#
+# Por que primary_region (não regions=[gru])?
+# -------------------------------------------
+# Fly.io v2 (apps Machines) usa primary_region. A app só roda em GRU
+# (não tem auto-scaling geográfico). Isso é exatamente o que queremos.
+#
+# Atenção ao "app =":
+# -------------------
+# O nome do app é GLOBALMENTE ÚNICO no Fly.io. Se "aneel-proxy-br" já
+# estiver tomado, ajuste antes de rodar `fly launch` ou `fly deploy`.
+# =============================================================================
+
+app = "aneel-proxy-br"
+primary_region = "gru"
+
+[build]
+  # Usa o Dockerfile local — Fly.io constrói a imagem e faz deploy
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"   # economiza recursos quando ocioso
+  auto_start_machines = true    # acorda em ~1s na primeira request
+  min_machines_running = 0      # zero quando idle (free tier friendly)
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  # Free tier permite até 3 VMs shared-cpu-1x@256MB
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

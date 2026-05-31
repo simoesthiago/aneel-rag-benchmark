@@ -82,11 +82,15 @@ def get_llm_api_key() -> str:
 
 def get_aneel_proxy_url() -> str | None:
     """
-    URL opcional de um Cloudflare Worker que faz proxy do cedoc/.
+    URL opcional de um proxy HTTP que mascara o IP de origem ao baixar do cedoc/.
 
-    Só é necessário em IPs de datacenter (Colab, GitHub Actions), onde o
-    Cloudflare bloqueia com HTTP 403 mesmo com curl_cffi. Em rede residencial
-    ou local, deixe vazio — curl_cffi + URL correta bastam.
+    Por quê? O cedoc/ bloqueia IPs de datacenter estrangeiros (Azure, Google
+    Cloud) com HTTP 403, mesmo com curl_cffi. A solução do projeto é um
+    proxy próprio hospedado em região brasileira — ver `proxies/aneel-proxy-fly/`
+    (Fly.io GRU/São Paulo).
+
+    Em rede residencial ou local brasileira, deixe vazio — curl_cffi + URL
+    correta bastam.
     """
     value = os.environ.get("ANEEL_PROXY_URL", "").strip()
     return value or None

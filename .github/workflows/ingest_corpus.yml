@@ -4,10 +4,12 @@
 #
 # Secrets:
 #   HF_TOKEN          — escrita no HuggingFace Hub (obrigatório)
-#   ANEEL_PROXY_URL   — Worker Cloudflare (obrigatório em Actions; ver workers/)
+#   ANEEL_PROXY_URL   — proxy HTTP em Fly.io GRU (obrigatório em Actions)
+#                       Ver proxies/aneel-proxy-fly/ para o código + deploy.
 #
-# Se o preflight falhar após várias tentativas, o Worker pode precisar de
-# redeploy (worker.js atualizado) ou rode localmente: python -m src.ingestion.run_wave --wave 1
+# Se o preflight falhar após várias tentativas, o proxy pode precisar de
+# redeploy: `cd proxies/aneel-proxy-fly && fly deploy`. Em último caso,
+# rode localmente: python -m src.ingestion.run_wave --wave 1
 # =============================================================================
 
 name: Ingest ANEEL corpus → HuggingFace Hub
@@ -48,7 +50,7 @@ jobs:
       - name: Install ingestion dependencies
         run: pip install -r requirements-ingest.txt
 
-      - name: Validate Worker health
+      - name: Validate Proxy health
         if: ${{ inputs.skip_preflight != true }}
         env:
           ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
@@ -60,9 +62,9 @@ jobs:
           health=$(curl -sf "${ANEEL_PROXY_URL%/}/health" || true)
           if [ "$health" != "aneel-proxy ok" ]; then
             echo "::warning::GET /health não retornou 'aneel-proxy ok' (got: $health)"
-            echo "Redeploy o worker.js em workers/aneel-proxy/ no dashboard Cloudflare."
+            echo "Redeploy: cd proxies/aneel-proxy-fly && fly deploy"
           else
-            echo "Worker health OK"
+            echo "Proxy health OK"
           fi
 
       - name: Preflight — cedoc/ via proxy (com retries)
@@ -84,9 +86,10 @@ jobs:
             sleep 5
           done
           echo "::error::Preflight falhou após 12 tentativas."
-          echo "1) Redeploy workers/aneel-proxy/worker.js no Cloudflare"
-          echo "2) Ou rode localmente: python -m src.ingestion.run_wave --wave 1"
-          echo "3) Ou reexecute o workflow com skip_preflight=true (só leis/PRODIST se GitLab responder)"
+          echo "1) Redeploy do proxy: cd proxies/aneel-proxy-fly && fly deploy"
+          echo "2) Verifique status do app: fly status -a <nome-do-app>"
+          echo "3) Em último caso, rode localmente: python -m src.ingestion.run_wave --wave 1"
+          echo "4) Ou reexecute com skip_preflight=true (só leis/PRODIST se GitLab responder)"
           exit 1
 
       - name: Run ingestion pipeline
