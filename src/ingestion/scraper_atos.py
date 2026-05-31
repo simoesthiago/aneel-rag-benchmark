@@ -326,19 +326,21 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
         )
 
     if proxy_fetch:
-        for attempt in range(3):
+        # O edge do Worker pode devolver 403 intermitente — até 6 tentativas.
+        for attempt in range(6):
             try:
-                resp = requests.get(proxy_fetch, timeout=60)
+                resp = requests.get(proxy_fetch, timeout=90)
                 if _resposta_e_pdf_valido(resp.status_code, resp.content):
                     return resp.content
-                if attempt < 2:
-                    time.sleep(2 * (attempt + 1))
+                if attempt < 5:
+                    wait = 3 * (attempt + 1)
+                    time.sleep(wait)
                     continue
                 _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
             except Exception as e:
                 print(f"    [{label}/proxy] erro de rede: {e}")
-                if attempt < 2:
-                    time.sleep(2)
+                if attempt < 5:
+                    time.sleep(3)
 
     try:
         resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
@@ -371,9 +373,10 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Returns:
         bytes do PDF, ou None se não encontrado
     """
+    # Original primeiro: consolidada costuma 404 em muitas RENs.
     urls = [
-        (montar_url_consolidada(sigla, ano, numero), "consolidada"),
         (montar_url_ato(sigla, ano, numero), "original"),
+        (montar_url_consolidada(sigla, ano, numero), "consolidada"),
     ]
 
     for url, label in urls:

@@ -22,10 +22,19 @@ Em **Mac/rede residencial**, não precisa do Worker — use só `curl_cffi` no `
 ## Teste manual
 
 ```bash
-curl -I "https://SEU-WORKER.workers.dev/?url=https://www2.aneel.gov.br/cedoc/ren20211000.pdf"
+# 1. Health check (confirma que o código certo está deployado)
+curl "https://SEU-WORKER.workers.dev/health"
+# → aneel-proxy ok
+
+# 2. PDF (pode precisar de 2–3 tentativas — edge intermitente)
+curl -s -o /tmp/ren.pdf -w "%{http_code}\n" \
+  "https://SEU-WORKER.workers.dev/?url=https://www2.aneel.gov.br/cedoc/ren20211000.pdf"
+head -c 4 /tmp/ren.pdf   # deve mostrar %PDF
 ```
 
-Deve retornar `HTTP/2 200` e `content-type: application/pdf`.
+Se `/health` não retornar `aneel-proxy ok`, o deploy está com código antigo — cole de novo o `worker.js`.
+
+Se `/health` OK mas o PDF alterna 200/403, é normal; o scraper já faz várias tentativas.
 
 ## Custo
 

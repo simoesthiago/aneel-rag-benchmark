@@ -2,13 +2,12 @@
 # ingest_corpus.yml — Pipeline mensal de ingestão do corpus ANEEL
 # =============================================================================
 #
-# Secrets necessários:
+# Secrets:
 #   HF_TOKEN          — escrita no HuggingFace Hub (obrigatório)
-#   ANEEL_PROXY_URL   — Worker Cloudflare para cedoc/ (obrigatório em Actions)
+#   ANEEL_PROXY_URL   — Worker Cloudflare (obrigatório em Actions; ver workers/)
 #
-# Por quê o Worker? IPs de datacenter (Azure/GitHub) recebem HTTP 403 do
-# Cloudflare no cedoc/, igual ao Colab. curl_cffi sozinho não basta nesses IPs.
-# Em rede residencial/local o proxy é opcional.
+# Se o preflight falhar após várias tentativas, o Worker pode precisar de
+# redeploy (worker.js atualizado) ou rode localmente: python -m src.ingestion.run_wave --wave 1
 # =============================================================================
 
 name: Ingest ANEEL corpus → HuggingFace Hub
@@ -24,12 +23,16 @@ on:
         options: ["1", "2", "3"]
         default: "1"
         required: true
+      skip_preflight:
+        description: "Pular teste do cedoc/ (não recomendado)"
+        type: boolean
+        default: false
 
 jobs:
   ingest:
     name: Ingest corpus (Wave ${{ inputs.wave || '1' }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -45,22 +48,46 @@ jobs:
       - name: Install ingestion dependencies
         run: pip install -r requirements-ingest.txt
 
-      - name: Preflight — cedoc/ via proxy
+      - name: Validate Worker health
+        if: ${{ inputs.skip_preflight != true }}
         env:
           ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
         run: |
           if [ -z "$ANEEL_PROXY_URL" ]; then
             echo "::error::Secret ANEEL_PROXY_URL não configurado."
-            echo "Deploy workers/aneel-proxy e adicione a URL em Settings → Secrets."
             exit 1
           fi
-          python -c "
+          health=$(curl -sf "${ANEEL_PROXY_URL%/}/health" || true)
+          if [ "$health" != "aneel-proxy ok" ]; then
+            echo "::warning::GET /health não retornou 'aneel-proxy ok' (got: $health)"
+            echo "Redeploy o worker.js em workers/aneel-proxy/ no dashboard Cloudflare."
+          else
+            echo "Worker health OK"
+          fi
+
+      - name: Preflight — cedoc/ via proxy (com retries)
+        if: ${{ inputs.skip_preflight != true }}
+        env:
+          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
+        run: |
+          for attempt in $(seq 1 12); do
+            echo "=== Preflight tentativa $attempt/12 ==="
+            if python -c "
           from src.ingestion.scraper_atos import baixar_ato
           pdf = baixar_ato('ren', 2021, 1000)
           if not pdf:
-              raise SystemExit('Preflight falhou: REN 1000/2021 não baixou via proxy')
+              raise SystemExit(1)
           print(f'Preflight OK: REN 1000/2021 — {len(pdf)} bytes')
-          "
+          "; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Preflight falhou após 12 tentativas."
+          echo "1) Redeploy workers/aneel-proxy/worker.js no Cloudflare"
+          echo "2) Ou rode localmente: python -m src.ingestion.run_wave --wave 1"
+          echo "3) Ou reexecute o workflow com skip_preflight=true (só leis/PRODIST se GitLab responder)"
+          exit 1
 
       - name: Run ingestion pipeline
         env:

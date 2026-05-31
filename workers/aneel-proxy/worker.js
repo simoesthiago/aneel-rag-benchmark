@@ -1,19 +1,40 @@
 /**
  * aneel-proxy — Cloudflare Worker para download do cedoc/ a partir de IPs bloqueados.
  *
- * O cedoc/ (www2.aneel.gov.br) retorna HTTP 403 para IPs de datacenter (Colab,
- * GitHub Actions). Requisições originadas na edge da Cloudflare passam pelo
- * bot management sem o bloqueio de IP.
- *
- * Deploy: ver README.md nesta pasta.
- * Uso: GET https://<worker>.workers.dev/?url=https://www2.aneel.gov.br/cedoc/ren20211000.pdf
+ * Uso: GET /?url=https://www2.aneel.gov.br/cedoc/ren20211000.pdf
+ * Health: GET /health → "aneel-proxy ok"
  */
+
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  Accept:
+    "application/pdf,application/octet-stream;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+  Referer: "https://www.aneel.gov.br/",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "cross-site",
+  "Cache-Control": "no-cache",
+};
 
 export default {
   async fetch(request) {
-    const target = new URL(request.url).searchParams.get("url");
+    const incoming = new URL(request.url);
+
+    if (incoming.pathname === "/health") {
+      return new Response("aneel-proxy ok", {
+        headers: { "content-type": "text/plain" },
+      });
+    }
+
+    const target = incoming.searchParams.get("url");
     if (!target) {
-      return new Response("Missing ?url= parameter", { status: 400 });
+      return new Response(
+        "aneel-proxy — use ?url=https://www2.aneel.gov.br/cedoc/....pdf ou /health",
+        { status: 400, headers: { "content-type": "text/plain" } },
+      );
     }
 
     let parsed;
@@ -33,12 +54,20 @@ export default {
       });
     }
 
-    return fetch(parsed.toString(), {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
+    const upstream = await fetch(parsed.toString(), {
+      method: "GET",
+      headers: BROWSER_HEADERS,
+      redirect: "follow",
+      cf: { cacheTtl: 0 },
+    });
+
+    const headers = new Headers(upstream.headers);
+    headers.set("x-proxy-worker", "aneel-proxy");
+    headers.set("x-upstream-status", String(upstream.status));
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers,
     });
   },
 };
