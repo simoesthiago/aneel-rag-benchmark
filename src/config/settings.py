@@ -80,6 +80,18 @@ def get_llm_api_key() -> str:
     return _get_required("LLM_API_KEY")
 
 
+def get_aneel_proxy_url() -> str | None:
+    """
+    URL opcional de um Cloudflare Worker que faz proxy do cedoc/.
+
+    Só é necessário em IPs de datacenter (Colab, GitHub Actions), onde o
+    Cloudflare bloqueia com HTTP 403 mesmo com curl_cffi. Em rede residencial
+    ou local, deixe vazio — curl_cffi + URL correta bastam.
+    """
+    value = os.environ.get("ANEEL_PROXY_URL", "").strip()
+    return value or None
+
+
 # -----------------------------------------------------------------------------
 # Repositórios e modelos (configuráveis, mas com default sensato)
 # -----------------------------------------------------------------------------

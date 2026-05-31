@@ -31,6 +31,7 @@ Como usar:
 
 import re
 import time
+import urllib.parse
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -38,7 +39,7 @@ import requests
 
 from curl_cffi import requests as cffi_requests
 
-from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
+from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL, get_aneel_proxy_url
 from src.ingestion.extractor import extrair_texto
 
 # --- Constantes do Power BI ---
@@ -297,6 +298,52 @@ def _parsear_resolucao(resolucao: str) -> tuple[str, int, int] | None:
 # =========================================================================
 
 
+def _resposta_e_pdf_valido(status: int, content: bytes) -> bool:
+    """True se HTTP 200 e corpo parece PDF (não página HTML do Cloudflare)."""
+    return status == 200 and len(content) > 1000 and content[:4] == b"%PDF"
+
+
+def _diagnostico_http(label: str, status: int, content: bytes) -> None:
+    """Log curto quando o download falha — ajuda a distinguir 403 vs 404."""
+    inicio = content[:60].decode("utf-8", errors="replace").replace("\n", " ")
+    print(f"    [{label}] HTTP {status} | {len(content)} bytes | início: {inicio[:70]!r}")
+
+
+def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
+    """
+    Baixa uma URL do cedoc/.
+
+    Ordem de tentativa:
+    1. Cloudflare Worker (ANEEL_PROXY_URL) — necessário em Colab/Actions (IP DC)
+    2. curl_cffi direto — funciona em rede residencial / Mac local
+    """
+    proxy_base = get_aneel_proxy_url()
+    tentativas: list[tuple[str, str]] = []
+
+    if proxy_base:
+        proxy_fetch = (
+            f"{proxy_base.rstrip('/')}/?url={urllib.parse.quote(url, safe='')}"
+        )
+        tentativas.append(("proxy", proxy_fetch))
+    tentativas.append(("curl_cffi", url))
+
+    for modo, fetch_url in tentativas:
+        try:
+            if modo == "proxy":
+                resp = requests.get(fetch_url, timeout=60)
+            else:
+                resp = cffi_requests.get(
+                    fetch_url, impersonate="chrome120", timeout=60
+                )
+            if _resposta_e_pdf_valido(resp.status_code, resp.content):
+                return resp.content
+            _diagnostico_http(f"{label}/{modo}", resp.status_code, resp.content)
+        except Exception as e:
+            print(f"    [{label}/{modo}] erro de rede: {e}")
+
+    return None
+
+
 def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     """
     Baixa o PDF de um ato do cedoc/.
@@ -304,10 +351,10 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Tenta primeiro a versão consolidada (mais completa, inclui alterações),
     depois a original. Retorna None se nenhuma versão for encontrada.
 
-    Por que curl_cffi? O cedoc/ usa Cloudflare Bot Management com TLS
-    fingerprinting — o `requests` padrão do Python tem assinatura TLS
-    diferente de um browser real e recebe HTTP 403. O `curl_cffi` com
-    impersonate="chrome120" mimetiza o handshake TLS do Chrome.
+    O cedoc/ usa Cloudflare Bot Management:
+    - TLS fingerprinting → curl_cffi com impersonate="chrome120"
+    - Bloqueio de IP de datacenter (Colab, GitHub Actions) → ANEEL_PROXY_URL
+      apontando para um Worker na edge da Cloudflare (ver workers/aneel-proxy/)
 
     Args:
         sigla: tipo do ato (ex.: "ren")
@@ -323,13 +370,9 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     ]
 
     for url, label in urls:
-        try:
-            resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
-            if resp.status_code == 200 and len(resp.content) > 1000:
-                return resp.content
-        except Exception as e:
-            print(f"    [{label}] erro de rede: {e}")
-            continue
+        pdf = _baixar_url_cedoc(url, label)
+        if pdf is not None:
+            return pdf
 
     return None
 

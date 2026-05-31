@@ -2,32 +2,19 @@
 # ingest_corpus.yml — Pipeline mensal de ingestão do corpus ANEEL
 # =============================================================================
 #
-# Por que este workflow existe?
-# -----------------------------
-# Este é o pipeline de produção da Camada 1. Roda mensalmente (no dia 1, 03h
-# UTC) e republica o corpus no HuggingFace Hub com qualquer ato novo, ementa
-# atualizada ou módulo PRODIST revisado.
-#
-# Pode também ser disparado manualmente para iteração via "Run workflow".
-#
-# Arquitetura:
-#   Actions runner (Azure)
-#     ├─ Power BI API     ──► direto
-#     ├─ Planalto         ──► direto
-#     ├─ GitLab ANEEL     ──► direto
-#     └─ cedoc/ (RENs)    ──► curl_cffi (impersonate Chrome para TLS)
-#
 # Secrets necessários:
-#   HF_TOKEN → token de escrita no HuggingFace Hub
+#   HF_TOKEN          — escrita no HuggingFace Hub (obrigatório)
+#   ANEEL_PROXY_URL   — Worker Cloudflare para cedoc/ (obrigatório em Actions)
 #
-# Configure em: Settings → Secrets and variables → Actions → New secret
+# Por quê o Worker? IPs de datacenter (Azure/GitHub) recebem HTTP 403 do
+# Cloudflare no cedoc/, igual ao Colab. curl_cffi sozinho não basta nesses IPs.
+# Em rede residencial/local o proxy é opcional.
 # =============================================================================
 
 name: Ingest ANEEL corpus → HuggingFace Hub
 
 on:
   schedule:
-    # Dia 1 de cada mês, 03h UTC (= 00h Brasília)
     - cron: "0 3 1 * *"
   workflow_dispatch:
     inputs:
@@ -53,14 +40,31 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-ingest.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install ingestion dependencies
+        run: pip install -r requirements-ingest.txt
+
+      - name: Preflight — cedoc/ via proxy
+        env:
+          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
+        run: |
+          if [ -z "$ANEEL_PROXY_URL" ]; then
+            echo "::error::Secret ANEEL_PROXY_URL não configurado."
+            echo "Deploy workers/aneel-proxy e adicione a URL em Settings → Secrets."
+            exit 1
+          fi
+          python -c "
+          from src.ingestion.scraper_atos import baixar_ato
+          pdf = baixar_ato('ren', 2021, 1000)
+          if not pdf:
+              raise SystemExit('Preflight falhou: REN 1000/2021 não baixou via proxy')
+          print(f'Preflight OK: REN 1000/2021 — {len(pdf)} bytes')
+          "
 
       - name: Run ingestion pipeline
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
           WAVE: ${{ inputs.wave || '1' }}
-        run: |
-          python -m src.ingestion.run_wave --wave "$WAVE"
+        run: python -m src.ingestion.run_wave --wave "$WAVE"

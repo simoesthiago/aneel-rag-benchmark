@@ -44,6 +44,32 @@ from src.ingestion.extractor import extrair_texto
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
 
+# GitLab da ANEEL pode demorar ou recusar conexões de datacenters (Actions/Colab)
+_GITLAB_MAX_RETRIES = 3
+_GITLAB_RETRY_BACKOFF_S = 10
+_GITLAB_TIMEOUT_S = 120
+
+
+def _gitlab_get(url: str, params: dict | None = None) -> requests.Response:
+    """GET com retry em timeout/conexão — comum em runners de CI."""
+    last_error: Exception | None = None
+    for attempt in range(_GITLAB_MAX_RETRIES):
+        try:
+            resp = requests.get(url, params=params, timeout=_GITLAB_TIMEOUT_S)
+            resp.raise_for_status()
+            return resp
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_error = e
+            if attempt < _GITLAB_MAX_RETRIES - 1:
+                wait = _GITLAB_RETRY_BACKOFF_S * (attempt + 1)
+                print(
+                    f"    GitLab: tentativa {attempt + 1}/{_GITLAB_MAX_RETRIES} "
+                    f"falhou ({e!r}), retry em {wait}s..."
+                )
+                time.sleep(wait)
+    raise last_error  # type: ignore[misc]
+
+
 def listar_arquivos_gitlab(path: str = "") -> list[dict]:
     """
     Lista arquivos e pastas num caminho do repositório GitLab.
@@ -61,8 +87,7 @@ def listar_arquivos_gitlab(path: str = "") -> list[dict]:
     )
     params = {"path": path, "per_page": 100}
 
-    resp = requests.get(url, params=params, timeout=60)
-    resp.raise_for_status()
+    resp = _gitlab_get(url, params=params)
     return resp.json()
 
 
@@ -85,8 +110,7 @@ def baixar_arquivo_gitlab(file_path: str, ref: str = "master") -> bytes:
     )
     params = {"ref": ref}
 
-    resp = requests.get(url, params=params, timeout=120)
-    resp.raise_for_status()
+    resp = _gitlab_get(url, params=params)
     return resp.content
 
 
