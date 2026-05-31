@@ -314,10 +314,16 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
     Baixa uma URL do cedoc/.
 
     Ordem de tentativa:
-    1. Proxy HTTP (ANEEL_PROXY_URL) — necessário em IPs de datacenter
-       estrangeiros (Colab US, GitHub Actions Azure). Apontar para o proxy
-       em Fly.io GRU (ver `proxies/aneel-proxy-fly/`).
-    2. curl_cffi direto — funciona em rede residencial / Mac local brasileiro.
+    1. Proxy CF Worker (ANEEL_PROXY_URL) — necessário em IPs de datacenter
+       (Colab, GitHub Actions Azure). O Worker roda na edge brasileira via
+       Service Placement (ver workers/aneel-proxy/).
+    2. curl_cffi direto — fallback para rede residencial brasileira local.
+
+    Lógica de retry:
+    - Erro de rede/5xx: até 6 tentativas com backoff (problemas transitórios)
+    - HTTP 4xx do proxy: para imediatamente — o servidor da ANEEL respondeu que
+      o arquivo não existe. Retry não resolve e curl_cffi também não adianta:
+      se a edge brasileira já recebeu 4xx, o Azure US receberá o mesmo (ou timeout).
     """
     proxy_base = get_aneel_proxy_url()
     proxy_fetch = None
@@ -326,22 +332,38 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
             f"{proxy_base.rstrip('/')}/?url={urllib.parse.quote(url, safe='')}"
         )
 
+    # Sinaliza que o servidor ANEEL (via edge BR) confirmou ausência do arquivo.
+    # Nesse caso não tentamos curl_cffi — evita timeout longo do Azure US.
+    proxy_confirmou_ausencia = False
+
     if proxy_fetch:
-        # O proxy pode devolver 403 intermitente em janelas curtas — até 6 tentativas.
         for attempt in range(6):
             try:
                 resp = requests.get(proxy_fetch, timeout=90)
                 if _resposta_e_pdf_valido(resp.status_code, resp.content):
                     return resp.content
-                if attempt < 5:
+                # 4xx = ANEEL respondeu que o arquivo não existe — sem retry.
+                # Com Service Placement, o Worker roda sempre no Brasil, então
+                # um 4xx aqui é definitivo (não é bloqueio de IP de datacenter).
+                if 400 <= resp.status_code < 500:
+                    _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
+                    proxy_confirmou_ausencia = True
+                    break
+                # 5xx ou resposta inesperada — pode ser instabilidade do Worker.
+                if attempt == 5:
+                    _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
+                else:
                     wait = 3 * (attempt + 1)
                     time.sleep(wait)
-                    continue
-                _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
             except Exception as e:
                 print(f"    [{label}/proxy] erro de rede: {e}")
                 if attempt < 5:
                     time.sleep(3)
+
+    # Se o proxy confirmou ausência, não tenta curl_cffi: o arquivo não existe
+    # (a edge brasileira já sabe disso) e o Azure US só vai travar a conexão.
+    if proxy_confirmou_ausencia:
+        return None
 
     try:
         resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
@@ -364,8 +386,8 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     O cedoc/ usa Cloudflare Bot Management:
     - TLS fingerprinting → curl_cffi com impersonate="chrome120"
     - Bloqueio de IP de datacenter estrangeiro (Colab US, GitHub Actions Azure)
-      → ANEEL_PROXY_URL apontando para o proxy em Fly.io GRU/São Paulo
-      (ver proxies/aneel-proxy-fly/)
+      → ANEEL_PROXY_URL apontando para o Cloudflare Worker com Service Placement
+      (ver workers/aneel-proxy/)
 
     Args:
         sigla: tipo do ato (ex.: "ren")
