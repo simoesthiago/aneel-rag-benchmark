@@ -117,7 +117,14 @@ ANEEL_DOC_TYPES: dict[str, str] = {
 ANEEL_YEAR_RANGE: tuple[int, int] = (1996, 2026)
 
 # --- Fonte 2: Procedimentos regulatórios (GitLab público) ---
-# PRODIST, PRORET e outros procedimentos vivem neste GitLab.
+# PRODIST, PRORET e Regras de Transmissão vivem neste GitLab.
+# Das 5 subcategorias do portal, 3 estão no GitLab:
+#   - PRODIST (distribuição) → procreg/prodist/
+#   - PRORET (tarifário) → procreg/proret/
+#   - Regras de Transmissão → procreg/regtransm/
+# As outras 2 são fora do escopo:
+#   - Procedimentos de Rede → pertencem ao ONS, não à ANEEL
+#   - EE/P&D (PROPEE + PROPDI) → são RENs (920/2021 e 1045/2022), cobertas por scraper_atos
 ANEEL_GITLAB_URL: str = "https://git.aneel.gov.br"
 ANEEL_GITLAB_PROJECT: str = "publico/centralconteudo"
 

@@ -46,7 +46,7 @@ def test_fixed_size_rejeita_overlap_maior_ou_igual_chunk_size():
 
 
 def test_article_aware_identifica_artigo_paragrafo_inciso_e_citacao():
-    from src.chunking.semantic import chunk_article_aware
+    from src.chunking.article_aware import chunk_article_aware
 
     doc = _documento(
         "CAPITULO I\n"
@@ -68,7 +68,7 @@ def test_article_aware_identifica_artigo_paragrafo_inciso_e_citacao():
 
 
 def test_article_aware_usa_fallback_por_paragrafo_quando_nao_ha_artigos():
-    from src.chunking.semantic import chunk_article_aware
+    from src.chunking.article_aware import chunk_article_aware
 
     doc = _documento("Primeiro bloco sem artigo.\n\nSegundo bloco sem artigo.")
 

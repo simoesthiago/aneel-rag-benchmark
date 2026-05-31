@@ -3,30 +3,33 @@ scraper_procedimentos.py — Coleta de procedimentos regulatórios via GitLab.
 
 Por que este módulo existe?
 ---------------------------
-O PRODIST, PRORET e outros procedimentos regulatórios da ANEEL ficam num
-GitLab público (git.aneel.gov.br/publico/centralconteudo). Este módulo
-usa a API REST do GitLab para descobrir e baixar PDFs.
+Os procedimentos regulatórios da ANEEL ficam num GitLab público
+(git.aneel.gov.br/publico/centralconteudo). Este módulo usa a API REST
+do GitLab para descobrir e baixar PDFs.
 
 O GitLab não exige autenticação para projetos públicos.
 
-Fontes:
-    - PRODIST (11 módulos) — Procedimentos de Distribuição
-    - PRORET — Procedimentos de Regulação Tarifária
-    - Procedimentos de Rede
-    - Regras de Eficiência Energética e P&D
-    - Regras de Transmissão
+Subcategorias de Procedimentos Regulatórios (5 no portal gov.br):
+    1. PRODIST (11 módulos) — Procedimentos de Distribuição → GitLab: procreg/prodist/
+    2. PRORET — Procedimentos de Regulação Tarifária → GitLab: procreg/proret/
+    3. Regras de Transmissão (6 módulos) → GitLab: procreg/regtransm/
+    4. Procedimentos de Rede → FORA DO ESCOPO (pertencem ao ONS, não à ANEEL)
+    5. EE/P&D (PROPEE + PROPDI) → FORA DO ESCOPO (são RENs, já cobertas por scraper_atos.py)
+
+Este scraper cobre as subcategorias 1, 2 e 3 — todas no mesmo GitLab.
 
 Onde roda:
     Google Colab (API REST + download de PDFs + PyMuPDF)
 
 Como usar:
-    from src.ingestion.scraper_procedimentos import listar_arquivos_gitlab, coletar_prodist_modulo
+    from src.ingestion.scraper_procedimentos import (
+        listar_arquivos_gitlab,
+        coletar_prodist_modulo,
+        coletar_regras_transmissao,
+    )
 
-    # Listar conteúdo de uma pasta
-    itens = listar_arquivos_gitlab("PRODIST")
-
-    # Coletar um módulo específico
     documentos = coletar_prodist_modulo(1)
+    documentos += coletar_regras_transmissao()
 """
 
 import urllib.parse
@@ -235,4 +238,119 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
     except Exception as e:
         print(f"    ❌ Erro: {e}")
 
+    return documentos
+
+
+# =========================================================================
+# Regras de Transmissão (6 módulos)
+# =========================================================================
+
+# URLs diretas confirmadas via inspeção do portal gov.br (2026-05-30).
+# Todos estão no GitLab da ANEEL em procreg/regtransm/.
+_REGRAS_TRANSMISSAO_MODULOS = [
+    {
+        "modulo": 1,
+        "titulo": "Regras de Transmissão — Módulo 1 — Glossário",
+        "gitlab_path": "procreg/regtransm/Modulo 01_Glossario_aren2020905_2.pdf",
+    },
+    {
+        "modulo": 2,
+        "titulo": "Regras de Transmissão — Módulo 2 — Classificação das Instalações",
+        "gitlab_path": "procreg/regtransm/Modulo 02_Classificacao Instalacoes_aren2020905_2_1.pdf",
+    },
+    {
+        "modulo": 3,
+        "titulo": "Regras de Transmissão — Módulo 3 — Instalações e Equipamentos",
+        "gitlab_path": "procreg/regtransm/Modulo 03_Instalacoes_Equipamentos_aren2020905_2_2.pdf",
+    },
+    {
+        "modulo": 4,
+        "titulo": "Regras de Transmissão — Módulo 4 — Prestação dos Serviços",
+        "gitlab_path": "procreg/regtransm/Modulo 04_Prestacao_Servicos_aren2020905_2_3.pdf",
+    },
+    {
+        "modulo": 5,
+        "titulo": "Regras de Transmissão — Módulo 5 — Acesso ao Sistema",
+        "gitlab_path": "procreg/regtransm/Modulo 05_Acesso_Sistema_aren2020905_2_4.pdf",
+    },
+    {
+        "modulo": 6,
+        "titulo": "Regras de Transmissão — Módulo 6 — Coordenação e Controle da Operação",
+        "gitlab_path": "procreg/regtransm/Modulo 06_Coordenacao_Controle_Opercao_aren2020905_2_5.pdf",
+    },
+]
+
+
+def coletar_regras_transmissao() -> list[dict]:
+    """
+    Coleta os 6 módulos das Regras de Transmissão do GitLab da ANEEL.
+
+    Diferente do PRODIST, as Regras de Transmissão usam URLs diretas conhecidas
+    (não precisam de navegação dinâmica pela árvore do GitLab). Isso é possível
+    porque a página gov.br expõe os links raw diretamente.
+
+    Returns:
+        lista de dicts no formato do schema do corpus
+    """
+    import time
+
+    scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    documentos = []
+
+    print("Coletando Regras de Transmissão (6 módulos)...")
+
+    for mod in _REGRAS_TRANSMISSAO_MODULOS:
+        modulo = mod["modulo"]
+        titulo = mod["titulo"]
+        gitlab_path = mod["gitlab_path"]
+        doc_id = f"regtransm-modulo-{modulo:02d}"
+
+        print(f"  Módulo {modulo}: {titulo}")
+
+        try:
+            pdf_bytes = baixar_arquivo_gitlab(gitlab_path, ref="main")
+            print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
+
+            resultado = extrair_texto(pdf_bytes, "pdf")
+            print(
+                f"    📄 {resultado['num_paginas']} págs | "
+                f"{len(resultado['texto'])} chars | "
+                f"qualidade: {resultado['qualidade_extracao']}"
+            )
+
+            url_blob = (
+                f"{ANEEL_GITLAB_URL}/{ANEEL_GITLAB_PROJECT}"
+                f"/-/blob/main/{gitlab_path}"
+            )
+
+            documentos.append(
+                {
+                    "id": doc_id,
+                    "tipo": "procedimento",
+                    "subtipo": "regras_transmissao",
+                    "numero": f"Módulo {modulo}",
+                    "ano": 2020,  # REN 905/2020 aprovou a estrutura
+                    "titulo": titulo,
+                    "assunto": "Regras dos Serviços de Transmissão",
+                    "situacao": None,
+                    "data_publicacao": None,
+                    "fonte": "gitlab",
+                    "url_original": url_blob,
+                    "url_consolidado": None,
+                    "formato_original": "pdf",
+                    "texto_bruto": resultado["texto"],
+                    "num_paginas": resultado["num_paginas"],
+                    "metodo_extracao": resultado["metodo"],
+                    "qualidade_extracao": resultado["qualidade_extracao"],
+                    "hf_path": None,
+                    "scraped_at": scraped_at,
+                }
+            )
+
+        except Exception as e:
+            print(f"    ❌ Erro: {e}")
+
+        time.sleep(1)  # respeito ao servidor
+
+    print(f"\n✅ {len(documentos)} módulos de Regras de Transmissão coletados.")
     return documentos

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.chunking.common import build_chunk
-from src.chunking.semantic import chunk_article_aware
+from src.chunking.article_aware import chunk_article_aware
 
 
 def chunk_parent_child(document: dict[str, Any]) -> list[dict[str, Any]]:
