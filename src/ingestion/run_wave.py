@@ -9,7 +9,7 @@ chama os scrapers na ordem correta, consolida no schema, valida e publica
 no HuggingFace Hub.
 
 Roda em GitHub Actions (workflow `ingest_corpus.yml`) e também pode rodar
-no Colab ou local desde que HF_TOKEN e ANEEL_PROXY_URL estejam configurados.
+no Colab ou local desde que HF_TOKEN esteja configurado.
 
 Como usar:
     python -m src.ingestion.run_wave --wave 1
@@ -106,19 +106,41 @@ def main() -> int:
     print(f" ANEEL Corpus — Wave {args.wave} (started {started_at.isoformat()})")
     print(f"==========================================================")
 
-    # Coleta de cada fonte (ordem importa pouco — são independentes)
-    docs_leis = coletar_leis()
-    print(f"\n→ Leis: {len(docs_leis)} documentos")
+    # Coleta de cada fonte — independentes, falha parcial é aceitável.
+    # O pipeline publica o que conseguir coletar.
+    erros_fonte = []
 
-    docs_atos = _coletar_atos_wave(args.wave)
-    print(f"\n→ Atos normativos: {len(docs_atos)} documentos")
+    try:
+        docs_leis = coletar_leis()
+        print(f"\n→ Leis: {len(docs_leis)} documentos")
+    except Exception as e:
+        docs_leis = []
+        erros_fonte.append(f"Leis: {e}")
+        print(f"\n→ Leis: ❌ FALHA — {e}")
 
-    docs_proc = _coletar_procedimentos_wave(args.wave)
-    print(f"\n→ Procedimentos regulatórios: {len(docs_proc)} documentos")
+    try:
+        docs_atos = _coletar_atos_wave(args.wave)
+        print(f"\n→ Atos normativos: {len(docs_atos)} documentos")
+    except Exception as e:
+        docs_atos = []
+        erros_fonte.append(f"Atos: {e}")
+        print(f"\n→ Atos normativos: ❌ FALHA — {e}")
+
+    try:
+        docs_proc = _coletar_procedimentos_wave(args.wave)
+        print(f"\n→ Procedimentos regulatórios: {len(docs_proc)} documentos")
+    except Exception as e:
+        docs_proc = []
+        erros_fonte.append(f"Procedimentos: {e}")
+        print(f"\n→ Procedimentos regulatórios: ❌ FALHA — {e}")
 
     todos = docs_leis + docs_atos + docs_proc
     print(f"\n=== Consolidação ===")
     print(f"  TOTAL: {len(todos)} documentos")
+    if erros_fonte:
+        print(f"  ⚠️  {len(erros_fonte)} fonte(s) com falha:")
+        for err in erros_fonte:
+            print(f"    - {err}")
 
     if not todos:
         print("❌ Nada coletado. Abortando.")

@@ -32,6 +32,7 @@ Como usar:
     documentos += coletar_regras_transmissao()
 """
 
+import time
 import urllib.parse
 from datetime import datetime, timezone
 
@@ -42,7 +43,6 @@ from src.ingestion.extractor import extrair_texto
 
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
-
 
 def listar_arquivos_gitlab(path: str = "") -> list[dict]:
     """
@@ -61,7 +61,7 @@ def listar_arquivos_gitlab(path: str = "") -> list[dict]:
     )
     params = {"path": path, "per_page": 100}
 
-    resp = requests.get(url, params=params, timeout=30)
+    resp = requests.get(url, params=params, timeout=60)
     resp.raise_for_status()
     return resp.json()
 
@@ -292,7 +292,6 @@ def coletar_regras_transmissao() -> list[dict]:
     Returns:
         lista de dicts no formato do schema do corpus
     """
-    import time
 
     scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     documentos = []

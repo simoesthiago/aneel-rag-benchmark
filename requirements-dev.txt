@@ -17,6 +17,7 @@
 
 # --- Bibliotecas leves de runtime (necessárias para imports nos testes) ---
 requests>=2.32
+curl_cffi>=0.7           # necessário para import nos testes do scraper_atos
 beautifulsoup4>=4.12
 lxml>=5.2
 tqdm>=4.66

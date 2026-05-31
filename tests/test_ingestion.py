@@ -135,12 +135,12 @@ class TestMontarUrlAto:
         url = montar_url_ato("ren", 2021, 1000)
         assert url == "https://www2.aneel.gov.br/cedoc/ren20211000.pdf"
 
-    def test_url_com_zero_pad(self):
-        """REN 414/2010 → ren20100414.pdf (zero-padded)"""
+    def test_url_sem_zero_pad(self):
+        """REN 414/2010 → ren2010414.pdf (sem zero-padding, confirmado no cedoc/)"""
         from src.ingestion.scraper_atos import montar_url_ato
 
         url = montar_url_ato("ren", 2010, 414)
-        assert url == "https://www2.aneel.gov.br/cedoc/ren20100414.pdf"
+        assert url == "https://www2.aneel.gov.br/cedoc/ren2010414.pdf"
 
     def test_url_consolidada(self):
         """Versão consolidada tem prefixo 'b'."""
@@ -150,11 +150,11 @@ class TestMontarUrlAto:
         assert url == "https://www2.aneel.gov.br/cedoc/bren20211000.pdf"
 
     def test_url_res(self):
-        """Funciona para outros tipos de ato (RES)."""
+        """Funciona para outros tipos de ato (RES), também sem zero-padding."""
         from src.ingestion.scraper_atos import montar_url_ato
 
         url = montar_url_ato("res", 2002, 798)
-        assert url == "https://www2.aneel.gov.br/cedoc/res20020798.pdf"
+        assert url == "https://www2.aneel.gov.br/cedoc/res2002798.pdf"
 
 
 class TestFiltrarVigentes:

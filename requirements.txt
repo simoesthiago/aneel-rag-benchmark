@@ -12,7 +12,8 @@
 # =============================================================================
 
 # --- Ingestão: scraping e extração de documentos ---
-requests>=2.32           # cliente HTTP para o scraper (cedoc/ via Cloudflare Worker)
+requests>=2.32           # cliente HTTP para APIs (Power BI, GitLab, Planalto)
+curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome para passar Cloudflare
 beautifulsoup4>=4.12     # parsing de HTML (portal ANEEL + leis do planalto.gov.br)
 lxml>=5.2                # backend rápido do BeautifulSoup
 PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)

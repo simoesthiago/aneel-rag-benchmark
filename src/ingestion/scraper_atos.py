@@ -36,7 +36,9 @@ from datetime import datetime, timezone
 import pandas as pd
 import requests
 
-from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL, ANEEL_PROXY_URL
+from curl_cffi import requests as cffi_requests
+
+from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
 from src.ingestion.extractor import extrair_texto
 
 # --- Constantes do Power BI ---
@@ -254,19 +256,24 @@ def montar_url_ato(sigla: str, ano: int, numero: int) -> str:
     """
     Constrói a URL do PDF no cedoc/.
 
-    Padrão: https://www2.aneel.gov.br/cedoc/{sigla_lower}{ano}{numero:04d}.pdf
+    Padrão: https://www2.aneel.gov.br/cedoc/{sigla_lower}{ano}{numero}.pdf
+
+    Importante: o cedoc/ NÃO usa zero-padding no número.
+    Ex.: REN 920/2021 → ren2021920.pdf (não ren20210920.pdf).
+    Isso só foi descoberto ao testar com RENs de número < 1000 —
+    o teste anterior usava REN 1000 que tem 4 dígitos de qualquer forma.
 
     Args:
         sigla: tipo do ato (ex.: "ren", "res")
         ano: ano de publicação
         numero: número do ato
     """
-    return f"{ANEEL_CEDOC_URL}/{sigla.lower()}{ano}{numero:04d}.pdf"
+    return f"{ANEEL_CEDOC_URL}/{sigla.lower()}{ano}{numero}.pdf"
 
 
 def montar_url_consolidada(sigla: str, ano: int, numero: int) -> str:
-    """URL da versão consolidada (prefixo 'b')."""
-    return f"{ANEEL_CEDOC_URL}/b{sigla.lower()}{ano}{numero:04d}.pdf"
+    """URL da versão consolidada (prefixo 'b'). Também sem zero-padding."""
+    return f"{ANEEL_CEDOC_URL}/b{sigla.lower()}{ano}{numero}.pdf"
 
 
 def _parsear_resolucao(resolucao: str) -> tuple[str, int, int] | None:
@@ -295,17 +302,12 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Baixa o PDF de um ato do cedoc/.
 
     Tenta primeiro a versão consolidada (mais completa, inclui alterações),
-    depois a original. Retorna None para 404 (não crasha).
+    depois a original. Retorna None se nenhuma versão for encontrada.
 
-    Roteamento da requisição:
-    - Se ANEEL_PROXY_URL estiver configurado → usa o Cloudflare Worker
-      (necessário em Colab, GitHub Actions, e qualquer IP de data center)
-    - Se vazio → tenta download direto (só funciona em IP residencial)
-
-    Por que o Worker? O cedoc/ tem Cloudflare Bot Management que bloqueia
-    IPs de data center com HTTP 403, independente de TLS fingerprint ou
-    User-Agent. O Worker roda no edge da Cloudflare, que passa pelo bot
-    management do próprio cedoc/. Ver DECISIONS.md.
+    Por que curl_cffi? O cedoc/ usa Cloudflare Bot Management com TLS
+    fingerprinting — o `requests` padrão do Python tem assinatura TLS
+    diferente de um browser real e recebe HTTP 403. O `curl_cffi` com
+    impersonate="chrome120" mimetiza o handshake TLS do Chrome.
 
     Args:
         sigla: tipo do ato (ex.: "ren")
@@ -315,23 +317,18 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Returns:
         bytes do PDF, ou None se não encontrado
     """
-    urls_cedoc = [
+    urls = [
         (montar_url_consolidada(sigla, ano, numero), "consolidada"),
         (montar_url_ato(sigla, ano, numero), "original"),
     ]
 
-    for url_cedoc, _label in urls_cedoc:
-        # Se há proxy configurado, encapsula a URL no parâmetro ?url= do Worker
-        if ANEEL_PROXY_URL:
-            url_efetiva = f"{ANEEL_PROXY_URL.rstrip('/')}/?url={url_cedoc}"
-        else:
-            url_efetiva = url_cedoc
-
+    for url, label in urls:
         try:
-            resp = requests.get(url_efetiva, headers=_HEADERS, timeout=60)
+            resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
             if resp.status_code == 200 and len(resp.content) > 1000:
                 return resp.content
-        except requests.RequestException:
+        except Exception as e:
+            print(f"    [{label}] erro de rede: {e}")
             continue
 
     return None

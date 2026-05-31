@@ -12,14 +12,13 @@
 #
 # Arquitetura:
 #   Actions runner (Azure)
-#     ├─ Power BI API     ──► direto (sem CF)
-#     ├─ Planalto         ──► direto (sem CF)
-#     ├─ GitLab ANEEL     ──► direto (sem CF)
-#     └─ cedoc/ (RENs)    ──► via Cloudflare Worker (única forma de passar)
+#     ├─ Power BI API     ──► direto
+#     ├─ Planalto         ──► direto
+#     ├─ GitLab ANEEL     ──► direto
+#     └─ cedoc/ (RENs)    ──► curl_cffi (impersonate Chrome para TLS)
 #
 # Secrets necessários:
-#   HF_TOKEN          → token de escrita no HuggingFace Hub
-#   ANEEL_PROXY_URL   → URL do Cloudflare Worker aneel-proxy
+#   HF_TOKEN → token de escrita no HuggingFace Hub
 #
 # Configure em: Settings → Secrets and variables → Actions → New secret
 # =============================================================================
@@ -59,22 +58,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Validate Worker is alive
-        env:
-          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
-        run: |
-          if [ -z "$ANEEL_PROXY_URL" ]; then
-            echo "❌ Secret ANEEL_PROXY_URL não configurado."
-            exit 1
-          fi
-          HEALTH=$(curl -s "${ANEEL_PROXY_URL%/}/health")
-          echo "Worker health: $HEALTH"
-          echo "$HEALTH" | grep -q '"status":"ok"' || (echo "❌ Worker unhealthy"; exit 1)
-
       - name: Run ingestion pipeline
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          ANEEL_PROXY_URL: ${{ secrets.ANEEL_PROXY_URL }}
           WAVE: ${{ inputs.wave || '1' }}
         run: |
           python -m src.ingestion.run_wave --wave "$WAVE"
