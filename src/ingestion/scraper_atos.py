@@ -315,31 +315,38 @@ def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
 
     Ordem de tentativa:
     1. Cloudflare Worker (ANEEL_PROXY_URL) — necessário em Colab/Actions (IP DC)
+       O edge às vezes recebe 403 intermitente; fazemos até 3 tentativas.
     2. curl_cffi direto — funciona em rede residencial / Mac local
     """
     proxy_base = get_aneel_proxy_url()
-    tentativas: list[tuple[str, str]] = []
-
+    proxy_fetch = None
     if proxy_base:
         proxy_fetch = (
             f"{proxy_base.rstrip('/')}/?url={urllib.parse.quote(url, safe='')}"
         )
-        tentativas.append(("proxy", proxy_fetch))
-    tentativas.append(("curl_cffi", url))
 
-    for modo, fetch_url in tentativas:
-        try:
-            if modo == "proxy":
-                resp = requests.get(fetch_url, timeout=60)
-            else:
-                resp = cffi_requests.get(
-                    fetch_url, impersonate="chrome120", timeout=60
-                )
-            if _resposta_e_pdf_valido(resp.status_code, resp.content):
-                return resp.content
-            _diagnostico_http(f"{label}/{modo}", resp.status_code, resp.content)
-        except Exception as e:
-            print(f"    [{label}/{modo}] erro de rede: {e}")
+    if proxy_fetch:
+        for attempt in range(3):
+            try:
+                resp = requests.get(proxy_fetch, timeout=60)
+                if _resposta_e_pdf_valido(resp.status_code, resp.content):
+                    return resp.content
+                if attempt < 2:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
+            except Exception as e:
+                print(f"    [{label}/proxy] erro de rede: {e}")
+                if attempt < 2:
+                    time.sleep(2)
+
+    try:
+        resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
+        if _resposta_e_pdf_valido(resp.status_code, resp.content):
+            return resp.content
+        _diagnostico_http(f"{label}/curl_cffi", resp.status_code, resp.content)
+    except Exception as e:
+        print(f"    [{label}/curl_cffi] erro de rede: {e}")
 
     return None
 

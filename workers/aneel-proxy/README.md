@@ -9,7 +9,7 @@ Em **Mac/rede residencial**, não precisa do Worker — use só `curl_cffi` no `
 1. Conta gratuita em [Cloudflare](https://dash.cloudflare.com/)
 2. **Workers & Pages** → **Create** → **Worker**
 3. Cole o conteúdo de `worker.js` → **Deploy**
-4. Copie a URL (ex.: `https://aneel-proxy.seu-usuario.workers.dev`)
+4. Copie a URL **sem barra no final** (ex.: `https://aneel-proxy.seu-usuario.workers.dev`)
 
 ## Configurar no projeto
 
