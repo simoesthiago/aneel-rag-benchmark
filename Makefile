@@ -12,7 +12,7 @@
 wave ?= 2
 
 install:
-	pip install -r requirements-dev.txt
+	pip3 install -r requirements-dev.txt
 
 test:
 	pytest tests/ -v
@@ -24,10 +24,10 @@ format:
 	black src/ tests/
 
 ingest:
-	python -m src.ingestion.run_wave --wave $(wave)
+	python3 -m src.ingestion.run_wave --wave $(wave)
 
 validate-corpus:
-	python scripts/validate_corpus.py
+	python3 scripts/validate_corpus.py
 
 ingest-wave3:
-	python -m src.ingestion.run_wave --wave 3 --mesclar-com-hub --pular-leis
+	python3 -m src.ingestion.run_wave --wave 3 --mesclar-com-hub --pular-leis

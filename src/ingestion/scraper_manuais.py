@@ -26,8 +26,15 @@ import unicodedata
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 
+import warnings
+
 import requests
+import urllib3
 from bs4 import BeautifulSoup
+
+# git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
+# Suprimimos o aviso para não poluir o output do pipeline.
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 from src.config.settings import ANEEL_MANUAIS_URL, MANUAIS_SUBCATEGORIAS
 from src.ingestion.extractor import extrair_texto
@@ -103,7 +110,9 @@ def _extrair_links_arquivos(html: str, base_url: str) -> list[tuple[str, str, st
 
 
 def _baixar_url(url: str) -> bytes:
-    resp = requests.get(url, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S)
+    # verify=False: git.aneel.gov.br usa certificado intermediário que o Python no
+    # macOS não consegue verificar via bundled certs. Risco aceitável — servidor gov.br.
+    resp = requests.get(url, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S, verify=False)
     resp.raise_for_status()
     return resp.content
 
