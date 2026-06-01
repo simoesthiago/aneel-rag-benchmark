@@ -16,7 +16,7 @@ O diretório cedoc/ NÃO tem índice HTML (retorna 403) — por isso o Power BI
 é o único ponto de descoberta estruturado.
 
 Onde roda:
-    Google Colab (Power BI API + download de PDFs + PyMuPDF)
+    Máquina local com IP residencial brasileiro (cedoc/ bloqueia datacenters)
 
 Como usar:
     from src.ingestion.scraper_atos import consultar_powerbi, coletar_atos
@@ -39,7 +39,7 @@ import requests
 
 from curl_cffi import requests as cffi_requests
 
-from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL, get_aneel_proxy_url
+from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
 from src.ingestion.extractor import extrair_texto
 
 # --- Constantes do Power BI ---
@@ -311,67 +311,27 @@ def _diagnostico_http(label: str, status: int, content: bytes) -> None:
 
 def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
     """
-    Baixa uma URL do cedoc/.
+    Baixa uma URL do cedoc/ via curl_cffi com TLS impersonation.
 
-    Ordem de tentativa:
-    1. Proxy CF Worker (ANEEL_PROXY_URL) — necessário em IPs de datacenter
-       (Colab, GitHub Actions Azure). O Worker roda na edge brasileira via
-       Service Placement (ver workers/aneel-proxy/).
-    2. curl_cffi direto — fallback para rede residencial brasileira local.
+    O cedoc/ usa Cloudflare Bot Management com TLS fingerprinting — requests
+    normal retorna 403. curl_cffi com impersonate="chrome120" mimetiza o
+    handshake TLS do Chrome real e é aceito.
 
-    Lógica de retry:
-    - Erro de rede/5xx: até 6 tentativas com backoff (problemas transitórios)
-    - HTTP 4xx do proxy: para imediatamente — o servidor da ANEEL respondeu que
-      o arquivo não existe. Retry não resolve e curl_cffi também não adianta:
-      se a edge brasileira já recebeu 4xx, o Azure US receberá o mesmo (ou timeout).
+    Requer IP residencial brasileiro: o cedoc/ bloqueia qualquer IP de
+    datacenter (cloud providers, CDNs). Roda na máquina local do desenvolvedor.
     """
-    proxy_base = get_aneel_proxy_url()
-    proxy_fetch = None
-    if proxy_base:
-        proxy_fetch = (
-            f"{proxy_base.rstrip('/')}/?url={urllib.parse.quote(url, safe='')}"
-        )
-
-    # Sinaliza que o servidor ANEEL (via edge BR) confirmou ausência do arquivo.
-    # Nesse caso não tentamos curl_cffi — evita timeout longo do Azure US.
-    proxy_confirmou_ausencia = False
-
-    if proxy_fetch:
-        for attempt in range(6):
-            try:
-                resp = requests.get(proxy_fetch, timeout=90)
-                if _resposta_e_pdf_valido(resp.status_code, resp.content):
-                    return resp.content
-                # 4xx = ANEEL respondeu que o arquivo não existe — sem retry.
-                # Com Service Placement, o Worker roda sempre no Brasil, então
-                # um 4xx aqui é definitivo (não é bloqueio de IP de datacenter).
-                if 400 <= resp.status_code < 500:
-                    _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
-                    proxy_confirmou_ausencia = True
-                    break
-                # 5xx ou resposta inesperada — pode ser instabilidade do Worker.
-                if attempt == 5:
-                    _diagnostico_http(f"{label}/proxy", resp.status_code, resp.content)
-                else:
-                    wait = 3 * (attempt + 1)
-                    time.sleep(wait)
-            except Exception as e:
-                print(f"    [{label}/proxy] erro de rede: {e}")
-                if attempt < 5:
-                    time.sleep(3)
-
-    # Se o proxy confirmou ausência, não tenta curl_cffi: o arquivo não existe
-    # (a edge brasileira já sabe disso) e o Azure US só vai travar a conexão.
-    if proxy_confirmou_ausencia:
-        return None
-
     try:
         resp = cffi_requests.get(url, impersonate="chrome120", timeout=60)
         if _resposta_e_pdf_valido(resp.status_code, resp.content):
             return resp.content
-        _diagnostico_http(f"{label}/curl_cffi", resp.status_code, resp.content)
+        # 4xx = arquivo não existe — diagnóstico e para
+        if 400 <= resp.status_code < 500:
+            _diagnostico_http(label, resp.status_code, resp.content)
+            return None
+        # 5xx — problema temporário no servidor
+        _diagnostico_http(label, resp.status_code, resp.content)
     except Exception as e:
-        print(f"    [{label}/curl_cffi] erro de rede: {e}")
+        print(f"    [{label}] erro de rede: {e}")
 
     return None
 
@@ -383,11 +343,9 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     Tenta primeiro a versão consolidada (mais completa, inclui alterações),
     depois a original. Retorna None se nenhuma versão for encontrada.
 
-    O cedoc/ usa Cloudflare Bot Management:
-    - TLS fingerprinting → curl_cffi com impersonate="chrome120"
-    - Bloqueio de IP de datacenter estrangeiro (Colab US, GitHub Actions Azure)
-      → ANEEL_PROXY_URL apontando para o Cloudflare Worker com Service Placement
-      (ver workers/aneel-proxy/)
+    O cedoc/ usa Cloudflare Bot Management com TLS fingerprinting.
+    curl_cffi com impersonate="chrome120" mimetiza o handshake TLS do Chrome
+    real — único método que funciona de IP residencial brasileiro.
 
     Args:
         sigla: tipo do ato (ex.: "ren")

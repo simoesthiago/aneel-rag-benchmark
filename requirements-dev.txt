@@ -1,34 +1,36 @@
 # =============================================================================
-# requirements-dev.txt — DEPENDÊNCIAS DE DESENVOLVIMENTO LOCAL
+# requirements-dev.txt — DEPENDÊNCIAS PARA DESENVOLVIMENTO E INGESTÃO LOCAL
 # =============================================================================
 #
-# Use este arquivo na sua máquina local. Ele NÃO inclui PyMuPDF, faiss-cpu,
-# sentence-transformers etc. — porque:
-#   1. Esses pacotes podem não ter wheel pré-compilada para Python 3.14
-#   2. O pipeline de dados NÃO roda local (premissa do projeto)
-#   3. Localmente você só precisa: escrever código, rodar testes, formatar
+# Instale com: make install
 #
-# Quando o código for executado de verdade, é no Colab/Actions — lá entra o
-# requirements.txt completo.
+# Inclui tudo para:
+#   - Escrever e rodar testes
+#   - Formatar e checar estilo
+#   - Rodar o pipeline de ingestão localmente (make ingest wave=2)
 #
-# Instalação:
-#   pip install -r requirements-dev.txt
+# O pipeline de ingestão roda na máquina local com IP residencial brasileiro —
+# o cedoc/ bloqueia IPs de datacenter. curl_cffi mimetiza o TLS do Chrome.
 # =============================================================================
 
-# --- Bibliotecas leves de runtime (necessárias para imports nos testes) ---
-requests>=2.32
-curl_cffi>=0.7           # necessário para import nos testes do scraper_atos
-beautifulsoup4>=4.12
-lxml>=5.2
-tqdm>=4.66
+# --- Ingestão de dados ---
+requests>=2.32           # HTTP para Power BI, GitLab, Planalto
+curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome (Cloudflare Bot Management)
+beautifulsoup4>=4.12     # parsing de HTML (leis do planalto.gov.br)
+lxml>=5.2                # backend rápido do BeautifulSoup
+PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)
+tqdm>=4.66               # barras de progresso
+
+# --- Dados e publicação ---
 pandas>=2.2
-pyarrow>=16.0
-huggingface_hub>=0.23
-python-dotenv>=1.0
-rank-bm25>=0.2.2
+pyarrow>=16.0            # leitura/escrita de Parquet
+huggingface_hub>=0.23    # upload para o HF Hub
+datasets>=2.20           # leitura do corpus publicado
+python-dotenv>=1.0       # carrega variáveis do .env
 
 # --- Ferramentas de desenvolvimento ---
-pytest>=8.2              # testes unitários
-black>=24.0              # formatador de código
-flake8>=7.0              # linter
-jupyter>=1.0             # notebooks exploratórios
+pytest>=8.2
+black>=24.0
+flake8>=7.0
+jupyter>=1.0
+rank-bm25>=0.2.2         # necessário para imports nos testes de RAG

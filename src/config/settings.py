@@ -13,8 +13,6 @@ caminhos. Espalhar isso pelos arquivos do projeto (hardcoded) tem 3 problemas:
 A solução padrão de mercado:
     - O que é SEGREDO (tokens, API keys) vive em variáveis de ambiente
       → lidas de um arquivo `.env` local (que está no .gitignore)
-      → no Colab, vêm de `google.colab.userdata`
-      → no GitHub Actions, vêm de `secrets.SOMETHING`
     - O que é CONSTANTE (URLs, nomes de modelo) fica neste arquivo, visível
 
 Como usar
@@ -65,7 +63,7 @@ def _get_optional(name: str, default: str) -> str:
 
 
 # -----------------------------------------------------------------------------
-# Credenciais (vêm do .env / userdata / secrets — NUNCA hardcoded)
+# Credenciais (vêm do .env — NUNCA hardcoded)
 # -----------------------------------------------------------------------------
 # Funções (não constantes) porque queremos LAZY LOADING: o erro só dispara
 # quando alguém realmente precisa do token. Assim, rodar testes que não tocam
@@ -78,35 +76,6 @@ def get_hf_token() -> str:
 def get_llm_api_key() -> str:
     """Chave da API do LLM (OpenAI ou outro)."""
     return _get_required("LLM_API_KEY")
-
-
-def get_aneel_proxy_url() -> str | None:
-    """
-    URL do Cloudflare Worker que faz proxy do cedoc/ a partir de IP brasileiro.
-
-    Por quê? O cedoc/ bloqueia IPs de datacenter estrangeiros (Azure, Google
-    Cloud) com HTTP 403. O Worker com Service Placement em www2.aneel.gov.br:443
-    força a execução na edge brasileira — ver `workers/aneel-proxy/`.
-
-    Em rede residencial ou local brasileira, deixe vazio — curl_cffi basta.
-    """
-    value = os.environ.get("ANEEL_PROXY_URL", "").strip()
-    return value or None
-
-
-def get_aneel_gitlab_proxy_url() -> str | None:
-    """
-    URL do Cloudflare Worker que faz proxy da API do GitLab da ANEEL.
-
-    Por quê? O git.aneel.gov.br bloqueia IPs de datacenter estrangeiros com
-    timeout de conexão — mesmo comportamento do cedoc/. O Worker com Service
-    Placement em git.aneel.gov.br:443 força a execução na edge brasileira
-    — ver `workers/aneel-gitlab-proxy/`.
-
-    Em rede residencial ou local brasileira, deixe vazio — acesso direto basta.
-    """
-    value = os.environ.get("ANEEL_GITLAB_PROXY_URL", "").strip()
-    return value or None
 
 
 # -----------------------------------------------------------------------------
@@ -174,9 +143,8 @@ LEIS_ESTRUTURANTES: dict[str, str] = {
 
 
 # -----------------------------------------------------------------------------
-# Caminhos de runtime (válidos só em Colab/Actions — nunca local)
+# Caminhos de runtime
 # -----------------------------------------------------------------------------
 # Diretório temporário para escrita intermediária durante o pipeline.
-# Em Colab é /content/tmp; em GitHub Actions usa $RUNNER_TEMP.
 # NUNCA criar nada permanente aqui — tudo é publicado no HF Hub no fim.
 RUNTIME_TMP_DIR: Path = Path(_get_optional("RUNTIME_TMP_DIR", "/tmp/aneel-rag"))

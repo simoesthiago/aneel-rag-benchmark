@@ -22,7 +22,7 @@ O corpus cobre quatro famílias de documentos:
 | Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | Wave 1/2 |
 | Procedimentos regulatórios | PRODIST, PRORET, Regras de Transmissão | Wave 2/3 |
 | Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | Wave 3 |
-| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | Wave 1 |
+| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | Wave 1 ✅ |
 
 ---
 
@@ -30,15 +30,11 @@ O corpus cobre quatro famílias de documentos:
 
 O pipeline é organizado em 5 camadas:
 
-1. **Ingestão** - coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub.
-2. **Processamento** - gera chunks `fixed-size`, `article-aware` e `hierarchical`, embeddings e índices.
-3. **RAG** - compara BM25, dense FAISS, hybrid BM25+dense e hierarchical parent-child.
-4. **Avaliação** - mede retrieval, citação, status normativo, latência e métricas LLM opcionais.
-5. **Interface** - chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada.
-
-GraphRAG fica documentado como fase avançada posterior. Ele não é caminho crítico
-do MVP porque BM25/hybrid tende a entregar ganho mais barato e explicável para
-documentos regulatórios cheios de siglas, números e referências normativas.
+1. **Ingestão** — coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub.
+2. **Processamento** — gera chunks `fixed-size`, `article-aware` e `hierarchical`, embeddings e índices.
+3. **RAG** — compara BM25, dense FAISS, hybrid BM25+dense e hierarchical parent-child.
+4. **Avaliação** — mede retrieval, citação, status normativo, latência e métricas LLM opcionais.
+5. **Interface** — chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada.
 
 ---
 
@@ -79,12 +75,9 @@ documentos regulatórios cheios de siglas, números e referências normativas.
 
 ## Infraestrutura
 
-Todo processamento pesado roda fora da máquina local:
-
 | Componente | Onde roda |
 |---|---|
-| Desenvolvimento e scraping | Google Colab |
-| Scraping recorrente | GitHub Actions |
+| Pipeline de ingestão | Máquina local (IP residencial — cedoc/ bloqueia datacenters) |
 | PDFs, Parquet e índices FAISS | HuggingFace Hub |
 | Código-fonte | GitHub |
 | Chatbot | HuggingFace Spaces |
@@ -97,14 +90,14 @@ PDFs, Parquet e índices ficam fora do Git.
 ## Como rodar
 
 ```bash
+# Instalar dependências
 make install
+
+# Rodar testes
 make test
-```
 
-Para ambiente de produção/Colab:
-
-```bash
-make install-prod
+# Ingerir o corpus (requer HF_TOKEN no .env)
+make ingest wave=2
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)

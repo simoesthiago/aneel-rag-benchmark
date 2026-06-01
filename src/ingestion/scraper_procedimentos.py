@@ -19,7 +19,7 @@ Subcategorias de Procedimentos Regulatórios (5 no portal gov.br):
 Este scraper cobre as subcategorias 1, 2 e 3 — todas no mesmo GitLab.
 
 Onde roda:
-    Google Colab (API REST + download de PDFs + PyMuPDF)
+    Máquina local (API REST + download de PDFs + PyMuPDF)
 
 Como usar:
     from src.ingestion.scraper_procedimentos import (
@@ -38,17 +38,13 @@ from datetime import datetime, timezone
 
 import requests
 
-from src.config.settings import (
-    ANEEL_GITLAB_URL,
-    ANEEL_GITLAB_PROJECT,
-    get_aneel_gitlab_proxy_url,
-)
+from src.config.settings import ANEEL_GITLAB_URL, ANEEL_GITLAB_PROJECT
 from src.ingestion.extractor import extrair_texto
 
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
 
-# GitLab da ANEEL pode demorar ou recusar conexões de datacenters (Actions/Colab)
+# Retry em timeout — o GitLab da ANEEL pode demorar em horários de pico
 _GITLAB_MAX_RETRIES = 3
 _GITLAB_RETRY_BACKOFF_S = 10
 _GITLAB_TIMEOUT_S = 120
@@ -56,33 +52,15 @@ _GITLAB_TIMEOUT_S = 120
 
 def _gitlab_get(url: str, params: dict | None = None) -> requests.Response:
     """
-    GET com retry em timeout/conexão — comum em runners de CI.
+    GET com retry em timeout/conexão para a API do GitLab da ANEEL.
 
-    Se ANEEL_GITLAB_PROXY_URL estiver setado, roteia pelo Cloudflare Worker
-    (workers/aneel-gitlab-proxy/) que executa na edge brasileira via Service
-    Placement. Necessário em GitHub Actions e Colab, onde o GitLab da ANEEL
-    recusa conexões de datacenters estrangeiros com timeout.
+    O git.aneel.gov.br pode ser lento em horários de pico — 3 tentativas
+    com backoff de 10/20s cobrem instabilidades transitórias.
     """
-    proxy_base = get_aneel_gitlab_proxy_url()
-
-    if proxy_base:
-        # Constrói URL completa com query params antes de passar ao proxy.
-        # O proxy recebe a URL já montada como parâmetro ?url=...
-        full_url = url
-        if params:
-            full_url = url + "?" + urllib.parse.urlencode(params)
-        fetch_url = (
-            f"{proxy_base.rstrip('/')}/?url={urllib.parse.quote(full_url, safe='')}"
-        )
-        fetch_params = None
-    else:
-        fetch_url = url
-        fetch_params = params
-
     last_error: Exception | None = None
     for attempt in range(_GITLAB_MAX_RETRIES):
         try:
-            resp = requests.get(fetch_url, params=fetch_params, timeout=_GITLAB_TIMEOUT_S)
+            resp = requests.get(url, params=params, timeout=_GITLAB_TIMEOUT_S)
             resp.raise_for_status()
             return resp
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
