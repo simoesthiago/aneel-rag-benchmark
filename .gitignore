@@ -16,14 +16,11 @@ __pycache__/
 # Variáveis de ambiente (nunca commitar o .env real)
 .env
 
-# Contexto local para Claude Code e Codex (contém paths e dados pessoais)
+# Contexto local para Claude Code (contém paths e dados pessoais)
 CLAUDE.md
-CODEX.md
 DECISIONS.md
-SCRATCHPAD.md
 PROGRESS.md
 SCRATCHPAD.md
-HANDOFF.md
 
 # Jupyter
 .ipynb_checkpoints/

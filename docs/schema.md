@@ -19,7 +19,7 @@ as Camadas 2-5 estiverem implementadas tem custo alto — decidir antes.**
 | Fonte | Tipo | Exemplos | Volume estimado |
 |---|---|---|---|
 | Gestão do Estoque Regulatório | Atos normativos | RENs, REHs, Despachos | ~1.460 atos (193 RENs vigentes) |
-| Procedimentos Regulatórios | Procedimentos técnicos | PRODIST (11 mód.), PRORET, Proc. Rede, EE/P&D, Transmissão | ~50 documentos |
+| Procedimentos Regulatórios | Procedimentos técnicos | PRODIST (11 mód.), PRORET, Regras de Transmissão (6 mód.) | ~30 documentos |
 | Manuais, Modelos e Instruções | Guias operacionais | Manuais de distribuição, tarifas, geração | ~100+ documentos |
 | Leis estruturantes | Legislação federal | Lei 9.427, Lei 8.987, Lei 9.074, Lei 13.848 | 4 documentos |
 

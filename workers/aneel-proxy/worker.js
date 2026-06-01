@@ -1,13 +1,14 @@
 /**
  * aneel-proxy — Cloudflare Worker para download do cedoc/ a partir de IPs bloqueados.
  *
- * ⚠️  REQUISITO: Smart Placement deve estar ATIVO neste Worker.
- *     Workers & Pages → aneel-proxy → Settings → Runtime → Placement → Smart
+ * ⚠️  REQUISITO: Service Placement deve estar ATIVO neste Worker.
+ *     Workers & Pages → aneel-proxy → Settings → Runtime → Placement → Service
+ *     Hostname: www2.aneel.gov.br  Port: 443
  *
- *     Sem Smart Placement, o Worker executa na edge mais próxima do CHAMADOR
+ *     Sem Service Placement, o Worker executa na edge mais próxima do CHAMADOR
  *     (ex.: GitHub Actions em Azure US → edge americana → cedoc/ bloqueia).
- *     Com Smart Placement, o Worker executa perto do DESTINO (cedoc/ no Brasil)
- *     → edge brasileira → cedoc/ aceita.
+ *     Com Service Placement, a Cloudflare roteia o Worker para a edge mais
+ *     próxima do hostname configurado (cedoc/ no Brasil) → cedoc/ aceita.
  *
  * Uso: GET /?url=https://www2.aneel.gov.br/cedoc/ren20211000.pdf
  * Health: GET /health → "aneel-proxy ok"

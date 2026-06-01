@@ -88,10 +88,9 @@ jobs:
             sleep 5
           done
           echo "::error::Preflight falhou após 12 tentativas."
-          echo "1) Verifique Smart Placement: Workers & Pages → aneel-proxy → Settings → Runtime → Placement → Smart"
+          echo "1) Verifique Service Placement: Workers & Pages → aneel-proxy → Settings → Placement → Service (www2.aneel.gov.br:443)"
           echo "2) Redeploye o Worker: cole workers/aneel-proxy/worker.js no dashboard e clique Deploy"
-          echo "3) Em último caso, rode localmente: python -m src.ingestion.run_wave --wave 1"
-          echo "4) Ou reexecute com skip_preflight=true (só leis/PRODIST se GitLab responder)"
+          echo "3) Ou reexecute com skip_preflight=true (só leis/PRODIST se GitLab responder)"
           exit 1
 
       - name: Run ingestion pipeline

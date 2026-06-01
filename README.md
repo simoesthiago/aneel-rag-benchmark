@@ -20,7 +20,7 @@ O corpus cobre quatro famílias de documentos:
 | Fonte | Exemplos | Status |
 |---|---|---|
 | Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | Wave 1/2 |
-| Procedimentos regulatórios | PRODIST, PRORET, Procedimentos de Rede, EE/P&D, Transmissão | Wave 1/2/3 |
+| Procedimentos regulatórios | PRODIST, PRORET, Regras de Transmissão | Wave 2/3 |
 | Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | Wave 3 |
 | Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | Wave 1 |
 
@@ -46,9 +46,9 @@ documentos regulatórios cheios de siglas, números e referências normativas.
 
 | Onda | Conteúdo | Objetivo |
 |---|---|---|
-| Wave 1 | 4 leis + amostra de RENs + PRODIST Módulo 1 | Provar pipeline completo |
-| Wave 2 | RENs vigentes + todos os módulos PRODIST | Expandir benchmark operacional |
-| Wave 3 | Manuais, PRORET, demais atos, OCR e formatos DOCX/XLSX | Completar corpus |
+| Wave 1 ✅ | 4 leis + 8 RENs | Pipeline comprovado end-to-end |
+| Wave 2 🔄 | Todas as ~182 RENs vigentes | Corpus normativo completo |
+| Wave 3 | PRODIST, PRORET, Regras de Transmissão, manuais, demais atos | Corpus regulatório completo |
 
 ---
 
@@ -107,4 +107,4 @@ Para ambiente de produção/Colab:
 make install-prod
 ```
 
-O dataset público será publicado em `simoesthiago/aneel-corpus` após a Wave 1.
+Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)
