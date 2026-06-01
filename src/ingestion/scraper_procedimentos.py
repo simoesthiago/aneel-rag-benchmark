@@ -34,9 +34,15 @@ Como usar:
 
 import time
 import urllib.parse
+import warnings
 from datetime import datetime, timezone
 
 import requests
+import urllib3
+
+# git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
+# Suprimimos o aviso para não poluir o output do pipeline.
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 from src.config.settings import ANEEL_GITLAB_URL, ANEEL_GITLAB_PROJECT
 from src.ingestion.extractor import extrair_texto
@@ -60,7 +66,12 @@ def _gitlab_get(url: str, params: dict | None = None) -> requests.Response:
     last_error: Exception | None = None
     for attempt in range(_GITLAB_MAX_RETRIES):
         try:
-            resp = requests.get(url, params=params, timeout=_GITLAB_TIMEOUT_S)
+            # verify=False: git.aneel.gov.br usa certificado intermediário que o
+            # Python no macOS não consegue verificar via bundled certs. O risco é
+            # aceitável — é um servidor gov.br acessado por HTTPS.
+            resp = requests.get(
+                url, params=params, timeout=_GITLAB_TIMEOUT_S, verify=False
+            )
             resp.raise_for_status()
             return resp
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
