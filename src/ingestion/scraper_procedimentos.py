@@ -107,7 +107,7 @@ def listar_arquivos_gitlab(path: str = "") -> list[dict]:
     return resp.json()
 
 
-def baixar_arquivo_gitlab(file_path: str, ref: str = "master") -> bytes:
+def baixar_arquivo_gitlab(file_path: str, ref: str = "main") -> bytes:
     """
     Baixa o conteúdo raw de um arquivo do repositório GitLab.
 
@@ -203,15 +203,18 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
 
     # Procurar o módulo específico
     modulo_str = str(modulo)
+    modulo_str_padded = f"{modulo:02d}"  # "01", "02", ..., "11"
     modulo_path = None
     for item in prodist_itens:
         nome_lower = item["name"].lower()
-        # Procura variações: "Módulo 1", "Modulo 1", "módulo1", etc.
+        # Procura variações: "Módulo 1", "Modulo 1", "módulo1", "modulo01", etc.
         if (
             f"módulo {modulo_str}" in nome_lower
             or f"modulo {modulo_str}" in nome_lower
             or f"módulo{modulo_str}" in nome_lower
             or f"modulo{modulo_str}" in nome_lower
+            or f"modulo{modulo_str_padded}" in nome_lower  # ex: "modulo01"
+            or f"módulo{modulo_str_padded}" in nome_lower  # ex: "módulo01"
         ):
             if item["type"] == "tree":
                 modulo_path = item["path"]
@@ -236,7 +239,7 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
 
     # Baixar e extrair texto
     try:
-        pdf_bytes = baixar_arquivo_gitlab(pdf_path)
+        pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
         print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
 
         resultado = extrair_texto(pdf_bytes, "pdf")
