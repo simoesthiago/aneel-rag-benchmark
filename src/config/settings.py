@@ -132,6 +132,32 @@ ANEEL_MANUAIS_URL: str = (
     "/manuais-modelos-e-instrucoes"
 )
 
+# Subcategorias do portal (slugs) — descobertas via inspeção HTML (2026-06-01).
+# Inclui subpáginas aninhadas quando existem.
+MANUAIS_SUBCATEGORIAS: list[str] = [
+    "air",
+    "cadastro-unico",
+    "cartografia-e-geoprocessamento",
+    "composicao-societaria",
+    "conselhos-consumidores",
+    "distribuicao",
+    "envio-de-arquivos",
+    "gcem",
+    "geracao",
+    "geracao/go-gestao-de-outorgas",
+    "gestao-de-riscos",
+    "gestao-estrategica",
+    "informacoes-economico-financeiras",
+    "licitacoes-e-contratos",
+    "micro-e-minigeracao-distribuida",
+    "pdi-aneel",
+    "procedimentos-manuais-guias-e-relatorios-do-pdi-aneel",
+    "processo-eletronico",
+    "seguranca",
+    "tarifas",
+    "transmissao",
+]
+
 # --- Fonte 4: Leis estruturantes (planalto.gov.br) ---
 # HTML estático — 4 leis de base do setor elétrico.
 LEIS_ESTRUTURANTES: dict[str, str] = {

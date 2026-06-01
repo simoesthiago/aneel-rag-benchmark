@@ -20,7 +20,7 @@ O corpus cobre quatro famílias de documentos:
 | Fonte | Exemplos | Status |
 |---|---|---|
 | Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | Wave 1/2 |
-| Procedimentos regulatórios | PRODIST, PRORET, Regras de Transmissão | Wave 2/3 |
+| Procedimentos regulatórios | PRODIST, Regras de Transmissão (Wave 2); PRORET (Wave 3) | Wave 2/3 |
 | Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | Wave 3 |
 | Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | Wave 1 ✅ |
 
@@ -43,8 +43,8 @@ O pipeline é organizado em 5 camadas:
 | Onda | Conteúdo | Objetivo |
 |---|---|---|
 | Wave 1 ✅ | 4 leis + 8 RENs | Pipeline comprovado end-to-end |
-| Wave 2 🔄 | Todas as ~182 RENs vigentes | Corpus normativo completo |
-| Wave 3 | PRODIST, PRORET, Regras de Transmissão, manuais, demais atos | Corpus regulatório completo |
+| Wave 2 ✅ | ~182 RENs vigentes + PRODIST + Regras de Transmissão | Corpus normativo vigente |
+| Wave 3 | RENs revogadas + PRORET + manuais (merge com Hub) | Corpus regulatório completo |
 
 ---
 
@@ -96,8 +96,10 @@ make install
 # Rodar testes
 make test
 
-# Ingerir o corpus (requer HF_TOKEN no .env)
+# Ingerir o corpus na máquina local (requer HF_TOKEN no .env, IP residencial BR)
 make ingest wave=2
+make ingest-wave3          # Wave 3: revogadas + PRORET + manuais + merge no Hub
+make validate-corpus       # conferir dataset publicado
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)

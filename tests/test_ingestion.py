@@ -76,19 +76,38 @@ class TestExtrairTextoDispatcher:
         with pytest.raises(ValueError, match="não é suportado"):
             extrair_texto("conteudo", "xyz")
 
-    def test_docx_levanta_not_implemented(self):
-        """DOCX levanta NotImplementedError (Wave 3)."""
+    def test_docx_extrai_paragrafos(self):
+        """DOCX com parágrafos retorna texto e metodo python_docx."""
+        from docx import Document
         from src.ingestion.extractor import extrair_texto
+        import io
 
-        with pytest.raises(NotImplementedError, match="Wave 3"):
-            extrair_texto(b"bytes", "docx")
+        doc = Document()
+        doc.add_paragraph("Manual de instruções da ANEEL para envio de dados.")
+        doc.add_paragraph("Segundo parágrafo com conteúdo regulatório suficiente.")
+        buf = io.BytesIO()
+        doc.save(buf)
 
-    def test_xlsx_levanta_not_implemented(self):
-        """XLSX levanta NotImplementedError (Wave 3)."""
+        resultado = extrair_texto(buf.getvalue(), "docx")
+        assert "Manual de instruções" in resultado["texto"]
+        assert resultado["metodo"] == "python_docx"
+
+    def test_xlsx_extrai_celulas(self):
+        """XLSX com células retorna texto concatenado."""
+        from openpyxl import Workbook
         from src.ingestion.extractor import extrair_texto
+        import io
 
-        with pytest.raises(NotImplementedError, match="Wave 3"):
-            extrair_texto(b"bytes", "xlsx")
+        wb = Workbook()
+        ws = wb.active
+        ws["A1"] = "Planilha de referência tarifária da distribuidora."
+        ws["A2"] = "Dados complementares para o regulador."
+        buf = io.BytesIO()
+        wb.save(buf)
+
+        resultado = extrair_texto(buf.getvalue(), "xlsx")
+        assert "tarifária" in resultado["texto"]
+        assert resultado["metodo"] == "openpyxl"
 
     def test_html_aceita_string(self):
         """extrair_texto("html") aceita string como conteúdo."""
@@ -155,6 +174,21 @@ class TestMontarUrlAto:
 
         url = montar_url_ato("res", 2002, 798)
         assert url == "https://www2.aneel.gov.br/cedoc/res2002798.pdf"
+
+
+class TestFiltrarNaoVigentes:
+    """Testes do filtro de atos não vigentes (Wave 3)."""
+
+    def test_filtra_revogados(self):
+        from src.ingestion.scraper_atos import filtrar_nao_vigentes
+
+        atos = [
+            {"Resolução": "REN 1000/2021", "Situação": "Não consta revogação expressa"},
+            {"Resolução": "REN 200/2005", "Situação": "Revogada"},
+        ]
+        resultado = filtrar_nao_vigentes(atos, sigla="ren")
+        assert len(resultado) == 1
+        assert resultado[0]["Resolução"] == "REN 200/2005"
 
 
 class TestFiltrarVigentes:
@@ -401,3 +435,102 @@ class TestValidarSchema:
 
         with pytest.raises(RuntimeError, match="texto_bruto < 100"):
             validar_schema(df)
+
+
+class TestMesclarCorpus:
+    """Testes de merge incremental (Wave 3)."""
+
+    def _doc(self, doc_id: str, scraped_at: str) -> dict:
+        return {
+            "id": doc_id,
+            "tipo": "lei",
+            "subtipo": "lei_federal",
+            "numero": "9427",
+            "ano": 1996,
+            "titulo": "Lei teste",
+            "assunto": None,
+            "situacao": None,
+            "data_publicacao": None,
+            "fonte": "planalto",
+            "url_original": "https://example.com",
+            "url_consolidado": None,
+            "formato_original": "html",
+            "texto_bruto": "A" * 200,
+            "num_paginas": None,
+            "metodo_extracao": "html_parser",
+            "qualidade_extracao": 1.0,
+            "hf_path": None,
+            "scraped_at": scraped_at,
+        }
+
+    def test_merge_sem_duplicatas(self):
+        from src.ingestion.uploader import mesclar_corpus
+
+        df1 = pd.DataFrame([self._doc("lei-9427-1996", "2026-01-01T00:00:00Z")])
+        df2 = pd.DataFrame([self._doc("ren-2020-100", "2026-02-01T00:00:00Z")])
+        merged = mesclar_corpus(df1, df2)
+        assert len(merged) == 2
+
+    def test_merge_id_conflito_mantem_mais_recente(self):
+        from src.ingestion.uploader import mesclar_corpus
+
+        df1 = pd.DataFrame([self._doc("lei-9427-1996", "2026-01-01T00:00:00Z")])
+        novo = self._doc("lei-9427-1996", "2026-06-01T12:00:00Z")
+        novo["texto_bruto"] = "B" * 200
+        df2 = pd.DataFrame([novo])
+        merged = mesclar_corpus(df1, df2)
+        assert len(merged) == 1
+        assert merged.iloc[0]["texto_bruto"].startswith("B")
+
+
+class TestColetarProretMock:
+    @patch("src.ingestion.scraper_procedimentos.baixar_arquivo_gitlab")
+    @patch("src.ingestion.scraper_procedimentos._listar_pdfs_recursivo")
+    @patch("src.ingestion.scraper_procedimentos._encontrar_pasta_proret")
+    def test_coletar_proret_um_pdf(self, mock_path, mock_listar, mock_baixar):
+        from src.ingestion.scraper_procedimentos import coletar_proret
+
+        mock_path.return_value = "procreg/proret"
+        mock_listar.return_value = ["procreg/proret/modulo02/subm2.1/doc.pdf"]
+        mock_baixar.return_value = b"%PDF-1.4 fake"
+
+        with patch("src.ingestion.scraper_procedimentos.extrair_texto") as mock_ext:
+            mock_ext.return_value = {
+                "texto": "X" * 150,
+                "num_paginas": 1,
+                "qualidade_extracao": 1.0,
+                "metodo": "pymupdf",
+            }
+            docs = coletar_proret()
+        assert len(docs) == 1
+        assert docs[0]["subtipo"] == "proret"
+
+
+class TestColetarManuaisMock:
+    @patch("src.ingestion.scraper_manuais._baixar_url")
+    @patch("src.ingestion.scraper_manuais.requests.get")
+    def test_coleta_link_pdf_na_pagina(self, mock_get, mock_baixar):
+        from src.ingestion.scraper_manuais import coletar_manuais
+
+        html = """
+        <html><body>
+        <a href="https://git.aneel.gov.br/publico/x/manual.pdf">Manual teste</a>
+        </body></html>
+        """
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.text = html
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+        mock_baixar.return_value = b"%PDF fake"
+
+        with patch("src.ingestion.scraper_manuais.extrair_texto") as mock_ext:
+            mock_ext.return_value = {
+                "texto": "Y" * 150,
+                "num_paginas": 1,
+                "qualidade_extracao": 1.0,
+                "metodo": "pymupdf",
+            }
+            docs = coletar_manuais(subcategorias=["distribuicao"], max_manuais=5)
+        assert len(docs) == 1
+        assert docs[0]["tipo"] == "manual"

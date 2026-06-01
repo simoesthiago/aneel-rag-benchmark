@@ -25,3 +25,9 @@ format:
 
 ingest:
 	python -m src.ingestion.run_wave --wave $(wave)
+
+validate-corpus:
+	python scripts/validate_corpus.py
+
+ingest-wave3:
+	python -m src.ingestion.run_wave --wave 3 --mesclar-com-hub --pular-leis

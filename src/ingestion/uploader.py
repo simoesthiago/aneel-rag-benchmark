@@ -12,7 +12,7 @@ Esse módulo garante que dados malformados nunca cheguem ao Hub — falha cedo
 com mensagem clara se alguma coluna estiver faltando ou se houver IDs duplicados.
 
 Onde roda:
-    Google Colab (precisa de HF_TOKEN para upload)
+    Máquina local ou qualquer ambiente com HF_TOKEN configurado
 
 Como usar:
     from src.ingestion.uploader import validar_schema, publicar_corpus
@@ -24,6 +24,7 @@ Como usar:
 
 import os
 import tempfile
+from datetime import datetime, timezone
 
 import pandas as pd
 from huggingface_hub import HfApi
@@ -120,7 +121,86 @@ def validar_schema(df: pd.DataFrame) -> None:
         )
 
 
-def publicar_corpus(df: pd.DataFrame, repo_id: str | None = None) -> str:
+def carregar_corpus_hub(repo_id: str | None = None) -> pd.DataFrame:
+    """
+    Carrega o corpus já publicado no HuggingFace Hub.
+
+    Lê os Parquets particionados (`tipo=.../part-0.parquet`) e restaura a coluna
+    `tipo`, removida no upload para o particionamento Hive.
+    """
+    import re
+
+    from huggingface_hub import hf_hub_download
+
+    if repo_id is None:
+        repo_id = HF_DATASET_REPO
+
+    print(f"  Carregando corpus existente de {repo_id}...")
+    api = HfApi()
+    arquivos = api.list_repo_files(repo_id, repo_type="dataset")
+    parquets = sorted(f for f in arquivos if f.endswith(".parquet"))
+
+    if not parquets:
+        raise RuntimeError(f"Nenhum Parquet encontrado em {repo_id}")
+
+    partes: list[pd.DataFrame] = []
+    for path in parquets:
+        match = re.search(r"tipo=([^/]+)/", path)
+        tipo = match.group(1) if match else "desconhecido"
+        local = hf_hub_download(
+            repo_id=repo_id, filename=path, repo_type="dataset"
+        )
+        df_part = pd.read_parquet(local, engine="pyarrow")
+        df_part["tipo"] = tipo
+        partes.append(df_part)
+
+    df = pd.concat(partes, ignore_index=True)
+    print(f"  {len(df)} documentos no Hub")
+    return df
+
+
+def mesclar_corpus(df_existente: pd.DataFrame, df_novo: pd.DataFrame) -> pd.DataFrame:
+    """
+    Une dois DataFrames pelo `id`, mantendo o registro mais recente em conflito.
+
+    Compara `scraped_at` (ISO 8601). Se ausente, o registro novo prevalece.
+    """
+    if df_existente.empty:
+        return df_novo.copy()
+    if df_novo.empty:
+        return df_existente.copy()
+
+    for col in _SCHEMA_COLUNAS:
+        if col not in df_existente.columns:
+            df_existente[col] = None
+        if col not in df_novo.columns:
+            df_novo[col] = None
+
+    combinado = pd.concat([df_existente[_SCHEMA_COLUNAS], df_novo[_SCHEMA_COLUNAS]], ignore_index=True)
+
+    def _parse_ts(val: object) -> datetime:
+        if val is None or (isinstance(val, float) and pd.isna(val)):
+            return datetime.min.replace(tzinfo=timezone.utc)
+        s = str(val).replace("Z", "+00:00")
+        try:
+            dt = datetime.fromisoformat(s)
+        except ValueError:
+            return datetime.min.replace(tzinfo=timezone.utc)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    combinado["_ts"] = combinado["scraped_at"].map(_parse_ts)
+    combinado = combinado.sort_values("_ts").drop_duplicates(subset=["id"], keep="last")
+    combinado = combinado.drop(columns=["_ts"])
+    return combinado.reset_index(drop=True)
+
+
+def publicar_corpus(
+    df: pd.DataFrame,
+    repo_id: str | None = None,
+    mesclar_com_hub: bool = False,
+) -> str:
     """
     Salva o DataFrame como Parquet particionado e faz upload ao HF Hub.
 
@@ -128,8 +208,9 @@ def publicar_corpus(df: pd.DataFrame, repo_id: str | None = None) -> str:
     para que queries como "todos os procedimentos" não precisem ler o dataset inteiro.
 
     Args:
-        df: DataFrame validado (chame validar_schema antes!)
+        df: DataFrame com documentos novos ou corpus completo
         repo_id: nome do repositório no HF Hub. Default: settings.HF_DATASET_REPO
+        mesclar_com_hub: se True, carrega o Hub e faz merge por `id` antes do upload
 
     Returns:
         URL do dataset no HF Hub
@@ -137,10 +218,19 @@ def publicar_corpus(df: pd.DataFrame, repo_id: str | None = None) -> str:
     if repo_id is None:
         repo_id = HF_DATASET_REPO
 
+    if mesclar_com_hub:
+        try:
+            df_hub = carregar_corpus_hub(repo_id)
+            df = mesclar_corpus(df_hub, df)
+            print(f"  Após merge: {len(df)} documentos no total")
+        except Exception as e:
+            raise RuntimeError(
+                f"Falha ao mesclar com corpus existente em {repo_id}: {e}"
+            ) from e
+
     token = get_hf_token()
     api = HfApi(token=token)
 
-    # Valida antes de fazer upload (proteção extra)
     validar_schema(df)
 
     # Reordena colunas conforme schema
@@ -159,9 +249,6 @@ def publicar_corpus(df: pd.DataFrame, repo_id: str | None = None) -> str:
                 path, index=False, engine="pyarrow"
             )
             print(f"  📦 tipo={tipo}: {len(df_tipo)} documentos")
-
-        # Upload
-        from datetime import datetime, timezone
 
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         commit_msg = f"Atualização do corpus: {len(df)} documentos ({timestamp})"

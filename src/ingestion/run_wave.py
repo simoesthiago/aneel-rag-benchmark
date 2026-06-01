@@ -3,16 +3,17 @@ run_wave.py — Orquestrador do pipeline de ingestão por wave.
 
 Por que este módulo existe?
 ---------------------------
-Os scrapers (`scraper_atos`, `scraper_leis`, `scraper_procedimentos`) são
-unidades isoladas. Este módulo amarra tudo: define o escopo de cada Wave,
-chama os scrapers na ordem correta, consolida no schema, valida e publica
-no HuggingFace Hub.
+Os scrapers (`scraper_atos`, `scraper_leis`, `scraper_procedimentos`,
+`scraper_manuais`) são unidades isoladas. Este módulo amarra tudo: define o
+escopo de cada Wave, chama os scrapers na ordem correta, consolida no schema,
+valida e publica no HuggingFace Hub.
 
-Roda em GitHub Actions (workflow `ingest_corpus.yml`) e também pode rodar
-no Colab ou local desde que HF_TOKEN esteja configurado.
+Roda na máquina local (IP residencial brasileiro para o cedoc/) com
+`HF_TOKEN` no `.env` para publicar no HuggingFace Hub.
 
 Como usar:
     python -m src.ingestion.run_wave --wave 1
+    python -m src.ingestion.run_wave --wave 3 --mesclar-com-hub
 """
 
 import argparse
@@ -24,15 +25,23 @@ import pandas as pd
 from src.config.settings import HF_DATASET_REPO
 from src.ingestion.scraper_atos import (
     consultar_powerbi,
-    filtrar_vigentes,
     coletar_atos,
+    filtrar_nao_vigentes,
+    filtrar_vigentes,
 )
 from src.ingestion.scraper_leis import coletar_leis
+from src.ingestion.scraper_manuais import coletar_manuais
 from src.ingestion.scraper_procedimentos import (
     coletar_prodist_modulo,
+    coletar_proret,
     coletar_regras_transmissao,
 )
-from src.ingestion.uploader import publicar_corpus, validar_schema
+from src.ingestion.uploader import (
+    carregar_corpus_hub,
+    mesclar_corpus,
+    publicar_corpus,
+    validar_schema,
+)
 
 # RENs selecionadas para a Wave 1 — variedade temática controlada
 RENS_WAVE1 = {
@@ -49,7 +58,7 @@ RENS_WAVE1 = {
 }
 
 
-def _coletar_atos_wave(wave: int) -> list[dict]:
+def _coletar_atos_wave(wave: int, max_atos: int | None = None) -> list[dict]:
     """Lista atos do Power BI e filtra conforme a wave."""
     print(f"\n=== Consultando Power BI (Wave {wave}) ===")
     todos = consultar_powerbi(
@@ -66,60 +75,97 @@ def _coletar_atos_wave(wave: int) -> list[dict]:
     elif wave == 2:
         selecionadas = vigentes
         print(f"  Wave 2: todas as {len(selecionadas)} RENs vigentes")
-    else:  # wave 3
-        selecionadas = [a for a in todos if a.get("Resolução", "").startswith("REN ")]
-        print(f"  Wave 3: todos os {len(selecionadas)} atos (vigentes + revogados)")
+    else:  # wave 3 — incremental: só não vigentes
+        selecionadas = filtrar_nao_vigentes(todos, sigla="ren")
+        print(f"  Wave 3: {len(selecionadas)} RENs não vigentes (revogadas)")
 
-    return coletar_atos(selecionadas)
+    return coletar_atos(selecionadas, max_atos=max_atos)
 
 
 def _coletar_procedimentos_wave(wave: int) -> list[dict]:
-    """Coleta módulos PRODIST e Regras de Transmissão por wave."""
-    docs = []
+    """Coleta procedimentos regulatórios conforme a wave."""
+    docs: list[dict] = []
     if wave == 1:
         docs.extend(coletar_prodist_modulo(1))
     elif wave == 2:
-        for m in range(1, 12):  # 11 módulos
-            docs.extend(coletar_prodist_modulo(m))
-        docs.extend(coletar_regras_transmissao())
-    else:  # wave 3 — futuro: PRORET completo + manuais
         for m in range(1, 12):
             docs.extend(coletar_prodist_modulo(m))
         docs.extend(coletar_regras_transmissao())
+    else:  # wave 3 — só PRORET (PRODIST/RegTransm já na Wave 2)
+        docs.extend(coletar_proret())
     return docs
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Pipeline de ingestão por wave")
     parser.add_argument(
-        "--wave", type=int, choices=[1, 2, 3], required=True,
-        help="Wave a executar (1=mínima/~15 docs, 2=vigentes/~220 docs, 3=completa)",
+        "--wave",
+        type=int,
+        choices=[1, 2, 3],
+        required=True,
+        help=(
+            "Wave: 1=amostra (~15 docs), 2=vigentes+PRODIST+RegTransm (~220), "
+            "3=revogadas+PRORET+manuais (merge com Hub)"
+        ),
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Não faz upload no HF Hub (só valida o schema)",
+    )
+    parser.add_argument(
+        "--mesclar-com-hub",
+        action="store_true",
+        help="Mescla com corpus existente no HF Hub antes do upload (Wave 3)",
+    )
+    parser.add_argument(
+        "--sem-merge",
+        action="store_true",
+        help="Não mescla com o Hub mesmo na Wave 3 (substitui corpus inteiro)",
+    )
+    parser.add_argument(
+        "--max-atos",
+        type=int,
+        default=None,
+        help="Limita quantidade de atos baixados (dev/teste)",
+    )
+    parser.add_argument(
+        "--max-manuais",
+        type=int,
+        default=None,
+        help="Limita quantidade de manuais coletados (dev/teste)",
+    )
+    parser.add_argument(
+        "--pular-leis",
+        action="store_true",
+        help="Não re-coleta as 4 leis (útil na Wave 3 com merge)",
     )
     args = parser.parse_args()
 
+    mesclar = args.mesclar_com_hub or (args.wave == 3 and not args.sem_merge)
+
     started_at = datetime.now(timezone.utc)
-    print(f"==========================================================")
+    print("==========================================================")
     print(f" ANEEL Corpus — Wave {args.wave} (started {started_at.isoformat()})")
-    print(f"==========================================================")
+    if mesclar:
+        print(" Modo: merge com corpus existente no HF Hub")
+    print("==========================================================")
 
-    # Coleta de cada fonte — independentes, falha parcial é aceitável.
-    # O pipeline publica o que conseguir coletar.
-    erros_fonte = []
+    erros_fonte: list[str] = []
+    docs_leis: list[dict] = []
+
+    if args.pular_leis or args.wave == 3:
+        print("\n→ Leis: puladas (já no Hub ou --pular-leis)")
+    else:
+        try:
+            docs_leis = coletar_leis()
+            print(f"\n→ Leis: {len(docs_leis)} documentos")
+        except Exception as e:
+            erros_fonte.append(f"Leis: {e}")
+            print(f"\n→ Leis: ❌ FALHA — {e}")
 
     try:
-        docs_leis = coletar_leis()
-        print(f"\n→ Leis: {len(docs_leis)} documentos")
-    except Exception as e:
-        docs_leis = []
-        erros_fonte.append(f"Leis: {e}")
-        print(f"\n→ Leis: ❌ FALHA — {e}")
-
-    try:
-        docs_atos = _coletar_atos_wave(args.wave)
+        docs_atos = _coletar_atos_wave(args.wave, max_atos=args.max_atos)
         print(f"\n→ Atos normativos: {len(docs_atos)} documentos")
     except Exception as e:
         docs_atos = []
@@ -134,28 +180,53 @@ def main() -> int:
         erros_fonte.append(f"Procedimentos: {e}")
         print(f"\n→ Procedimentos regulatórios: ❌ FALHA — {e}")
 
-    todos = docs_leis + docs_atos + docs_proc
-    print(f"\n=== Consolidação ===")
-    print(f"  TOTAL: {len(todos)} documentos")
+    docs_manuais: list[dict] = []
+    if args.wave == 3:
+        try:
+            docs_manuais = coletar_manuais(max_manuais=args.max_manuais)
+            print(f"\n→ Manuais: {len(docs_manuais)} documentos")
+        except Exception as e:
+            erros_fonte.append(f"Manuais: {e}")
+            print(f"\n→ Manuais: ❌ FALHA — {e}")
+
+    docs_novos = docs_leis + docs_atos + docs_proc + docs_manuais
+    print("\n=== Consolidação (coleta desta execução) ===")
+    print(f"  NOVOS: {len(docs_novos)} documentos")
     if erros_fonte:
         print(f"  ⚠️  {len(erros_fonte)} fonte(s) com falha:")
         for err in erros_fonte:
             print(f"    - {err}")
 
-    if not todos:
+    if not docs_novos and not mesclar:
         print("❌ Nada coletado. Abortando.")
         return 1
 
-    df = pd.DataFrame(todos)
+    if mesclar and not args.dry_run:
+        try:
+            df_hub = carregar_corpus_hub()
+            df = mesclar_corpus(df_hub, pd.DataFrame(docs_novos))
+        except Exception as e:
+            print(f"❌ Merge com Hub falhou: {e}")
+            return 1
+    elif mesclar and args.dry_run:
+        print("\n[dry-run] Simulando merge: apenas validando documentos novos")
+        df = pd.DataFrame(docs_novos)
+    else:
+        df = pd.DataFrame(docs_novos)
+
+    if df.empty:
+        print("❌ DataFrame vazio após consolidação. Abortando.")
+        return 1
+
     validar_schema(df)
-    print("  ✅ Schema validado")
+    print(f"  ✅ Schema validado ({len(df)} documentos no corpus final)")
 
     if args.dry_run:
         print("\n[dry-run] Pulando upload para HF Hub")
         return 0
 
     print(f"\n=== Upload para {HF_DATASET_REPO} ===")
-    url = publicar_corpus(df)
+    url = publicar_corpus(df, mesclar_com_hub=False)
     print(f"\n✅ Pipeline concluído: {url}")
     return 0
 

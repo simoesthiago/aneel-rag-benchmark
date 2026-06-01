@@ -225,6 +225,18 @@ def _decodificar_dsr(resposta_json: dict, propriedades: list[str]) -> list[dict]
 # =========================================================================
 
 
+_SITUACOES_VIGENTES = frozenset(
+    {"Não consta revogação expressa", "Vacatio Legis"}
+)
+
+
+def _mapear_situacao(situacao_powerbi: str | None) -> str:
+    """Converte situação do Power BI para o schema (`vigente` / `revogada`)."""
+    if situacao_powerbi in _SITUACOES_VIGENTES:
+        return "vigente"
+    return "revogada"
+
+
 def filtrar_vigentes(atos: list[dict], sigla: str | None = None) -> list[dict]:
     """
     Filtra atos normativos vigentes (não revogados).
@@ -240,14 +252,31 @@ def filtrar_vigentes(atos: list[dict], sigla: str | None = None) -> list[dict]:
     Returns:
         lista filtrada
     """
-    situacoes_vigentes = {"Não consta revogação expressa", "Vacatio Legis"}
-
-    resultado = [a for a in atos if a.get("Situação") in situacoes_vigentes]
+    resultado = [a for a in atos if a.get("Situação") in _SITUACOES_VIGENTES]
 
     if sigla:
         sigla_upper = sigla.upper()
         resultado = [
             a for a in resultado if a.get("Resolução", "").startswith(sigla_upper + " ")
+        ]
+
+    return resultado
+
+
+def filtrar_nao_vigentes(atos: list[dict], sigla: str | None = None) -> list[dict]:
+    """
+    Filtra atos normativos não vigentes (revogados ou outras situações).
+
+    Complemento de `filtrar_vigentes` — usado na Wave 3 para ingestão incremental.
+    """
+    resultado = [a for a in atos if a.get("Situação") not in _SITUACOES_VIGENTES]
+
+    if sigla:
+        sigla_upper = sigla.upper()
+        resultado = [
+            a
+            for a in resultado
+            if a.get("Resolução", "").startswith(sigla_upper + " ")
         ]
 
     return resultado
@@ -369,7 +398,7 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     return None
 
 
-def coletar_atos(atos: list[dict]) -> list[dict]:
+def coletar_atos(atos: list[dict], max_atos: int | None = None) -> list[dict]:
     """
     Para cada ato da lista, baixa o PDF, extrai texto e monta dict do schema.
 
@@ -382,8 +411,9 @@ def coletar_atos(atos: list[dict]) -> list[dict]:
     """
     scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     documentos = []
+    lista = atos[:max_atos] if max_atos is not None else atos
 
-    for ato in atos:
+    for ato in lista:
         resolucao = ato.get("Resolução", "")
         parsed = _parsear_resolucao(resolucao)
         if not parsed:
@@ -428,7 +458,7 @@ def coletar_atos(atos: list[dict]) -> list[dict]:
                     "ano": ano,
                     "titulo": ato.get("Ementa") or resolucao,
                     "assunto": None,
-                    "situacao": "vigente",
+                    "situacao": _mapear_situacao(ato.get("Situação")),
                     "data_publicacao": data_pub,
                     "fonte": "cedoc",
                     "url_original": url_original,

@@ -1,9 +1,9 @@
 # =============================================================================
-# requirements.txt — DEPENDÊNCIAS DE EXECUÇÃO (Google Colab + GitHub Actions)
+# requirements.txt — DEPENDÊNCIAS DE EXECUÇÃO (ingestão local / Colab legado)
 # =============================================================================
 #
-# Estas são as bibliotecas usadas pelo pipeline real, que roda em Colab
-# (desenvolvimento) e GitHub Actions (produção recorrente). Inclui pacotes que
+# Bibliotecas do pipeline de ingestão. Em desenvolvimento, prefira
+# requirements-dev.txt (`make install`). Inclui pacotes que
 # exigem compilação nativa (PyMuPDF, faiss-cpu) — eles funcionam direto nesses
 # ambientes porque o Python lá é 3.10/3.11 e há wheels prontas.
 #

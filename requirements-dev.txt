@@ -19,6 +19,8 @@ curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome (Cloudf
 beautifulsoup4>=4.12     # parsing de HTML (leis do planalto.gov.br)
 lxml>=5.2                # backend rápido do BeautifulSoup
 PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)
+python-docx>=1.1         # manuais DOCX (Wave 3)
+openpyxl>=3.1            # manuais XLSX (Wave 3)
 tqdm>=4.66               # barras de progresso
 
 # --- Dados e publicação ---

@@ -25,6 +25,7 @@ Como usar:
     from src.ingestion.scraper_procedimentos import (
         listar_arquivos_gitlab,
         coletar_prodist_modulo,
+        coletar_proret,
         coletar_regras_transmissao,
     )
 
@@ -32,6 +33,7 @@ Como usar:
     documentos += coletar_regras_transmissao()
 """
 
+import re
 import time
 import urllib.parse
 import warnings
@@ -281,6 +283,135 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
     except Exception as e:
         print(f"    ❌ Erro: {e}")
 
+    return documentos
+
+
+# =========================================================================
+# PRORET — Procedimentos de Regulação Tarifária
+# =========================================================================
+# Estrutura no GitLab (2026-06-01): procreg/proret/modulo02..modulo12
+# com subpastas subm2.1, subm2.1A, etc. e PDFs em cada nível.
+
+
+def _encontrar_pasta_proret() -> str | None:
+    """Localiza a pasta PRORET na raiz do repositório GitLab."""
+    try:
+        itens_raiz = listar_arquivos_gitlab("")
+    except Exception:
+        return None
+
+    for item in itens_raiz:
+        if item["type"] != "tree":
+            continue
+        nome = item["name"].lower()
+        if nome == "procreg" or "procreg" in item["path"].lower():
+            try:
+                sub = listar_arquivos_gitlab(item["path"])
+                for s in sub:
+                    if "proret" in s["name"].lower() and s["type"] == "tree":
+                        return s["path"]
+            except Exception:
+                pass
+
+    # Busca direta por path conhecido
+    try:
+        listar_arquivos_gitlab("procreg/proret")
+        return "procreg/proret"
+    except Exception:
+        return None
+
+
+def _listar_pdfs_recursivo(path: str) -> list[str]:
+    """Lista paths de todos os PDFs sob uma pasta do GitLab."""
+    pdfs: list[str] = []
+    try:
+        itens = listar_arquivos_gitlab(path)
+    except Exception:
+        return pdfs
+
+    for item in itens:
+        if item["type"] == "blob" and item["name"].lower().endswith(".pdf"):
+            pdfs.append(item["path"])
+        elif item["type"] == "tree":
+            pdfs.extend(_listar_pdfs_recursivo(item["path"]))
+            time.sleep(0.3)
+    return pdfs
+
+
+def _id_proret_de_path(gitlab_path: str) -> str:
+    """Gera id estável a partir do path no GitLab (ex.: proret-modulo02-subm2-1)."""
+    rel = gitlab_path.lower()
+    if "procreg/proret/" in rel:
+        rel = rel.split("procreg/proret/", 1)[1]
+    slug = re.sub(r"[^a-z0-9]+", "-", rel.replace(".pdf", "")).strip("-")
+    return f"proret-{slug}" if slug else "proret-documento"
+
+
+def coletar_proret() -> list[dict]:
+    """
+    Coleta todos os PDFs do PRORET no GitLab (módulos 2–12 e submódulos).
+
+    A árvore é percorrida recursivamente — cada PDF vira um documento no schema.
+    """
+    scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    documentos: list[dict] = []
+
+    print("Coletando PRORET (GitLab)...")
+    proret_path = _encontrar_pasta_proret()
+    if proret_path is None:
+        print("  ❌ Pasta PRORET não encontrada no GitLab.")
+        return []
+
+    print(f"  ✅ PRORET em: {proret_path}")
+    pdf_paths = _listar_pdfs_recursivo(proret_path)
+    print(f"  {len(pdf_paths)} PDF(s) encontrados")
+
+    for pdf_path in pdf_paths:
+        doc_id = _id_proret_de_path(pdf_path)
+        titulo = pdf_path.split("/")[-1].replace(".pdf", "").replace("_", " ")
+        print(f"  {doc_id}: {pdf_path}")
+
+        try:
+            pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
+            resultado = extrair_texto(pdf_bytes, "pdf")
+            if len(resultado["texto"].strip()) < 100:
+                print("    ⚠️  Texto curto — pulando")
+                continue
+
+            url_blob = (
+                f"{ANEEL_GITLAB_URL}/{ANEEL_GITLAB_PROJECT}"
+                f"/-/blob/main/{pdf_path}"
+            )
+            documentos.append(
+                {
+                    "id": doc_id,
+                    "tipo": "procedimento",
+                    "subtipo": "proret",
+                    "numero": titulo[:80],
+                    "ano": None,
+                    "titulo": f"PRORET — {titulo}",
+                    "assunto": "Procedimentos de Regulação Tarifária",
+                    "situacao": None,
+                    "data_publicacao": None,
+                    "fonte": "gitlab",
+                    "url_original": url_blob,
+                    "url_consolidado": None,
+                    "formato_original": "pdf",
+                    "texto_bruto": resultado["texto"],
+                    "num_paginas": resultado["num_paginas"],
+                    "metodo_extracao": resultado["metodo"],
+                    "qualidade_extracao": resultado["qualidade_extracao"],
+                    "hf_path": None,
+                    "scraped_at": scraped_at,
+                }
+            )
+            print(f"    ✅ {len(resultado['texto'])} chars")
+        except Exception as e:
+            print(f"    ❌ Erro: {e}")
+
+        time.sleep(1)
+
+    print(f"\n✅ {len(documentos)} documentos PRORET coletados.")
     return documentos
 
 

@@ -12,9 +12,9 @@ Este módulo centraliza essa lógica para que os scrapers não precisem saber
 os detalhes de cada parser — eles só chamam `extrair_texto(conteudo, formato)`.
 
 Onde roda:
-    - PDF: Google Colab (PyMuPDF exige compilação nativa)
+    - PDF: máquina local (`make install` inclui PyMuPDF)
     - HTML: qualquer lugar (BeautifulSoup é Python puro)
-    - DOCX/XLSX: Wave 3 — levanta NotImplementedError por enquanto
+    - DOCX/XLSX: manuais da ANEEL (python-docx, openpyxl)
 
 Como usar:
     from src.ingestion.extractor import extrair_texto
@@ -33,7 +33,7 @@ def extrair_texto_pdf(conteudo: bytes) -> dict:
 
     Processa o PDF inteiramente em memória — NUNCA salva em disco.
     Isso é fundamental: o projeto opera com a premissa de que dados brutos
-    não tocam a máquina local (Colab → HF Hub direto).
+    não são persistidos em disco no repo (processamento em memória → HF Hub).
 
     Calcula `qualidade_extracao` como a fração de páginas que têm texto
     substancial (>100 chars). Páginas com menos que isso provavelmente
@@ -57,7 +57,7 @@ def extrair_texto_pdf(conteudo: bytes) -> dict:
         raise RuntimeError(
             "PyMuPDF (fitz) não está instalado. "
             "Instale com: pip install PyMuPDF. "
-            "Nota: este módulo roda melhor no Google Colab."
+            "Nota: instale com make install (requirements-dev.txt)."
         )
 
     pdf = fitz.open(stream=io.BytesIO(conteudo), filetype="pdf")
@@ -127,6 +127,57 @@ def extrair_texto_html(html: str) -> dict:
     }
 
 
+def extrair_texto_docx(conteudo: bytes) -> dict:
+    """Extrai texto de um arquivo DOCX (parágrafos concatenados)."""
+    try:
+        from docx import Document
+    except ImportError:
+        raise RuntimeError(
+            "python-docx não está instalado. Instale com: pip install python-docx"
+        )
+
+    doc = Document(io.BytesIO(conteudo))
+    partes = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+    texto_final = "\n\n".join(partes)
+    qualidade = 1.0 if len(texto_final) > 1000 else 0.5
+
+    return {
+        "texto": texto_final,
+        "num_paginas": None,
+        "qualidade_extracao": qualidade,
+        "metodo": "python_docx",
+    }
+
+
+def extrair_texto_xlsx(conteudo: bytes) -> dict:
+    """Extrai texto de planilha XLSX (células não vazias, por aba)."""
+    try:
+        from openpyxl import load_workbook
+    except ImportError:
+        raise RuntimeError(
+            "openpyxl não está instalado. Instale com: pip install openpyxl"
+        )
+
+    wb = load_workbook(io.BytesIO(conteudo), read_only=True, data_only=True)
+    partes: list[str] = []
+    for sheet in wb.worksheets:
+        for row in sheet.iter_rows(values_only=True):
+            for cell in row:
+                if cell is not None and str(cell).strip():
+                    partes.append(str(cell).strip())
+    wb.close()
+
+    texto_final = "\n".join(partes)
+    qualidade = 1.0 if len(texto_final) > 1000 else 0.5
+
+    return {
+        "texto": texto_final,
+        "num_paginas": None,
+        "qualidade_extracao": qualidade,
+        "metodo": "openpyxl",
+    }
+
+
 def extrair_texto(conteudo: bytes | str, formato: str) -> dict:
     """
     Dispatcher principal — extrai texto de qualquer formato suportado.
@@ -162,14 +213,14 @@ def extrair_texto(conteudo: bytes | str, formato: str) -> dict:
         return extrair_texto_html(conteudo)
 
     elif formato_lower == "docx":
-        raise NotImplementedError(
-            "Extração de DOCX será implementada na Wave 3. " "Biblioteca: python-docx."
-        )
+        if not isinstance(conteudo, bytes):
+            raise TypeError("Para DOCX, conteudo deve ser bytes.")
+        return extrair_texto_docx(conteudo)
 
     elif formato_lower == "xlsx":
-        raise NotImplementedError(
-            "Extração de XLSX será implementada na Wave 3. " "Biblioteca: openpyxl."
-        )
+        if not isinstance(conteudo, bytes):
+            raise TypeError("Para XLSX, conteudo deve ser bytes.")
+        return extrair_texto_xlsx(conteudo)
 
     else:
         raise ValueError(
