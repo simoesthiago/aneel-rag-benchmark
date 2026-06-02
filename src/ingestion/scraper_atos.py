@@ -43,7 +43,6 @@ from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
 from src.ingestion.extractor import extrair_texto
 
 # --- Constantes do Power BI ---
-# Capturadas via Playwright inspecionando as requisições de rede (2026-05-28).
 # Se a ANEEL atualizar o relatório, esses IDs podem mudar.
 _POWERBI_RESOURCE_KEY = "3dcb7cfd-a90c-4d66-8ec3-6934cb4253de"
 _POWERBI_DATASET_ID = "762a020c-217a-4dae-b9d3-d9b01fd2c14a"

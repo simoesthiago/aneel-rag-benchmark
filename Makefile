@@ -31,3 +31,6 @@ validate-corpus:
 
 ingest-wave3:
 	python3 -m src.ingestion.run_wave --wave 3 --mesclar-com-hub --pular-leis
+
+ingest-wave4:
+	python3 -m src.ingestion.run_wave --wave 4 --mesclar-com-hub

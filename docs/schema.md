@@ -19,7 +19,8 @@ as Camadas 2-5 estiverem implementadas tem custo alto — decidir antes.**
 | Fonte | Tipo | Exemplos | Volume estimado |
 |---|---|---|---|
 | Gestão do Estoque Regulatório | Atos normativos | RENs, REHs, Despachos | ~1.460 atos (193 RENs vigentes) |
-| Procedimentos Regulatórios | Procedimentos técnicos | PRODIST (11 mód.), PRORET, Regras de Transmissão (6 mód.) | ~30 documentos |
+| Procedimentos Regulatórios (GitLab ANEEL) | Procedimentos técnicos | PRODIST (11 mód.), PRORET, Regras de Transmissão (6 mód.) | ~30 documentos |
+| Procedimentos de Rede (SharePoint ONS) | Procedimentos operacionais | 9 módulos, ~50 submódulos, tipos RS/OP/PR/CR/RQ/IN | ~165 documentos |
 | Manuais, Modelos e Instruções | Guias operacionais | Manuais de distribuição, tarifas, geração | ~100+ documentos |
 | Leis estruturantes | Legislação federal | Lei 9.427, Lei 8.987, Lei 9.074, Lei 13.848 | 4 documentos |
 
@@ -40,7 +41,7 @@ Cada linha é **um documento** do corpus, independente da fonte.
 | `assunto` | `str` | Sim | Assunto ou área (quando disponível no metadado) |
 | `situacao` | `str` | Sim | `"vigente"`, `"revogada"`, `"consolidada"` (atos) ou `null` (manuais/leis) |
 | `data_publicacao` | `str` | Sim | Data no formato `"YYYY-MM-DD"` (quando disponível) |
-| `fonte` | `str` | Não | Origem: `"cedoc"`, `"gitlab"`, `"gov_br"`, `"planalto"` |
+| `fonte` | `str` | Não | Origem: `"cedoc"`, `"gitlab"`, `"gov_br"`, `"planalto"`, `"ons_org_br"` |
 | `url_original` | `str` | Não | URL do documento na fonte original |
 | `url_consolidado` | `str` | Sim | URL da versão consolidada (atos: `bren...`), se existir |
 | `formato_original` | `str` | Não | `"pdf"`, `"html"`, `"docx"`, `"xlsx"` |

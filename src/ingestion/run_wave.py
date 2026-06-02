@@ -3,9 +3,7 @@ run_wave.py — Orquestrador do pipeline de ingestão por wave.
 
 Por que este módulo existe?
 ---------------------------
-Os scrapers (`scraper_atos`, `scraper_leis`, `scraper_procedimentos`,
-`scraper_manuais`) são unidades isoladas. Este módulo amarra tudo: define o
-escopo de cada Wave, chama os scrapers na ordem correta, consolida no schema,
+Este módulo amarra tudo: define o escopo de cada Wave, chama os scrapers na ordem correta, consolida no schema,
 valida e publica no HuggingFace Hub.
 
 Roda na máquina local (IP residencial brasileiro para o cedoc/) com
@@ -36,6 +34,7 @@ from src.ingestion.scraper_procedimentos import (
     coletar_proret,
     coletar_regras_transmissao,
 )
+from src.ingestion.scraper_procedimentos_rede import coletar_procedimentos_rede
 from src.ingestion.uploader import (
     carregar_corpus_hub,
     mesclar_corpus,
@@ -91,8 +90,10 @@ def _coletar_procedimentos_wave(wave: int) -> list[dict]:
         for m in range(1, 12):
             docs.extend(coletar_prodist_modulo(m))
         docs.extend(coletar_regras_transmissao())
-    else:  # wave 3 — só PRORET (PRODIST/RegTransm já na Wave 2)
+    elif wave == 3:  # só PRORET (PRODIST/RegTransm já na Wave 2)
         docs.extend(coletar_proret())
+    else:  # wave 4 — Procedimentos de Rede (ONS SharePoint)
+        docs.extend(coletar_procedimentos_rede())
     return docs
 
 
@@ -101,11 +102,12 @@ def main() -> int:
     parser.add_argument(
         "--wave",
         type=int,
-        choices=[1, 2, 3],
+        choices=[1, 2, 3, 4],
         required=True,
         help=(
             "Wave: 1=amostra (~15 docs), 2=vigentes+PRODIST+RegTransm (~220), "
-            "3=revogadas+PRORET+manuais (merge com Hub)"
+            "3=revogadas+PRORET+manuais (merge com Hub), "
+            "4=Procedimentos de Rede ONS (~165 docs, merge com Hub)"
         ),
     )
     parser.add_argument(
@@ -142,7 +144,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    mesclar = args.mesclar_com_hub or (args.wave == 3 and not args.sem_merge)
+    mesclar = args.mesclar_com_hub or (args.wave in (3, 4) and not args.sem_merge)
 
     started_at = datetime.now(timezone.utc)
     print("==========================================================")
@@ -154,7 +156,7 @@ def main() -> int:
     erros_fonte: list[str] = []
     docs_leis: list[dict] = []
 
-    if args.pular_leis or args.wave == 3:
+    if args.pular_leis or args.wave in (3, 4):
         print("\n→ Leis: puladas (já no Hub ou --pular-leis)")
     else:
         try:
@@ -164,13 +166,16 @@ def main() -> int:
             erros_fonte.append(f"Leis: {e}")
             print(f"\n→ Leis: ❌ FALHA — {e}")
 
-    try:
-        docs_atos = _coletar_atos_wave(args.wave, max_atos=args.max_atos)
-        print(f"\n→ Atos normativos: {len(docs_atos)} documentos")
-    except Exception as e:
-        docs_atos = []
-        erros_fonte.append(f"Atos: {e}")
-        print(f"\n→ Atos normativos: ❌ FALHA — {e}")
+    docs_atos: list[dict] = []
+    if args.wave == 4:
+        print("\n→ Atos normativos: pulados (Wave 4 coleta só Procedimentos de Rede)")
+    else:
+        try:
+            docs_atos = _coletar_atos_wave(args.wave, max_atos=args.max_atos)
+            print(f"\n→ Atos normativos: {len(docs_atos)} documentos")
+        except Exception as e:
+            erros_fonte.append(f"Atos: {e}")
+            print(f"\n→ Atos normativos: ❌ FALHA — {e}")
 
     try:
         docs_proc = _coletar_procedimentos_wave(args.wave)

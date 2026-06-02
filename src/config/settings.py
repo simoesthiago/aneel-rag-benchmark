@@ -114,17 +114,22 @@ ANEEL_DOC_TYPES: dict[str, str] = {
 # Range temporal do corpus. A ANEEL existe desde 1996 (Lei 9.427/1996).
 ANEEL_YEAR_RANGE: tuple[int, int] = (1996, 2026)
 
-# --- Fonte 2: Procedimentos regulatórios (GitLab público) ---
-# PRODIST, PRORET e Regras de Transmissão vivem neste GitLab.
-# Das 5 subcategorias do portal, 3 estão no GitLab:
+# --- Fonte 2: Procedimentos regulatórios ---
+# 2a. PRODIST, PRORET e Regras de Transmissão (GitLab público da ANEEL)
 #   - PRODIST (distribuição) → procreg/prodist/
 #   - PRORET (tarifário) → procreg/proret/
 #   - Regras de Transmissão → procreg/regtransm/
-# As outras 2 são fora do escopo:
-#   - Procedimentos de Rede → pertencem ao ONS, não à ANEEL
-#   - EE/P&D (PROPEE + PROPDI) → são RENs (920/2021 e 1045/2022), cobertas por scraper_atos
 ANEEL_GITLAB_URL: str = "https://git.aneel.gov.br"
 ANEEL_GITLAB_PROJECT: str = "publico/centralconteudo"
+
+# 2b. Procedimentos de Rede (SharePoint público do ONS)
+# Embora propostos pelo ONS, são aprovados parcialmente pela ANEEL (REN 903/2020)
+# e obrigatórios para toda distribuidora, geradora e transmissora no SIN.
+# O SharePoint permite acesso anônimo (ContentTypeId fixo para os documentos).
+# Nota: EE/P&D (PROPEE + PROPDI) são RENs (920/2021 e 1045/2022) → scraper_atos.
+ONS_PROXY_URL: str = (
+    "https://proxyportais.ons.org.br/ons.portalempregado.proxy"
+)
 
 # --- Fonte 3: Manuais, Modelos e Instruções (gov.br) ---
 ANEEL_MANUAIS_URL: str = (

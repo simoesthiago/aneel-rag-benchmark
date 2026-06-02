@@ -13,7 +13,7 @@ Subcategorias de Procedimentos Regulatórios (5 no portal gov.br):
     1. PRODIST (11 módulos) — Procedimentos de Distribuição → GitLab: procreg/prodist/
     2. PRORET — Procedimentos de Regulação Tarifária → GitLab: procreg/proret/
     3. Regras de Transmissão (6 módulos) → GitLab: procreg/regtransm/
-    4. Procedimentos de Rede → FORA DO ESCOPO (pertencem ao ONS, não à ANEEL)
+    4. Procedimentos de Rede → scraper_procedimentos_rede.py (ONS SharePoint)
     5. EE/P&D (PROPEE + PROPDI) → FORA DO ESCOPO (são RENs, já cobertas por scraper_atos.py)
 
 Este scraper cobre as subcategorias 1, 2 e 3 — todas no mesmo GitLab.
