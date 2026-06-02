@@ -31,10 +31,14 @@ import warnings
 import requests
 import urllib3
 from bs4 import BeautifulSoup
+from curl_cffi import requests as cffi_requests
 
 # git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
 # Suprimimos o aviso para não poluir o output do pipeline.
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
+# Domínios que exigem curl_cffi (Cloudflare TLS fingerprinting).
+_CFFI_HOSTS = {"www2.aneel.gov.br"}
 
 from src.config.settings import ANEEL_MANUAIS_URL, MANUAIS_SUBCATEGORIAS
 from src.ingestion.extractor import extrair_texto
@@ -110,9 +114,23 @@ def _extrair_links_arquivos(html: str, base_url: str) -> list[tuple[str, str, st
 
 
 def _baixar_url(url: str) -> bytes:
-    # verify=False: git.aneel.gov.br usa certificado intermediário que o Python no
-    # macOS não consegue verificar via bundled certs. Risco aceitável — servidor gov.br.
-    resp = requests.get(url, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S, verify=False)
+    """
+    Baixa um arquivo de URL.
+
+    www2.aneel.gov.br usa Cloudflare TLS fingerprinting — requests puro recebe 403.
+    Para esse domínio, usamos curl_cffi com impersonate="chrome120" (mesmo método
+    do scraper_atos.py para o cedoc/).
+
+    Para outros domínios (git.aneel.gov.br, gov.br etc.), usamos requests normal
+    com verify=False para contornar o certificado intermediário do GitLab ANEEL.
+    """
+    from urllib.parse import urlparse
+
+    host = urlparse(url).hostname or ""
+    if host in _CFFI_HOSTS:
+        resp = cffi_requests.get(url, impersonate="chrome120", timeout=_REQUEST_TIMEOUT_S)
+    else:
+        resp = requests.get(url, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S, verify=False)
     resp.raise_for_status()
     return resp.content
 
