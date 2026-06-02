@@ -26,7 +26,8 @@ from datetime import datetime, timezone
 import requests
 
 from src.config.settings import LEIS_ESTRUTURANTES
-from src.ingestion.extractor import extrair_texto
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
 
 # Headers HTTP — identificação como navegador para evitar bloqueios
 _HEADERS = {
@@ -99,27 +100,23 @@ def coletar_leis() -> list[dict]:
             )
 
             documentos.append(
-                {
-                    "id": lei_id,
-                    "tipo": "lei",
-                    "subtipo": "lei_federal",
-                    "numero": meta["numero"],
-                    "ano": meta["ano"],
-                    "titulo": meta["titulo"],
-                    "assunto": None,
-                    "situacao": None,
-                    "data_publicacao": None,
-                    "fonte": "planalto",
-                    "url_original": url,
-                    "url_consolidado": None,
-                    "formato_original": "html",
-                    "texto_bruto": resultado["texto"],
-                    "num_paginas": resultado["num_paginas"],
-                    "metodo_extracao": resultado["metodo"],
-                    "qualidade_extracao": resultado["qualidade_extracao"],
-                    "hf_path": None,
-                    "scraped_at": scraped_at,
-                }
+                montar_documento(
+                    id=lei_id,
+                    tipo="lei",
+                    subtipo="lei_federal",
+                    numero=meta["numero"],
+                    ano=meta["ano"],
+                    titulo=meta["titulo"],
+                    assunto=None,
+                    situacao=None,
+                    data_publicacao=None,
+                    fonte="planalto",
+                    url_original=url,
+                    url_consolidado=None,
+                    formato_original="html",
+                    resultado=resultado,
+                    scraped_at=scraped_at,
+                )
             )
 
         except Exception as e:

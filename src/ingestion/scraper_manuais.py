@@ -41,7 +41,8 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 _CFFI_HOSTS = {"www2.aneel.gov.br"}
 
 from src.config.settings import ANEEL_MANUAIS_URL, MANUAIS_SUBCATEGORIAS
-from src.ingestion.extractor import extrair_texto
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
 
 _HEADERS = {
     "User-Agent": (
@@ -135,43 +136,10 @@ def _baixar_url(url: str) -> bytes:
     return resp.content
 
 
-def _montar_documento(
-    *,
-    doc_id: str,
-    titulo: str,
-    area_slug: str,
-    url: str,
-    formato: str,
-    resultado: dict,
-    scraped_at: str,
-) -> dict:
-    area_nome = area_slug.split("/")[0].replace("-", " ").title()
-    return {
-        "id": doc_id,
-        "tipo": "manual",
-        "subtipo": area_slug.split("/")[0],
-        "numero": None,
-        "ano": None,
-        "titulo": titulo[:500] if titulo else doc_id,
-        "assunto": area_nome,
-        "situacao": None,
-        "data_publicacao": None,
-        "fonte": "gov_br",
-        "url_original": url,
-        "url_consolidado": None,
-        "formato_original": formato,
-        "texto_bruto": resultado["texto"],
-        "num_paginas": resultado.get("num_paginas"),
-        "metodo_extracao": resultado["metodo"],
-        "qualidade_extracao": resultado["qualidade_extracao"],
-        "hf_path": None,
-        "scraped_at": scraped_at,
-    }
-
-
 def coletar_manuais(
     subcategorias: list[str] | None = None,
     max_manuais: int | None = None,
+    estrategia: str = "pymupdf",
 ) -> list[dict]:
     """
     Coleta manuais de todas as subcategorias do portal gov.br.
@@ -221,17 +189,28 @@ def coletar_manuais(
 
             try:
                 conteudo = _baixar_url(url_arquivo)
-                resultado = extrair_texto(conteudo, formato)
+                # HTML não tem estratégia alternativa — ignora o parâmetro.
+                ext = estrategia if formato == "pdf" else None
+                resultado = extrair_texto(conteudo, formato, estrategia=ext)
                 if len(resultado["texto"].strip()) < 100:
                     print("      ⚠️  Texto < 100 chars — pulando")
                     continue
 
-                doc = _montar_documento(
-                    doc_id=doc_id,
-                    titulo=titulo,
-                    area_slug=slug,
-                    url=url_arquivo,
-                    formato=formato,
+                area_nome = slug.split("/")[0].replace("-", " ").title()
+                doc = montar_documento(
+                    id=doc_id,
+                    tipo="manual",
+                    subtipo=slug.split("/")[0],
+                    numero=None,
+                    ano=None,
+                    titulo=titulo[:500] if titulo else doc_id,
+                    assunto=area_nome,
+                    situacao=None,
+                    data_publicacao=None,
+                    fonte="gov_br",
+                    url_original=url_arquivo,
+                    url_consolidado=None,
+                    formato_original=formato,
                     resultado=resultado,
                     scraped_at=scraped_at,
                 )

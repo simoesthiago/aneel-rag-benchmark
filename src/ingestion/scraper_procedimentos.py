@@ -47,7 +47,8 @@ import urllib3
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 from src.config.settings import ANEEL_GITLAB_URL, ANEEL_GITLAB_PROJECT
-from src.ingestion.extractor import extrair_texto
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
 
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
@@ -149,7 +150,7 @@ def _encontrar_pdf_em_pasta(path: str) -> str | None:
     return None
 
 
-def coletar_prodist_modulo(modulo: int) -> list[dict]:
+def coletar_prodist_modulo(modulo: int, estrategia: str = "pymupdf") -> list[dict]:
     """
     Coleta PDFs de um módulo específico do PRODIST.
 
@@ -244,7 +245,7 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
         pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
         print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
 
-        resultado = extrair_texto(pdf_bytes, "pdf")
+        resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
         print(
             f"    📄 {resultado['num_paginas']} págs | "
             f"{len(resultado['texto'])} chars | "
@@ -257,27 +258,23 @@ def coletar_prodist_modulo(modulo: int) -> list[dict]:
         )
 
         documentos.append(
-            {
-                "id": doc_id,
-                "tipo": "procedimento",
-                "subtipo": "prodist",
-                "numero": f"Módulo {modulo}",
-                "ano": None,  # PRODIST é atualizado continuamente
-                "titulo": f"PRODIST — Módulo {modulo}",
-                "assunto": "Procedimentos de Distribuição",
-                "situacao": None,
-                "data_publicacao": None,
-                "fonte": "gitlab",
-                "url_original": url_blob,
-                "url_consolidado": None,
-                "formato_original": "pdf",
-                "texto_bruto": resultado["texto"],
-                "num_paginas": resultado["num_paginas"],
-                "metodo_extracao": resultado["metodo"],
-                "qualidade_extracao": resultado["qualidade_extracao"],
-                "hf_path": None,
-                "scraped_at": scraped_at,
-            }
+            montar_documento(
+                id=doc_id,
+                tipo="procedimento",
+                subtipo="prodist",
+                numero=f"Módulo {modulo}",
+                ano=None,
+                titulo=f"PRODIST — Módulo {modulo}",
+                assunto="Procedimentos de Distribuição",
+                situacao=None,
+                data_publicacao=None,
+                fonte="gitlab",
+                url_original=url_blob,
+                url_consolidado=None,
+                formato_original="pdf",
+                resultado=resultado,
+                scraped_at=scraped_at,
+            )
         )
 
     except Exception as e:
@@ -347,7 +344,7 @@ def _id_proret_de_path(gitlab_path: str) -> str:
     return f"proret-{slug}" if slug else "proret-documento"
 
 
-def coletar_proret() -> list[dict]:
+def coletar_proret(estrategia: str = "pymupdf") -> list[dict]:
     """
     Coleta todos os PDFs do PRORET no GitLab (módulos 2–12 e submódulos).
 
@@ -373,7 +370,7 @@ def coletar_proret() -> list[dict]:
 
         try:
             pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
-            resultado = extrair_texto(pdf_bytes, "pdf")
+            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
             if len(resultado["texto"].strip()) < 100:
                 print("    ⚠️  Texto curto — pulando")
                 continue
@@ -383,27 +380,23 @@ def coletar_proret() -> list[dict]:
                 f"/-/blob/main/{pdf_path}"
             )
             documentos.append(
-                {
-                    "id": doc_id,
-                    "tipo": "procedimento",
-                    "subtipo": "proret",
-                    "numero": titulo[:80],
-                    "ano": None,
-                    "titulo": f"PRORET — {titulo}",
-                    "assunto": "Procedimentos de Regulação Tarifária",
-                    "situacao": None,
-                    "data_publicacao": None,
-                    "fonte": "gitlab",
-                    "url_original": url_blob,
-                    "url_consolidado": None,
-                    "formato_original": "pdf",
-                    "texto_bruto": resultado["texto"],
-                    "num_paginas": resultado["num_paginas"],
-                    "metodo_extracao": resultado["metodo"],
-                    "qualidade_extracao": resultado["qualidade_extracao"],
-                    "hf_path": None,
-                    "scraped_at": scraped_at,
-                }
+                montar_documento(
+                    id=doc_id,
+                    tipo="procedimento",
+                    subtipo="proret",
+                    numero=titulo[:80],
+                    ano=None,
+                    titulo=f"PRORET — {titulo}",
+                    assunto="Procedimentos de Regulação Tarifária",
+                    situacao=None,
+                    data_publicacao=None,
+                    fonte="gitlab",
+                    url_original=url_blob,
+                    url_consolidado=None,
+                    formato_original="pdf",
+                    resultado=resultado,
+                    scraped_at=scraped_at,
+                )
             )
             print(f"    ✅ {len(resultado['texto'])} chars")
         except Exception as e:
@@ -455,7 +448,7 @@ _REGRAS_TRANSMISSAO_MODULOS = [
 ]
 
 
-def coletar_regras_transmissao() -> list[dict]:
+def coletar_regras_transmissao(estrategia: str = "pymupdf") -> list[dict]:
     """
     Coleta os 6 módulos das Regras de Transmissão do GitLab da ANEEL.
 
@@ -484,7 +477,7 @@ def coletar_regras_transmissao() -> list[dict]:
             pdf_bytes = baixar_arquivo_gitlab(gitlab_path, ref="main")
             print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
 
-            resultado = extrair_texto(pdf_bytes, "pdf")
+            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
             print(
                 f"    📄 {resultado['num_paginas']} págs | "
                 f"{len(resultado['texto'])} chars | "
@@ -497,27 +490,23 @@ def coletar_regras_transmissao() -> list[dict]:
             )
 
             documentos.append(
-                {
-                    "id": doc_id,
-                    "tipo": "procedimento",
-                    "subtipo": "regras_transmissao",
-                    "numero": f"Módulo {modulo}",
-                    "ano": 2020,  # REN 905/2020 aprovou a estrutura
-                    "titulo": titulo,
-                    "assunto": "Regras dos Serviços de Transmissão",
-                    "situacao": None,
-                    "data_publicacao": None,
-                    "fonte": "gitlab",
-                    "url_original": url_blob,
-                    "url_consolidado": None,
-                    "formato_original": "pdf",
-                    "texto_bruto": resultado["texto"],
-                    "num_paginas": resultado["num_paginas"],
-                    "metodo_extracao": resultado["metodo"],
-                    "qualidade_extracao": resultado["qualidade_extracao"],
-                    "hf_path": None,
-                    "scraped_at": scraped_at,
-                }
+                montar_documento(
+                    id=doc_id,
+                    tipo="procedimento",
+                    subtipo="regras_transmissao",
+                    numero=f"Módulo {modulo}",
+                    ano=2020,
+                    titulo=titulo,
+                    assunto="Regras dos Serviços de Transmissão",
+                    situacao=None,
+                    data_publicacao=None,
+                    fonte="gitlab",
+                    url_original=url_blob,
+                    url_consolidado=None,
+                    formato_original="pdf",
+                    resultado=resultado,
+                    scraped_at=scraped_at,
+                )
             )
 
         except Exception as e:

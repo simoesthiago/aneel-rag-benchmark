@@ -31,7 +31,6 @@ Como usar:
 
 import re
 import time
-import urllib.parse
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -40,7 +39,8 @@ import requests
 from curl_cffi import requests as cffi_requests
 
 from src.config.settings import ANEEL_CEDOC_URL, ANEEL_POWERBI_URL
-from src.ingestion.extractor import extrair_texto
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
 
 # --- Constantes do Power BI ---
 # Se a ANEEL atualizar o relatório, esses IDs podem mudar.
@@ -397,7 +397,11 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
     return None
 
 
-def coletar_atos(atos: list[dict], max_atos: int | None = None) -> list[dict]:
+def coletar_atos(
+    atos: list[dict],
+    max_atos: int | None = None,
+    estrategia: str = "pymupdf",
+) -> list[dict]:
     """
     Para cada ato da lista, baixa o PDF, extrai texto e monta dict do schema.
 
@@ -428,48 +432,38 @@ def coletar_atos(atos: list[dict], max_atos: int | None = None) -> list[dict]:
             continue
 
         try:
-            resultado = extrair_texto(pdf_bytes, "pdf")
+            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
             print(
                 f"    ✅ {resultado['num_paginas']} págs | "
                 f"{len(resultado['texto'])} chars | "
                 f"qualidade: {resultado['qualidade_extracao']}"
             )
 
-            # Converter timestamp do Power BI (ms) para data
             data_pub = None
             data_raw = ato.get("Data")
             if data_raw and not pd.isna(data_raw):
                 data_pub = pd.to_datetime(data_raw, unit="ms").strftime("%Y-%m-%d")
 
-            # Montar ID: "ren-2021-1000"
             doc_id = f"{sigla.lower()}-{ano}-{numero}"
 
-            # Verificar se versão consolidada foi usada
-            url_original = montar_url_ato(sigla, ano, numero)
-            url_consolidada = montar_url_consolidada(sigla, ano, numero)
-
             documentos.append(
-                {
-                    "id": doc_id,
-                    "tipo": "ato_normativo",
-                    "subtipo": sigla.lower(),
-                    "numero": str(numero),
-                    "ano": ano,
-                    "titulo": ato.get("Ementa") or resolucao,
-                    "assunto": None,
-                    "situacao": _mapear_situacao(ato.get("Situação")),
-                    "data_publicacao": data_pub,
-                    "fonte": "cedoc",
-                    "url_original": url_original,
-                    "url_consolidado": url_consolidada,
-                    "formato_original": "pdf",
-                    "texto_bruto": resultado["texto"],
-                    "num_paginas": resultado["num_paginas"],
-                    "metodo_extracao": resultado["metodo"],
-                    "qualidade_extracao": resultado["qualidade_extracao"],
-                    "hf_path": None,
-                    "scraped_at": scraped_at,
-                }
+                montar_documento(
+                    id=doc_id,
+                    tipo="ato_normativo",
+                    subtipo=sigla.lower(),
+                    numero=str(numero),
+                    ano=ano,
+                    titulo=ato.get("Ementa") or resolucao,
+                    assunto=None,
+                    situacao=_mapear_situacao(ato.get("Situação")),
+                    data_publicacao=data_pub,
+                    fonte="cedoc",
+                    url_original=montar_url_ato(sigla, ano, numero),
+                    url_consolidado=montar_url_consolidada(sigla, ano, numero),
+                    formato_original="pdf",
+                    resultado=resultado,
+                    scraped_at=scraped_at,
+                )
             )
 
         except Exception as e:

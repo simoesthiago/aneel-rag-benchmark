@@ -38,7 +38,8 @@ from datetime import datetime, timezone
 import requests
 
 from src.config.settings import ONS_PROXY_URL
-from src.ingestion.extractor import extrair_texto
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
 
 # Endpoint da API REST SharePoint que lista os documentos de Procedimentos de Rede.
 # ContentTypeId filtra só documentos de procedimento (exclui outros itens da lista).
@@ -110,7 +111,7 @@ def listar_vigentes() -> list[dict]:
     return resp.json().get("value", [])
 
 
-def coletar_procedimentos_rede() -> list[dict]:
+def coletar_procedimentos_rede(estrategia: str = "pymupdf") -> list[dict]:
     """
     Coleta os ~165 Procedimentos de Rede vigentes do ONS e extrai texto dos PDFs.
 
@@ -137,7 +138,6 @@ def coletar_procedimentos_rede() -> list[dict]:
 
     for item in vigentes:
         submodulo = item.get("subModulo", "")
-        tipo_doc = item.get("tipoDocumento", "")
         modulo = item.get("modulo", "")
         revisao = item.get("revisao", "")
         titulo_item = item.get("Title", submodulo)
@@ -167,13 +167,12 @@ def coletar_procedimentos_rede() -> list[dict]:
             resp.raise_for_status()
             pdf_bytes = resp.content
 
-            resultado = extrair_texto(pdf_bytes, "pdf")
+            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
 
             if len(resultado["texto"].strip()) < 100:
-                print(f"    ⚠️  Texto muito curto — pulando")
+                print("    ⚠️  Texto muito curto — pulando")
                 continue
 
-            # Ano de vigência ou revisão
             ano: int | None = None
             vigencia_inicio = item.get("vigenciaInicio") or ""
             if vigencia_inicio:
@@ -193,27 +192,23 @@ def coletar_procedimentos_rede() -> list[dict]:
             )
 
             documentos.append(
-                {
-                    "id": doc_id,
-                    "tipo": "procedimento",
-                    "subtipo": "procedimento_rede",
-                    "numero": numero,
-                    "ano": ano,
-                    "titulo": f"Procedimentos de Rede — {titulo_item}",
-                    "assunto": modulo,
-                    "situacao": None,
-                    "data_publicacao": data_pub,
-                    "fonte": "ons_org_br",
-                    "url_original": pdf_url,
-                    "url_consolidado": None,
-                    "formato_original": "pdf",
-                    "texto_bruto": resultado["texto"],
-                    "num_paginas": resultado["num_paginas"],
-                    "metodo_extracao": resultado["metodo"],
-                    "qualidade_extracao": resultado["qualidade_extracao"],
-                    "hf_path": None,
-                    "scraped_at": scraped_at,
-                }
+                montar_documento(
+                    id=doc_id,
+                    tipo="procedimento",
+                    subtipo="procedimento_rede",
+                    numero=numero,
+                    ano=ano,
+                    titulo=f"Procedimentos de Rede — {titulo_item}",
+                    assunto=modulo,
+                    situacao=None,
+                    data_publicacao=data_pub,
+                    fonte="ons_org_br",
+                    url_original=pdf_url,
+                    url_consolidado=None,
+                    formato_original="pdf",
+                    resultado=resultado,
+                    scraped_at=scraped_at,
+                )
             )
 
         except Exception as e:

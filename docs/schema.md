@@ -58,13 +58,25 @@ O `id` é composto pelo tipo + identificador legível:
 
 ```
 Atos normativos:    "ren-2021-1000", "reh-2026-3589"
-Procedimentos:      "prodist-modulo-08", "proret-submódulo-2.1"
+Procedimentos:      "prodist-modulo-08", "proret-submódulo-2.1", "proc-rede-1-1-op"
 Manuais:            "manual-distribuicao-cartilha-gd"
 Leis:               "lei-9427-1996", "lei-8987-1995"
 ```
 
 **Por que string?** Facilita joins, lookup e debugging. `"ren-2021-1000"` é
 autoexplicativo em logs — um número puro `1000` não é.
+
+### Unicidade e benchmark de extração (Opção A)
+
+A chave de uma linha é `(id, metodo_extracao)`, não só `id`. O mesmo documento
+pode ser extraído por múltiplas estratégias — cada uma gera uma linha distinta.
+Isso viabiliza o benchmark de ingestão (PyMuPDF vs Docling vs LlamaParse) e a
+comparação de downstream RAG na Camada 4.
+
+Estratégias atuais: `"pymupdf"` (baseline) e `"docling"`.
+
+**Implicação para a Camada 2:** o `chunk_id` deve incluir a estratégia para que a
+FK não seja ambígua: `{id}::{metodo_extracao}::{strategy}::{index}`.
 
 ### Notas de design
 
@@ -140,14 +152,18 @@ da Camada 1.
 aneel-corpus/
   data/
     documents/
-      tipo=ato_normativo/part-0.parquet
-      tipo=procedimento/part-0.parquet
-      tipo=manual/part-0.parquet
-      tipo=lei/part-0.parquet
+      tipo=ato_normativo/metodo_extracao=pymupdf/part-0.parquet
+      tipo=ato_normativo/metodo_extracao=docling/part-0.parquet
+      tipo=procedimento/metodo_extracao=pymupdf/part-0.parquet
+      tipo=procedimento/metodo_extracao=docling/part-0.parquet
+      tipo=manual/metodo_extracao=pymupdf/part-0.parquet
+      tipo=lei/metodo_extracao=html_parser/part-0.parquet
 ```
 
-Particionado por `tipo` para que queries como "todos os procedimentos" ou
-"apenas atos normativos vigentes" não precisem ler o dataset inteiro.
+Particionado por `(tipo, metodo_extracao)` para que queries como "todos os
+procedimentos extraídos com Docling" não precisem ler o dataset inteiro.
+Retrocompatível: corpus legado (sem partição `metodo_extracao`) é lido com
+inferência `metodo_extracao = "pymupdf"` em `uploader.carregar_corpus_hub()`.
 
 ---
 

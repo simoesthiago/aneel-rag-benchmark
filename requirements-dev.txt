@@ -18,9 +18,10 @@ requests>=2.32           # HTTP para Power BI, GitLab, Planalto
 curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome (Cloudflare Bot Management)
 beautifulsoup4>=4.12     # parsing de HTML (leis do planalto.gov.br)
 lxml>=5.2                # backend rápido do BeautifulSoup
-PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)
-python-docx>=1.1         # manuais DOCX (Wave 3)
-openpyxl>=3.1            # manuais XLSX (Wave 3)
+PyMuPDF>=1.24            # extração de texto de PDFs — estratégia baseline (importado como fitz)
+pymupdf4llm>=0.0.17      # extração de PDFs em Markdown — 2ª estratégia do benchmark
+python-docx>=1.1         # manuais DOCX
+openpyxl>=3.1            # manuais XLSX
 tqdm>=4.66               # barras de progresso
 
 # --- Dados e publicação ---

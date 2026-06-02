@@ -14,7 +14,7 @@ import pandas as pd
 from unittest.mock import patch, MagicMock
 
 # =========================================================================
-# Testes do extractor.py
+# Testes do pacote extractors/
 # =========================================================================
 
 
@@ -23,7 +23,7 @@ class TestExtrairTextoHtml:
 
     def test_extrai_texto_de_html_simples(self):
         """HTML com parágrafos retorna texto limpo."""
-        from src.ingestion.extractor import extrair_texto_html
+        from src.ingestion.extractors import extrair_texto_html
 
         html = """
         <html>
@@ -40,14 +40,13 @@ class TestExtrairTextoHtml:
 
         assert "concessões de energia" in resultado["texto"]
         assert "regulação do setor" in resultado["texto"]
-        # Navegação e rodapé devem ser removidos
         assert "Menu de navegação" not in resultado["texto"]
         assert resultado["metodo"] == "html_parser"
         assert resultado["num_paginas"] is None
 
     def test_html_vazio_retorna_baixa_qualidade(self):
         """HTML sem conteúdo substancial retorna qualidade 0.5."""
-        from src.ingestion.extractor import extrair_texto_html
+        from src.ingestion.extractors import extrair_texto_html
 
         html = "<html><body><p>Ok</p></body></html>"
         resultado = extrair_texto_html(html)
@@ -56,9 +55,8 @@ class TestExtrairTextoHtml:
 
     def test_html_com_conteudo_retorna_alta_qualidade(self):
         """HTML com conteúdo substancial (>1000 chars) retorna qualidade 1.0."""
-        from src.ingestion.extractor import extrair_texto_html
+        from src.ingestion.extractors import extrair_texto_html
 
-        # Gera HTML com conteúdo longo
         texto_longo = "A" * 500
         html = f"<html><body><p>{texto_longo}</p><p>{texto_longo}</p></body></html>"
         resultado = extrair_texto_html(html)
@@ -71,15 +69,22 @@ class TestExtrairTextoDispatcher:
 
     def test_formato_desconhecido_levanta_erro(self):
         """Formato inválido levanta ValueError com mensagem clara."""
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
 
         with pytest.raises(ValueError, match="não é suportado"):
             extrair_texto("conteudo", "xyz")
 
+    def test_estrategia_invalida_levanta_erro(self):
+        """Estratégia inválida para um formato levanta ValueError."""
+        from src.ingestion.extractors import extrair_texto
+
+        with pytest.raises(ValueError, match="não é válida"):
+            extrair_texto(b"bytes", "pdf", estrategia="naoexiste")
+
     def test_docx_extrai_paragrafos(self):
         """DOCX com parágrafos retorna texto e metodo python_docx."""
         from docx import Document
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
         import io
 
         doc = Document()
@@ -95,7 +100,7 @@ class TestExtrairTextoDispatcher:
     def test_xlsx_extrai_celulas(self):
         """XLSX com células retorna texto concatenado."""
         from openpyxl import Workbook
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
         import io
 
         wb = Workbook()
@@ -111,7 +116,7 @@ class TestExtrairTextoDispatcher:
 
     def test_html_aceita_string(self):
         """extrair_texto("html") aceita string como conteúdo."""
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
 
         resultado = extrair_texto(
             "<html><body><p>Teste de extração de texto HTML.</p></body></html>",
@@ -121,7 +126,7 @@ class TestExtrairTextoDispatcher:
 
     def test_html_aceita_bytes_utf8(self):
         """extrair_texto("html") decodifica bytes UTF-8 automaticamente."""
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
 
         html_bytes = (
             "<html><body><p>Resolução normativa da ANEEL.</p></body></html>".encode(
@@ -133,7 +138,7 @@ class TestExtrairTextoDispatcher:
 
     def test_pdf_exige_bytes(self):
         """extrair_texto("pdf") levanta TypeError se receber string."""
-        from src.ingestion.extractor import extrair_texto
+        from src.ingestion.extractors import extrair_texto
 
         with pytest.raises(TypeError, match="bytes"):
             extrair_texto("string", "pdf")
@@ -177,7 +182,7 @@ class TestMontarUrlAto:
 
 
 class TestFiltrarNaoVigentes:
-    """Testes do filtro de atos não vigentes (Wave 3)."""
+    """Testes do filtro de atos não vigentes."""
 
     def test_filtra_revogados(self):
         from src.ingestion.scraper_atos import filtrar_nao_vigentes
@@ -230,7 +235,6 @@ class TestConsultarPowerbiMock:
         """Resposta simples do Power BI é decodificada corretamente."""
         from src.ingestion.scraper_atos import consultar_powerbi
 
-        # Simula uma resposta mínima do Power BI
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -292,7 +296,6 @@ class TestColetarLeisMock:
         """Uma lei com HTML simples é coletada corretamente."""
         from src.ingestion.scraper_leis import coletar_leis
 
-        # Simula resposta do planalto.gov.br
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.encoding = "utf-8"
@@ -310,7 +313,7 @@ class TestColetarLeisMock:
 
         documentos = coletar_leis()
 
-        assert len(documentos) == 4  # 4 leis
+        assert len(documentos) == 4
         for doc in documentos:
             assert doc["tipo"] == "lei"
             assert doc["subtipo"] == "lei_federal"
@@ -320,58 +323,14 @@ class TestColetarLeisMock:
 
 
 # =========================================================================
-# Testes do parser.py
-# =========================================================================
-
-
-class TestLimparTexto:
-    """Testes de limpeza de texto."""
-
-    def test_normaliza_whitespace(self):
-        """Múltiplos espaços viram um só."""
-        from src.ingestion.parser import limpar_texto
-
-        texto = "Art.  1º   -   Esta   lei."
-        resultado = limpar_texto(texto)
-        assert "  " not in resultado
-        assert "Art. 1º - Esta lei." in resultado
-
-    def test_remove_numeros_de_pagina(self):
-        """Linhas com só números (paginação) são removidas."""
-        from src.ingestion.parser import limpar_texto
-
-        texto = "Texto antes\n42\nTexto depois"
-        resultado = limpar_texto(texto)
-        assert "42" not in resultado
-        assert "Texto antes" in resultado
-        assert "Texto depois" in resultado
-
-    def test_colapsa_quebras_multiplas(self):
-        """3+ quebras de linha viram 2."""
-        from src.ingestion.parser import limpar_texto
-
-        texto = "Seção 1\n\n\n\n\nSeção 2"
-        resultado = limpar_texto(texto)
-        assert "\n\n\n" not in resultado
-        assert "Seção 1\n\nSeção 2" in resultado
-
-    def test_texto_vazio_retorna_vazio(self):
-        """String vazia retorna string vazia."""
-        from src.ingestion.parser import limpar_texto
-
-        assert limpar_texto("") == ""
-        assert limpar_texto(None) == ""
-
-
-# =========================================================================
-# Testes do uploader.py
+# Testes do schema.py
 # =========================================================================
 
 
 class TestValidarSchema:
     """Testes de validação do schema do DataFrame."""
 
-    def _criar_df_valido(self) -> pd.DataFrame:
+    def _criar_df_valido(self, metodo: str = "pymupdf") -> pd.DataFrame:
         """Cria um DataFrame mínimo válido para testes."""
         return pd.DataFrame(
             [
@@ -391,7 +350,7 @@ class TestValidarSchema:
                     "formato_original": "html",
                     "texto_bruto": "A" * 200,
                     "num_paginas": None,
-                    "metodo_extracao": "html_parser",
+                    "metodo_extracao": metodo,
                     "qualidade_extracao": 1.0,
                     "hf_path": None,
                     "scraped_at": "2026-05-29T00:00:00Z",
@@ -401,14 +360,14 @@ class TestValidarSchema:
 
     def test_df_valido_nao_levanta_erro(self):
         """DataFrame válido passa sem erro."""
-        from src.ingestion.uploader import validar_schema
+        from src.ingestion.schema import validar_schema
 
         df = self._criar_df_valido()
-        validar_schema(df)  # não deve levantar exceção
+        validar_schema(df)
 
     def test_coluna_faltando_levanta_erro(self):
         """DataFrame sem coluna obrigatória levanta RuntimeError."""
-        from src.ingestion.uploader import validar_schema
+        from src.ingestion.schema import validar_schema
 
         df = self._criar_df_valido()
         df = df.drop(columns=["titulo"])
@@ -416,19 +375,29 @@ class TestValidarSchema:
         with pytest.raises(RuntimeError, match="Colunas faltando"):
             validar_schema(df)
 
-    def test_id_duplicado_levanta_erro(self):
-        """DataFrame com IDs duplicados levanta RuntimeError."""
-        from src.ingestion.uploader import validar_schema
+    def test_par_id_metodo_duplicado_levanta_erro(self):
+        """Par (id, metodo_extracao) duplicado levanta RuntimeError."""
+        from src.ingestion.schema import validar_schema
 
         df = self._criar_df_valido()
         df = pd.concat([df, df], ignore_index=True)
 
-        with pytest.raises(RuntimeError, match="IDs duplicados"):
+        with pytest.raises(RuntimeError, match="duplicados"):
             validar_schema(df)
+
+    def test_mesmo_id_estrategias_diferentes_e_valido(self):
+        """Mesmo id com metodo_extracao diferente é válido (Opção A)."""
+        from src.ingestion.schema import validar_schema
+
+        df_pymupdf = self._criar_df_valido(metodo="pymupdf")
+        df_docling = self._criar_df_valido(metodo="docling")
+        df = pd.concat([df_pymupdf, df_docling], ignore_index=True)
+
+        validar_schema(df)  # não deve levantar exceção
 
     def test_texto_vazio_levanta_erro(self):
         """Documento com texto_bruto muito curto levanta RuntimeError."""
-        from src.ingestion.uploader import validar_schema
+        from src.ingestion.schema import validar_schema
 
         df = self._criar_df_valido()
         df.loc[0, "texto_bruto"] = "curto"
@@ -438,9 +407,9 @@ class TestValidarSchema:
 
 
 class TestMesclarCorpus:
-    """Testes de merge incremental (Wave 3)."""
+    """Testes de merge incremental."""
 
-    def _doc(self, doc_id: str, scraped_at: str) -> dict:
+    def _doc(self, doc_id: str, scraped_at: str, metodo: str = "pymupdf") -> dict:
         return {
             "id": doc_id,
             "tipo": "lei",
@@ -457,7 +426,7 @@ class TestMesclarCorpus:
             "formato_original": "html",
             "texto_bruto": "A" * 200,
             "num_paginas": None,
-            "metodo_extracao": "html_parser",
+            "metodo_extracao": metodo,
             "qualidade_extracao": 1.0,
             "hf_path": None,
             "scraped_at": scraped_at,
@@ -481,6 +450,16 @@ class TestMesclarCorpus:
         merged = mesclar_corpus(df1, df2)
         assert len(merged) == 1
         assert merged.iloc[0]["texto_bruto"].startswith("B")
+
+    def test_merge_mesmo_id_estrategias_diferentes_preserva_ambos(self):
+        """Doc com pymupdf + docling devem coexistir após merge."""
+        from src.ingestion.uploader import mesclar_corpus
+
+        df1 = pd.DataFrame([self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="pymupdf")])
+        df2 = pd.DataFrame([self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="docling")])
+        merged = mesclar_corpus(df1, df2)
+        assert len(merged) == 2
+        assert set(merged["metodo_extracao"]) == {"pymupdf", "docling"}
 
 
 class TestColetarProretMock:
