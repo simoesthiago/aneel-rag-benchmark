@@ -58,18 +58,23 @@ def carregar_corpus_hub(repo_id: str | None = None) -> pd.DataFrame:
     for path in parquets:
         tipo_match = re.search(r"tipo=([^/]+)/", path)
         metodo_match = re.search(r"metodo_extracao=([^/]+)/", path)
-        tipo = tipo_match.group(1) if tipo_match else "desconhecido"
-        # Corpus legado (antes do refactor) não tem partição metodo_extracao.
-        # Nesse caso inferimos "pymupdf" — todos os docs foram extraídos com PyMuPDF.
-        metodo = metodo_match.group(1) if metodo_match else "pymupdf"
+        if tipo_match is None or metodo_match is None:
+            # Após o refactor texto/markdown, todo Parquet no Hub vem do uploader
+            # deste módulo e tem partição completa. Path sem partição é sinal de
+            # estrutura corrompida — falhamos cedo em vez de inferir silenciosamente.
+            raise RuntimeError(
+                f"Parquet sem partição tipo=/metodo_extracao=: {path}. "
+                f"Use `--limpar-estrutura` para reescrever o Hub com a estrutura nova."
+            )
+        tipo = tipo_match.group(1)
+        metodo = metodo_match.group(1)
 
         local = hf_hub_download(
             repo_id=repo_id, filename=path, repo_type="dataset"
         )
         df_part = pd.read_parquet(local, engine="pyarrow")
         df_part["tipo"] = tipo
-        if "metodo_extracao" not in df_part.columns:
-            df_part["metodo_extracao"] = metodo
+        df_part["metodo_extracao"] = metodo
         partes.append(df_part)
 
     df = pd.concat(partes, ignore_index=True)

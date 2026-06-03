@@ -111,14 +111,17 @@ def listar_vigentes() -> list[dict]:
     return resp.json().get("value", [])
 
 
-def coletar_procedimentos_rede(estrategia: str = "pymupdf") -> list[dict]:
+def coletar_procedimentos_rede(estrategia: str = "texto") -> list[dict]:
     """
     Coleta os ~165 Procedimentos de Rede vigentes do ONS e extrai texto dos PDFs.
 
     Processo:
         1. Consulta API SharePoint filtrando vigente='Vigente'
         2. Para cada item, constrói URL do PDF via proxy de conversão DOCX→PDF
-        3. Baixa o PDF e extrai texto com PyMuPDF
+        3. Baixa o PDF e extrai texto (formato_saida=estrategia)
+
+    Args:
+        estrategia: "texto" (PyMuPDF, default) ou "markdown" (PyMuPDF4LLM)
 
     Returns:
         lista de dicts no formato do schema do corpus (docs/schema.md)
@@ -167,7 +170,7 @@ def coletar_procedimentos_rede(estrategia: str = "pymupdf") -> list[dict]:
             resp.raise_for_status()
             pdf_bytes = resp.content
 
-            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
+            resultado = extrair_texto(pdf_bytes, "pdf", formato_saida=estrategia)
 
             if len(resultado["texto"].strip()) < 100:
                 print("    ⚠️  Texto muito curto — pulando")

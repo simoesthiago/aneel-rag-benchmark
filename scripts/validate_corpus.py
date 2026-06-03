@@ -32,8 +32,12 @@ def validar_corpus(repo_id: str) -> int:
     print(df["tipo"].value_counts().to_string())
 
     if "metodo_extracao" in df.columns:
-        print("\nPor estratégia de extração:")
+        print("\nPor formato de saída (metodo_extracao):")
         print(df["metodo_extracao"].value_counts().to_string())
+
+    if "extrator" in df.columns:
+        print("\nPor ferramenta (extrator):")
+        print(df["extrator"].value_counts().to_string())
 
     dup = int(df.duplicated(subset=["id", "metodo_extracao"]).sum())
     print(f"\nPares (id, metodo_extracao) duplicados: {dup}")

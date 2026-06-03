@@ -16,11 +16,20 @@ Schema completo e racional de design: ver docs/schema.md.
 
 Unicidade (Opção A — múltiplas estratégias de extração):
     A chave de um documento no corpus é `(id, metodo_extracao)`, não só `id`.
-    O mesmo documento (ex.: "ren-2021-1000") pode aparecer extraído por PyMuPDF
-    E por Docling — duas linhas, mesmo `id`, `metodo_extracao` diferente.
+    O mesmo documento (ex.: "ren-2021-1000") pode aparecer como `texto` e como
+    `markdown` — duas linhas, mesmo `id`, `metodo_extracao` diferente.
+
+Distinção entre `metodo_extracao` e `extrator`:
+    - `metodo_extracao` ∈ {"texto", "markdown"} — formato de saída. Vira partição
+      no Hub (`tipo=X/metodo_extracao=Y/`). É o eixo do benchmark.
+    - `extrator` — ferramenta concreta ("pymupdf", "mammoth", "pandas_tabulate"…).
+      Metadado de rastreio, viaja dentro do Parquet. Em manuais (formatos mistos)
+      a mesma partição `markdown` pode ter linhas com extratores diferentes.
 """
 
 import pandas as pd
+
+from src.ingestion.extractors import FORMATOS_SAIDA_VALIDOS
 
 # Colunas obrigatórias do schema (ver docs/schema.md)
 _SCHEMA_COLUNAS = [
@@ -40,6 +49,7 @@ _SCHEMA_COLUNAS = [
     "texto_bruto",
     "num_paginas",
     "metodo_extracao",
+    "extrator",
     "qualidade_extracao",
     "hf_path",
     "scraped_at",
@@ -55,6 +65,7 @@ _COLUNAS_NOT_NULL = [
     "formato_original",
     "texto_bruto",
     "metodo_extracao",
+    "extrator",
     "scraped_at",
 ]
 
@@ -83,17 +94,18 @@ def montar_documento(
     """
     Monta uma linha do corpus a partir dos metadados da fonte + resultado do extractor.
 
-    Os 4 campos derivados da extração (`texto_bruto`, `num_paginas`,
-    `metodo_extracao`, `qualidade_extracao`) são preenchidos a partir de
-    `resultado` — o dict retornado por `extractors.extrair_texto`. Assim os
-    scrapers não precisam saber qual estratégia rodou: o `metodo` vem no resultado.
+    Os 5 campos derivados da extração (`texto_bruto`, `num_paginas`,
+    `metodo_extracao`, `extrator`, `qualidade_extracao`) são preenchidos a partir
+    de `resultado` — o dict retornado por `extractors.extrair_texto`. Assim os
+    scrapers não precisam saber qual ferramenta rodou: tudo vem no resultado.
 
     Args:
-        resultado: dict do extractor com texto/num_paginas/qualidade_extracao/metodo
+        resultado: dict do extractor com texto/num_paginas/qualidade_extracao/
+            formato_saida/extrator
         (demais args): metadados específicos da fonte
 
     Returns:
-        dict com as 19 colunas do schema, pronto para virar linha do DataFrame
+        dict com as 20 colunas do schema, pronto para virar linha do DataFrame
     """
     return {
         "id": id,
@@ -111,7 +123,8 @@ def montar_documento(
         "formato_original": formato_original,
         "texto_bruto": resultado["texto"],
         "num_paginas": resultado["num_paginas"],
-        "metodo_extracao": resultado["metodo"],
+        "metodo_extracao": resultado["formato_saida"],
+        "extrator": resultado["extrator"],
         "qualidade_extracao": resultado["qualidade_extracao"],
         "hf_path": None,
         "scraped_at": scraped_at,
@@ -127,6 +140,7 @@ def validar_schema(df: pd.DataFrame) -> None:
     2. Nenhuma coluna NOT NULL contém nulos
     3. Não há pares (id, metodo_extracao) duplicados
     4. texto_bruto não está vazio em nenhum documento
+    5. metodo_extracao ∈ {"texto", "markdown"} (só esses dois valores no Hub)
 
     Args:
         df: DataFrame com os documentos
@@ -170,4 +184,16 @@ def validar_schema(df: pd.DataFrame) -> None:
         raise RuntimeError(
             f"{len(vazios)} documentos com texto_bruto < 100 chars: {ids_vazios}. "
             f"Extração de texto provavelmente falhou."
+        )
+
+    # 5. metodo_extracao ∈ {"texto", "markdown"}
+    # Falha cedo se algum extrator esquecer de declarar formato_saida ou se um
+    # nome de ferramenta antigo vazar para a coluna (ex.: "pymupdf", "docling").
+    metodos_invalidos = set(df["metodo_extracao"].unique()) - FORMATOS_SAIDA_VALIDOS
+    if metodos_invalidos:
+        raise RuntimeError(
+            f"metodo_extracao com valores inválidos: {metodos_invalidos}. "
+            f"Aceitos: {sorted(FORMATOS_SAIDA_VALIDOS)}. "
+            f"Provavelmente um extrator está retornando o nome da ferramenta "
+            f"em vez do formato de saída."
         )

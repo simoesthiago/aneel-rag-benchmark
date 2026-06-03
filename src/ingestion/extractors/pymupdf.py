@@ -1,10 +1,9 @@
 """
-pymupdf.py — Extração de texto de PDF via PyMuPDF (fitz).
+pymupdf.py — Extração de texto plano de PDF via PyMuPDF (fitz).
 
-Estratégia baseline do benchmark de extração. Rápida, sem dependências de ML,
-funciona bem em PDFs nativos (texto selecionável). Para PDFs escaneados ou com
-layout complexo (tabelas), a estratégia `docling` tende a extrair melhor — a
-comparação é justamente o objeto do benchmark (ver docs/schema.md).
+Estratégia baseline (formato_saida="texto"). Rápida, sem dependências de ML,
+funciona bem em PDFs nativos (texto selecionável). A estratégia Markdown
+(`pymupdf4llm.py`) preserva a estrutura — a comparação é o eixo do benchmark.
 """
 
 import io
@@ -30,7 +29,8 @@ def extrair_texto_pdf(conteudo: bytes) -> dict:
             texto (str): texto completo concatenado (páginas separadas por \\n\\n)
             num_paginas (int): total de páginas do PDF
             qualidade_extracao (float): 0.0 a 1.0, fração de páginas com texto
-            metodo (str): sempre "pymupdf"
+            formato_saida (str): sempre "texto"
+            extrator (str): sempre "pymupdf"
     """
     # Import aqui porque PyMuPDF não instala em todos os ambientes
     # (exige compilação nativa — funciona no Colab mas pode falhar local)
@@ -40,7 +40,7 @@ def extrair_texto_pdf(conteudo: bytes) -> dict:
         raise RuntimeError(
             "PyMuPDF (fitz) não está instalado. "
             "Instale com: pip install PyMuPDF. "
-            "Nota: instale com make install (requirements-dev.txt)."
+            "Nota: instale com make install (requirements.txt)."
         )
 
     pdf = fitz.open(stream=io.BytesIO(conteudo), filetype="pdf")
@@ -65,5 +65,6 @@ def extrair_texto_pdf(conteudo: bytes) -> dict:
         "texto": texto_completo,
         "num_paginas": num_paginas,
         "qualidade_extracao": round(qualidade, 2),
-        "metodo": "pymupdf",
+        "formato_saida": "texto",
+        "extrator": "pymupdf",
     }

@@ -1,45 +1,89 @@
 # =============================================================================
-# requirements.txt — DEPENDÊNCIAS DE EXECUÇÃO (ingestão local / Colab legado)
+# requirements.txt — DEPENDÊNCIAS DO PROJETO
 # =============================================================================
 #
-# Bibliotecas do pipeline de ingestão. Em desenvolvimento, prefira
-# requirements-dev.txt (`make install`). Inclui pacotes que
-# exigem compilação nativa (PyMuPDF, faiss-cpu) — eles funcionam direto nesses
-# ambientes porque o Python lá é 3.10/3.11 e há wheels prontas.
+# Instale com: make install
 #
-# Para desenvolvimento LOCAL (rodar testes, formatar código, abrir notebooks),
-# use requirements-dev.txt no lugar deste.
+# Organizado por camada. "CAMADA 1" e "DESENVOLVIMENTO" estão confirmados
+# e instalados hoje. As demais camadas estão comentadas: deps confirmadas
+# no stack são marcadas como [confirmado]; deps ainda sem decisão final
+# são marcadas como [a escolher] com os candidatos listados.
 # =============================================================================
 
-# --- Ingestão: scraping e extração de documentos ---
-requests>=2.32           # cliente HTTP para APIs (Power BI, GitLab, Planalto)
-curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome para passar Cloudflare
-beautifulsoup4>=4.12     # parsing de HTML (portal ANEEL + leis do planalto.gov.br)
+
+# =============================================================================
+# CAMADA 1 — INGESTÃO (instalado)
+# =============================================================================
+
+# --- Scraping e HTTP ---
+requests>=2.32           # HTTP para Power BI, GitLab, Planalto
+curl_cffi>=0.7           # download do cedoc/ — mimetiza TLS do Chrome (Cloudflare)
+beautifulsoup4>=4.12     # parsing de HTML (portal ANEEL + planalto.gov.br)
 lxml>=5.2                # backend rápido do BeautifulSoup
-PyMuPDF>=1.24            # extração de texto de PDFs (importado como fitz)
-pdfplumber>=0.11         # extração alternativa, melhor para tabelas
-python-docx>=1.1         # extração de texto de DOCX (manuais da ANEEL)
-openpyxl>=3.1            # extração de dados de XLSX (manuais da ANEEL)
-tqdm>=4.66               # barras de progresso (essencial para scraping longo)
+tqdm>=4.66               # barras de progresso para scraping longo
 
-# --- Dados e armazenamento ---
-pandas>=2.2              # manipulação tabular
+# --- Extração de documentos ---
+PyMuPDF>=1.24            # PDF → texto (baseline, importado como fitz)
+pymupdf4llm>=0.0.17      # PDF → Markdown (segunda estratégia do benchmark)
+html2text>=2024.2        # HTML → Markdown; também usado pelo mammoth para DOCX
+python-docx>=1.1         # DOCX → texto (manuais DOCX)
+mammoth>=1.8             # DOCX → HTML → Markdown via html2text
+openpyxl>=3.1            # XLSX → texto (manuais XLSX)
+tabulate>=0.9            # backend de DataFrame.to_markdown() — XLSX → Markdown
+
+# --- Dados e publicação ---
+pandas>=2.2              # manipulação tabular e XLSX → Markdown
 pyarrow>=16.0            # leitura/escrita de Parquet
-huggingface_hub>=0.23    # upload/download do HuggingFace Hub
-datasets>=2.20           # biblioteca HF para datasets
+huggingface_hub>=0.23    # upload do corpus para o HF Hub
+datasets>=2.20           # leitura do corpus publicado
+python-dotenv>=1.0       # carrega variáveis do .env
 
-# --- Embeddings e vector store ---
-sentence-transformers>=3.0   # modelos de embedding
-faiss-cpu>=1.8               # indexação vetorial (CPU; faiss-gpu não é portável)
-rank-bm25>=0.2.2             # baseline lexical BM25 para termos exatos
 
-# --- RAG e LLM ---
-langchain>=0.2           # orquestração de RAG
-langchain-community>=0.2 # integrações da comunidade
-openai>=1.35             # cliente da API OpenAI
+# =============================================================================
+# DESENVOLVIMENTO (instalado)
+# =============================================================================
 
-# --- Interface ---
-streamlit>=1.36          # chatbot hospedado no HF Spaces
+pytest>=8.2
+black>=24.0
+flake8>=7.0
+jupyter>=1.0             # notebooks exploratórios em notebooks/
 
-# --- Infra mínima compartilhada ---
-python-dotenv>=1.0       # carrega variáveis de ambiente do .env
+
+# =============================================================================
+# CAMADA 2 — PROCESSAMENTO (ainda não instalado)
+# =============================================================================
+#
+# rank-bm25 já aparece nos testes — será instalado assim que a Camada 2 começar.
+# Embedding e vector store serão decididos no benchmark comparativo.
+#
+# rank-bm25>=0.2.2             # [confirmado] baseline lexical BM25 — sem alternativa
+#
+# [a escolher] modelo de embedding — candidatos:
+#   sentence-transformers>=3.0 # local, sem custo de API; suporte a modelos multilíngues
+#   # openai embeddings via openai>=1.35 (ver Camada 3)
+#
+# [a escolher] vector store — candidatos:
+#   faiss-cpu>=1.8             # arquivo .faiss, sem servidor, portável para HF Spaces
+#   # chromadb                 # alternativa com metadados mais ricos
+#   # qdrant-client            # alternativa com filtros avançados
+
+
+# =============================================================================
+# CAMADA 3 — RAG (ainda não instalado)
+# =============================================================================
+#
+# LangChain como orquestrador e OpenAI como LLM estão confirmados no stack
+# (ver CLAUDE.md). Versões exatas a fixar quando a camada começar.
+#
+# langchain>=0.2               # [confirmado] orquestração de RAG
+# langchain-community>=0.2     # [confirmado] integrações (FAISS, loaders, etc.)
+# openai>=1.35                 # [confirmado] LLM principal
+
+
+# =============================================================================
+# CAMADA 5 — INTERFACE (ainda não instalado)
+# =============================================================================
+#
+# Streamlit está definido como framework do chatbot no HF Spaces (ver CLAUDE.md).
+#
+# streamlit>=1.36              # [confirmado] chatbot público no HF Spaces

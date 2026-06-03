@@ -64,12 +64,16 @@ _LEIS_METADATA: dict[str, dict] = {
 }
 
 
-def coletar_leis() -> list[dict]:
+def coletar_leis(estrategia: str = "texto") -> list[dict]:
     """
     Coleta as 4 leis estruturantes do planalto.gov.br.
 
-    Faz GET em cada URL, extrai o texto via BeautifulSoup, e retorna uma
-    lista de dicts no formato do schema do corpus (ver docs/schema.md).
+    Faz GET em cada URL, extrai o texto via dispatcher, e retorna uma lista
+    de dicts no formato do schema do corpus (ver docs/schema.md).
+
+    Args:
+        estrategia: formato de saída ("texto" ou "markdown"). "texto" usa
+            BeautifulSoup; "markdown" usa html2text. Ver `extractors/__init__.py`.
 
     Returns:
         lista de dicts, um por lei coletada com sucesso.
@@ -92,7 +96,7 @@ def coletar_leis() -> list[dict]:
                 resp.encoding = resp.apparent_encoding or "utf-8"
 
             # Extrair texto usando o extractor centralizado
-            resultado = extrair_texto(resp.text, "html")
+            resultado = extrair_texto(resp.text, "html", formato_saida=estrategia)
 
             print(
                 f"    OK: {resultado['qualidade_extracao']} qualidade, "

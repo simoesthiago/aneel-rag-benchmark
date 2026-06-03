@@ -139,7 +139,7 @@ def _baixar_url(url: str) -> bytes:
 def coletar_manuais(
     subcategorias: list[str] | None = None,
     max_manuais: int | None = None,
-    estrategia: str = "pymupdf",
+    estrategia: str = "texto",
 ) -> list[dict]:
     """
     Coleta manuais de todas as subcategorias do portal gov.br.
@@ -147,6 +147,8 @@ def coletar_manuais(
     Args:
         subcategorias: lista de slugs; default = MANUAIS_SUBCATEGORIAS
         max_manuais: limite total de documentos (útil em dry-run/dev)
+        estrategia: formato de saída ("texto" ou "markdown"); todos os formatos
+            de arquivo (pdf, html, docx, xlsx) têm versão para ambos.
 
     Returns:
         lista de dicts no formato do schema
@@ -189,9 +191,9 @@ def coletar_manuais(
 
             try:
                 conteudo = _baixar_url(url_arquivo)
-                # HTML não tem estratégia alternativa — ignora o parâmetro.
-                ext = estrategia if formato == "pdf" else None
-                resultado = extrair_texto(conteudo, formato, estrategia=ext)
+                # Todo formato (pdf/html/docx/xlsx) tem extrator para texto e
+                # para markdown — passa direto sem traduzir.
+                resultado = extrair_texto(conteudo, formato, formato_saida=estrategia)
                 if len(resultado["texto"].strip()) < 100:
                     print("      ⚠️  Texto < 100 chars — pulando")
                     continue

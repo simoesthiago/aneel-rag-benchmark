@@ -46,8 +46,9 @@ Cada linha é **um documento** do corpus, independente da fonte.
 | `url_consolidado` | `str` | Sim | URL da versão consolidada (atos: `bren...`), se existir |
 | `formato_original` | `str` | Não | `"pdf"`, `"html"`, `"docx"`, `"xlsx"` |
 | `texto_bruto` | `str` | Não | Texto completo extraído do documento |
-| `num_paginas` | `int` | Sim | Número de páginas (PDFs) ou `null` (HTML) |
-| `metodo_extracao` | `str` | Não | `"pymupdf"`, `"pdfplumber"`, `"ocr"`, `"html_parser"`, `"python_docx"` |
+| `num_paginas` | `int` | Sim | Número de páginas (PDFs) ou `null` (HTML/DOCX/XLSX) |
+| `metodo_extracao` | `str` | Não | Formato de saída: `"texto"` ou `"markdown"` (eixo do benchmark; vira partição no Hub) |
+| `extrator` | `str` | Não | Ferramenta concreta: `"pymupdf"`, `"pymupdf4llm"`, `"html_parser"`, `"html2markdown"`, `"python_docx"`, `"mammoth"`, `"openpyxl"`, `"pandas_tabulate"` |
 | `qualidade_extracao` | `float` | Sim | Score 0-1 estimado (% de páginas sem anomalia) |
 | `hf_path` | `str` | Sim | Caminho do arquivo bruto no HF Hub (LFS) |
 | `scraped_at` | `str` | Não | Timestamp da extração: `"YYYY-MM-DDTHH:MM:SSZ"` |
@@ -69,14 +70,22 @@ autoexplicativo em logs — um número puro `1000` não é.
 ### Unicidade e benchmark de extração (Opção A)
 
 A chave de uma linha é `(id, metodo_extracao)`, não só `id`. O mesmo documento
-pode ser extraído por múltiplas estratégias — cada uma gera uma linha distinta.
-Isso viabiliza o benchmark de ingestão (PyMuPDF vs Docling vs LlamaParse) e a
+aparece como `texto` E como `markdown` — duas linhas distintas, mesmo `id`,
+`metodo_extracao` diferente. Isso viabiliza o benchmark de ingestão e a
 comparação de downstream RAG na Camada 4.
 
-Estratégias atuais: `"pymupdf"` (baseline) e `"docling"`.
+Valores de `metodo_extracao`: **só** `"texto"` e `"markdown"`. A ferramenta real
+fica na coluna `extrator` (rastreio, não chave). Mapa formato_arquivo × formato_saida:
 
-**Implicação para a Camada 2:** o `chunk_id` deve incluir a estratégia para que a
-FK não seja ambígua: `{id}::{metodo_extracao}::{strategy}::{index}`.
+|        | `metodo_extracao=texto` | `metodo_extracao=markdown` |
+|--------|-------------------------|----------------------------|
+| `pdf`  | `extrator=pymupdf`      | `extrator=pymupdf4llm`     |
+| `html` | `extrator=html_parser`  | `extrator=html2markdown`   |
+| `docx` | `extrator=python_docx`  | `extrator=mammoth`         |
+| `xlsx` | `extrator=openpyxl`     | `extrator=pandas_tabulate` |
+
+**Implicação para a Camada 2:** o `chunk_id` deve incluir `metodo_extracao` para
+que a FK não seja ambígua: `{id}::{metodo_extracao}::{strategy}::{index}`.
 
 ### Notas de design
 
@@ -85,11 +94,13 @@ O pipeline de RAG trata todos os documentos da mesma forma: texto → chunks →
 embeddings → índice. Tabelas separadas complicariam sem benefício — a coluna
 `tipo` + `subtipo` permite filtrar quando necessário.
 
-**Por que `metodo_extracao`?**
-PDFs antigos (< 2005) são frequentemente escaneados — texto extraído via OCR
-tem qualidade diferente. Manuais em DOCX/XLSX exigem extratores diferentes.
-A Camada 4 (avaliação) precisa saber isso para interpretar diferenças de
-faithfulness entre documentos.
+**Por que separar `metodo_extracao` e `extrator`?**
+`metodo_extracao` ∈ {texto, markdown} é o **eixo do benchmark** — só dois valores,
+exatos, simétricos por formato de arquivo. Particionar por isso dá ao Hub uma
+estrutura limpa (2 pastas por tipo) e queries triviais ("dame só o markdown").
+A ferramenta concreta (`pymupdf`, `mammoth`, …) viaja em `extrator` como metadado
+de rastreio: útil em manuais (formatos mistos, vários extratores na mesma
+partição) e na Camada 4 para interpretar diferenças de faithfulness.
 
 **Por que `qualidade_extracao`?**
 Permite filtrar documentos problemáticos antes do benchmark. Um PDF com 30%
@@ -152,18 +163,24 @@ da Camada 1.
 aneel-corpus/
   data/
     documents/
-      tipo=ato_normativo/metodo_extracao=pymupdf/part-0.parquet
-      tipo=ato_normativo/metodo_extracao=docling/part-0.parquet
-      tipo=procedimento/metodo_extracao=pymupdf/part-0.parquet
-      tipo=procedimento/metodo_extracao=docling/part-0.parquet
-      tipo=manual/metodo_extracao=pymupdf/part-0.parquet
-      tipo=lei/metodo_extracao=html_parser/part-0.parquet
+      tipo=ato_normativo/metodo_extracao=texto/part-0.parquet
+      tipo=ato_normativo/metodo_extracao=markdown/part-0.parquet
+      tipo=procedimento/metodo_extracao=texto/part-0.parquet
+      tipo=procedimento/metodo_extracao=markdown/part-0.parquet
+      tipo=manual/metodo_extracao=texto/part-0.parquet
+      tipo=manual/metodo_extracao=markdown/part-0.parquet
+      tipo=lei/metodo_extracao=texto/part-0.parquet
+      tipo=lei/metodo_extracao=markdown/part-0.parquet
 ```
 
-Particionado por `(tipo, metodo_extracao)` para que queries como "todos os
-procedimentos extraídos com Docling" não precisem ler o dataset inteiro.
-Retrocompatível: corpus legado (sem partição `metodo_extracao`) é lido com
-inferência `metodo_extracao = "pymupdf"` em `uploader.carregar_corpus_hub()`.
+Particionado por `(tipo, metodo_extracao)` — **exatamente 2 partições por tipo**.
+A coluna `extrator` (ferramenta concreta) viaja dentro do Parquet, não particiona.
+Em manuais (formatos heterogêneos), a partição `markdown` pode conter linhas com
+`extrator ∈ {pymupdf4llm, mammoth, pandas_tabulate, html2markdown}`.
+
+Não há mais retrocompatibilidade com corpus legado: o uploader exige que todo
+Parquet tenha partição `metodo_extracao=`. A migração foi feita uma única vez com
+`python -m src.ingestion.run --todas --estrategia texto --limpar-estrutura`.
 
 ---
 

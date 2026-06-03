@@ -1,9 +1,9 @@
 """
-office.py — Extração de texto de documentos Office (DOCX, XLSX).
+office.py — Extração de texto plano de documentos Office (DOCX, XLSX).
 
-Usado por manuais da ANEEL que vêm nesses formatos. Estratégias baseline:
-python-docx (parágrafos) e openpyxl (células). O Docling também lê esses
-formatos e poderia virar estratégia alternativa no futuro (ver extractors/docling.py).
+Usado por manuais da ANEEL que vêm nesses formatos. Estratégias baseline
+(formato_saida="texto"): python-docx (parágrafos) e openpyxl (células).
+As estratégias Markdown são `mammoth_md.py` (DOCX) e `xlsx_markdown.py` (XLSX).
 """
 
 import io
@@ -27,7 +27,8 @@ def extrair_texto_docx(conteudo: bytes) -> dict:
         "texto": texto_final,
         "num_paginas": None,
         "qualidade_extracao": qualidade,
-        "metodo": "python_docx",
+        "formato_saida": "texto",
+        "extrator": "python_docx",
     }
 
 
@@ -56,5 +57,6 @@ def extrair_texto_xlsx(conteudo: bytes) -> dict:
         "texto": texto_final,
         "num_paginas": None,
         "qualidade_extracao": qualidade,
-        "metodo": "openpyxl",
+        "formato_saida": "texto",
+        "extrator": "openpyxl",
     }

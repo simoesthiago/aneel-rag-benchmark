@@ -41,7 +41,8 @@ class TestExtrairTextoHtml:
         assert "concessões de energia" in resultado["texto"]
         assert "regulação do setor" in resultado["texto"]
         assert "Menu de navegação" not in resultado["texto"]
-        assert resultado["metodo"] == "html_parser"
+        assert resultado["extrator"] == "html_parser"
+        assert resultado["formato_saida"] == "texto"
         assert resultado["num_paginas"] is None
 
     def test_html_vazio_retorna_baixa_qualidade(self):
@@ -74,12 +75,12 @@ class TestExtrairTextoDispatcher:
         with pytest.raises(ValueError, match="não é suportado"):
             extrair_texto("conteudo", "xyz")
 
-    def test_estrategia_invalida_levanta_erro(self):
-        """Estratégia inválida para um formato levanta ValueError."""
+    def test_formato_saida_invalido_levanta_erro(self):
+        """formato_saida inválido (ex.: "json") levanta ValueError."""
         from src.ingestion.extractors import extrair_texto
 
-        with pytest.raises(ValueError, match="não é válida"):
-            extrair_texto(b"bytes", "pdf", estrategia="naoexiste")
+        with pytest.raises(ValueError, match="não é válido"):
+            extrair_texto(b"bytes", "pdf", formato_saida="json")
 
     def test_docx_extrai_paragrafos(self):
         """DOCX com parágrafos retorna texto e metodo python_docx."""
@@ -95,7 +96,8 @@ class TestExtrairTextoDispatcher:
 
         resultado = extrair_texto(buf.getvalue(), "docx")
         assert "Manual de instruções" in resultado["texto"]
-        assert resultado["metodo"] == "python_docx"
+        assert resultado["extrator"] == "python_docx"
+        assert resultado["formato_saida"] == "texto"
 
     def test_xlsx_extrai_celulas(self):
         """XLSX com células retorna texto concatenado."""
@@ -112,7 +114,8 @@ class TestExtrairTextoDispatcher:
 
         resultado = extrair_texto(buf.getvalue(), "xlsx")
         assert "tarifária" in resultado["texto"]
-        assert resultado["metodo"] == "openpyxl"
+        assert resultado["extrator"] == "openpyxl"
+        assert resultado["formato_saida"] == "texto"
 
     def test_html_aceita_string(self):
         """extrair_texto("html") aceita string como conteúdo."""
@@ -142,6 +145,54 @@ class TestExtrairTextoDispatcher:
 
         with pytest.raises(TypeError, match="bytes"):
             extrair_texto("string", "pdf")
+
+    def test_docx_markdown_via_mammoth(self):
+        """DOCX com formato_saida="markdown" usa mammoth + html2text."""
+        from docx import Document
+        from src.ingestion.extractors import extrair_texto
+        import io
+
+        # python-docx por si só não cria estilos "Heading"; um parágrafo simples
+        # já produz Markdown válido (texto puro / parágrafo). O ponto do teste é
+        # validar o roteamento: formato_saida=markdown deve cair em mammoth, não
+        # em python_docx.
+        doc = Document()
+        doc.add_heading("Manual de Operação da Distribuidora", level=1)
+        doc.add_paragraph(
+            "Este documento descreve os procedimentos regulatórios obrigatórios "
+            "para as concessionárias de distribuição de energia elétrica."
+        )
+        buf = io.BytesIO()
+        doc.save(buf)
+
+        resultado = extrair_texto(buf.getvalue(), "docx", formato_saida="markdown")
+        assert resultado["extrator"] == "mammoth"
+        assert resultado["formato_saida"] == "markdown"
+        # Heading 1 do python-docx vira "# ..." no Markdown
+        assert "Manual de Operação" in resultado["texto"]
+
+    def test_xlsx_markdown_via_pandas(self):
+        """XLSX com formato_saida="markdown" gera tabela Markdown por aba."""
+        from openpyxl import Workbook
+        from src.ingestion.extractors import extrair_texto
+        import io
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Tarifas"
+        ws.append(["distribuidora", "tarifa_kwh"])
+        ws.append(["CPFL", 0.65])
+        ws.append(["Light", 0.72])
+        buf = io.BytesIO()
+        wb.save(buf)
+
+        resultado = extrair_texto(buf.getvalue(), "xlsx", formato_saida="markdown")
+        assert resultado["extrator"] == "pandas_tabulate"
+        assert resultado["formato_saida"] == "markdown"
+        assert "## Tarifas" in resultado["texto"]
+        # df.to_markdown() usa "|" como separador de colunas
+        assert "|" in resultado["texto"]
+        assert "distribuidora" in resultado["texto"]
 
 
 # =========================================================================
@@ -330,7 +381,9 @@ class TestColetarLeisMock:
 class TestValidarSchema:
     """Testes de validação do schema do DataFrame."""
 
-    def _criar_df_valido(self, metodo: str = "pymupdf") -> pd.DataFrame:
+    def _criar_df_valido(
+        self, metodo: str = "texto", extrator: str = "html_parser"
+    ) -> pd.DataFrame:
         """Cria um DataFrame mínimo válido para testes."""
         return pd.DataFrame(
             [
@@ -351,6 +404,7 @@ class TestValidarSchema:
                     "texto_bruto": "A" * 200,
                     "num_paginas": None,
                     "metodo_extracao": metodo,
+                    "extrator": extrator,
                     "qualidade_extracao": 1.0,
                     "hf_path": None,
                     "scraped_at": "2026-05-29T00:00:00Z",
@@ -389,11 +443,19 @@ class TestValidarSchema:
         """Mesmo id com metodo_extracao diferente é válido (Opção A)."""
         from src.ingestion.schema import validar_schema
 
-        df_pymupdf = self._criar_df_valido(metodo="pymupdf")
-        df_docling = self._criar_df_valido(metodo="docling")
-        df = pd.concat([df_pymupdf, df_docling], ignore_index=True)
+        df_texto = self._criar_df_valido(metodo="texto", extrator="html_parser")
+        df_md = self._criar_df_valido(metodo="markdown", extrator="html2markdown")
+        df = pd.concat([df_texto, df_md], ignore_index=True)
 
         validar_schema(df)  # não deve levantar exceção
+
+    def test_metodo_extracao_invalido_levanta_erro(self):
+        """metodo_extracao com nome de ferramenta (ex.: "pymupdf") é rejeitado."""
+        from src.ingestion.schema import validar_schema
+
+        df = self._criar_df_valido(metodo="pymupdf", extrator="pymupdf")
+        with pytest.raises(RuntimeError, match="metodo_extracao com valores inválidos"):
+            validar_schema(df)
 
     def test_texto_vazio_levanta_erro(self):
         """Documento com texto_bruto muito curto levanta RuntimeError."""
@@ -409,7 +471,13 @@ class TestValidarSchema:
 class TestMesclarCorpus:
     """Testes de merge incremental."""
 
-    def _doc(self, doc_id: str, scraped_at: str, metodo: str = "pymupdf") -> dict:
+    def _doc(
+        self,
+        doc_id: str,
+        scraped_at: str,
+        metodo: str = "texto",
+        extrator: str = "html_parser",
+    ) -> dict:
         return {
             "id": doc_id,
             "tipo": "lei",
@@ -427,6 +495,7 @@ class TestMesclarCorpus:
             "texto_bruto": "A" * 200,
             "num_paginas": None,
             "metodo_extracao": metodo,
+            "extrator": extrator,
             "qualidade_extracao": 1.0,
             "hf_path": None,
             "scraped_at": scraped_at,
@@ -452,14 +521,18 @@ class TestMesclarCorpus:
         assert merged.iloc[0]["texto_bruto"].startswith("B")
 
     def test_merge_mesmo_id_estrategias_diferentes_preserva_ambos(self):
-        """Doc com pymupdf + docling devem coexistir após merge."""
+        """Doc com texto + markdown devem coexistir após merge."""
         from src.ingestion.uploader import mesclar_corpus
 
-        df1 = pd.DataFrame([self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="pymupdf")])
-        df2 = pd.DataFrame([self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="docling")])
+        df1 = pd.DataFrame(
+            [self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="texto", extrator="pymupdf")]
+        )
+        df2 = pd.DataFrame(
+            [self._doc("ren-2021-1000", "2026-01-01T00:00:00Z", metodo="markdown", extrator="pymupdf4llm")]
+        )
         merged = mesclar_corpus(df1, df2)
         assert len(merged) == 2
-        assert set(merged["metodo_extracao"]) == {"pymupdf", "docling"}
+        assert set(merged["metodo_extracao"]) == {"texto", "markdown"}
 
 
 class TestColetarProretMock:
@@ -478,7 +551,8 @@ class TestColetarProretMock:
                 "texto": "X" * 150,
                 "num_paginas": 1,
                 "qualidade_extracao": 1.0,
-                "metodo": "pymupdf",
+                "formato_saida": "texto",
+                "extrator": "pymupdf",
             }
             docs = coletar_proret()
         assert len(docs) == 1
@@ -508,7 +582,8 @@ class TestColetarManuaisMock:
                 "texto": "Y" * 150,
                 "num_paginas": 1,
                 "qualidade_extracao": 1.0,
-                "metodo": "pymupdf",
+                "formato_saida": "texto",
+                "extrator": "pymupdf",
             }
             docs = coletar_manuais(subcategorias=["distribuicao"], max_manuais=5)
         assert len(docs) == 1

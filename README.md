@@ -19,10 +19,11 @@ O corpus cobre quatro famílias de documentos:
 
 | Fonte | Exemplos | Status |
 |---|---|---|
-| Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | Wave 1/2 |
-| Procedimentos regulatórios | PRODIST, Regras de Transmissão (Wave 2); PRORET (Wave 3) | Wave 2/3 |
-| Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | Wave 3 |
-| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | Wave 1 ✅ |
+| Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | ✅ ~991 docs |
+| Procedimentos regulatórios | PRODIST (11 mód.), Regras de Transmissão (6 mód.), PRORET | ✅ ~395 docs |
+| Procedimentos de Rede (ONS) | 9 módulos, ~165 submódulos vigentes (tipos OP/RS/PR/CR/IN/RQ) | ✅ ~165 docs |
+| Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | ✅ ~87 docs |
+| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | ✅ 4 docs |
 
 ---
 
@@ -38,13 +39,16 @@ O pipeline é organizado em 5 camadas:
 
 ---
 
-## Implementação em ondas
+## Benchmark de extração
 
-| Onda | Conteúdo | Objetivo |
+Cada documento é extraído em **duas versões** — o eixo central do benchmark de ingestão:
+
+| Estratégia | Ferramenta por formato | Coluna `metodo_extracao` |
 |---|---|---|
-| Wave 1 ✅ | 4 leis + 8 RENs | Pipeline comprovado end-to-end |
-| Wave 2 ✅ | ~182 RENs vigentes + PRODIST + Regras de Transmissão | Corpus normativo vigente |
-| Wave 3 | RENs revogadas + PRORET + manuais (merge com Hub) | Corpus regulatório completo |
+| Texto plano | PyMuPDF (PDF), BeautifulSoup (HTML), python-docx (DOCX), openpyxl (XLSX) | `"texto"` |
+| Markdown estruturado | PyMuPDF4LLM (PDF), html2text (HTML), mammoth (DOCX), pandas+tabulate (XLSX) | `"markdown"` |
+
+A ferramenta concreta fica na coluna `extrator` para rastreio. O Hub é particionado por `tipo=X/metodo_extracao={texto,markdown}/` — exatamente 2 partições por tipo.
 
 ---
 
@@ -96,10 +100,19 @@ make install
 # Rodar testes
 make test
 
-# Ingerir o corpus na máquina local (requer HF_TOKEN no .env, IP residencial BR)
-make ingest wave=2
-make ingest-wave3          # Wave 3: revogadas + PRORET + manuais + merge no Hub
-make validate-corpus       # conferir dataset publicado
+# Ingestão incremental por fonte (requer HF_TOKEN no .env, IP residencial BR)
+make ingest-atos           # atos normativos (Power BI + cedoc/)
+make ingest-leis           # 4 leis estruturantes
+make ingest-procedimentos  # PRODIST, PRORET, Regras de Transmissão
+make ingest-rede           # Procedimentos de Rede (ONS)
+make ingest-manuais        # manuais gov.br
+make ingest-all            # todas as fontes em texto (merge incremental)
+
+# Benchmark de extração: re-roda tudo em Markdown
+make benchmark-markdown
+
+# Conferir dataset publicado
+make validate-corpus
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)

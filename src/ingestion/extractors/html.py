@@ -23,7 +23,8 @@ def extrair_texto_html(html: str) -> dict:
             texto (str): texto limpo extraído
             num_paginas (None): HTML não tem páginas
             qualidade_extracao (float): 1.0 se >1000 chars, 0.5 caso contrário
-            metodo (str): sempre "html_parser"
+            formato_saida (str): sempre "texto"
+            extrator (str): sempre "html_parser"
     """
     soup = BeautifulSoup(html, "lxml")
 
@@ -45,5 +46,6 @@ def extrair_texto_html(html: str) -> dict:
         "texto": texto_final,
         "num_paginas": None,
         "qualidade_extracao": 1.0 if len(texto_final) > 1000 else 0.5,
-        "metodo": "html_parser",
+        "formato_saida": "texto",
+        "extrator": "html_parser",
     }

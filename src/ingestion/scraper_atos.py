@@ -400,7 +400,7 @@ def baixar_ato(sigla: str, ano: int, numero: int) -> bytes | None:
 def coletar_atos(
     atos: list[dict],
     max_atos: int | None = None,
-    estrategia: str = "pymupdf",
+    estrategia: str = "texto",
 ) -> list[dict]:
     """
     Para cada ato da lista, baixa o PDF, extrai texto e monta dict do schema.
@@ -408,6 +408,8 @@ def coletar_atos(
     Args:
         atos: lista de dicts do Power BI (precisa ter "Resolução", "Ementa",
               "Situação", "Data")
+        max_atos: limite opcional (útil em testes e benchmarks)
+        estrategia: formato de saída ("texto" ou "markdown")
 
     Returns:
         lista de dicts no formato do schema do corpus
@@ -432,7 +434,12 @@ def coletar_atos(
             continue
 
         try:
-            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
+            resultado = extrair_texto(pdf_bytes, "pdf", formato_saida=estrategia)
+
+            if len(resultado["texto"].strip()) < 100:
+                print("    ⚠️  Texto curto — pulando (PDF escaneado ou vazio)")
+                continue
+
             print(
                 f"    ✅ {resultado['num_paginas']} págs | "
                 f"{len(resultado['texto'])} chars | "

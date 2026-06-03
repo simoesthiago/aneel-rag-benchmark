@@ -150,7 +150,7 @@ def _encontrar_pdf_em_pasta(path: str) -> str | None:
     return None
 
 
-def coletar_prodist_modulo(modulo: int, estrategia: str = "pymupdf") -> list[dict]:
+def coletar_prodist_modulo(modulo: int, estrategia: str = "texto") -> list[dict]:
     """
     Coleta PDFs de um módulo específico do PRODIST.
 
@@ -245,7 +245,7 @@ def coletar_prodist_modulo(modulo: int, estrategia: str = "pymupdf") -> list[dic
         pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
         print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
 
-        resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
+        resultado = extrair_texto(pdf_bytes, "pdf", formato_saida=estrategia)
         print(
             f"    📄 {resultado['num_paginas']} págs | "
             f"{len(resultado['texto'])} chars | "
@@ -344,7 +344,7 @@ def _id_proret_de_path(gitlab_path: str) -> str:
     return f"proret-{slug}" if slug else "proret-documento"
 
 
-def coletar_proret(estrategia: str = "pymupdf") -> list[dict]:
+def coletar_proret(estrategia: str = "texto") -> list[dict]:
     """
     Coleta todos os PDFs do PRORET no GitLab (módulos 2–12 e submódulos).
 
@@ -370,7 +370,7 @@ def coletar_proret(estrategia: str = "pymupdf") -> list[dict]:
 
         try:
             pdf_bytes = baixar_arquivo_gitlab(pdf_path, ref="main")
-            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
+            resultado = extrair_texto(pdf_bytes, "pdf", formato_saida=estrategia)
             if len(resultado["texto"].strip()) < 100:
                 print("    ⚠️  Texto curto — pulando")
                 continue
@@ -448,7 +448,7 @@ _REGRAS_TRANSMISSAO_MODULOS = [
 ]
 
 
-def coletar_regras_transmissao(estrategia: str = "pymupdf") -> list[dict]:
+def coletar_regras_transmissao(estrategia: str = "texto") -> list[dict]:
     """
     Coleta os 6 módulos das Regras de Transmissão do GitLab da ANEEL.
 
@@ -477,7 +477,7 @@ def coletar_regras_transmissao(estrategia: str = "pymupdf") -> list[dict]:
             pdf_bytes = baixar_arquivo_gitlab(gitlab_path, ref="main")
             print(f"    ✅ {len(pdf_bytes) / 1024:.0f} KB baixados")
 
-            resultado = extrair_texto(pdf_bytes, "pdf", estrategia=estrategia)
+            resultado = extrair_texto(pdf_bytes, "pdf", formato_saida=estrategia)
             print(
                 f"    📄 {resultado['num_paginas']} págs | "
                 f"{len(resultado['texto'])} chars | "

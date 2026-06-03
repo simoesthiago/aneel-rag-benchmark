@@ -1,103 +1,119 @@
 """
-extractors/ — Extração de texto plugável por formato e estratégia.
+extractors/ — Extração de texto plugável por formato de arquivo e formato de saída.
 
 Por que este pacote existe?
 ---------------------------
 O corpus da ANEEL vem em formatos variados: PDF (atos, procedimentos), HTML
-(leis), DOCX e XLSX (manuais). Cada formato exige um parser diferente — mas o
-projeto também compara *estratégias* de extração para o mesmo formato (ex.: PDF
-via PyMuPDF vs Docling). Isso é o benchmark de ingestão.
+(leis), DOCX e XLSX (manuais). Cada um exige um parser diferente — mas o projeto
+também compara *formatos de saída* (texto plano vs Markdown) para o benchmark
+de RAG. Este é o eixo do benchmark de ingestão.
 
-O dispatcher `extrair_texto(conteudo, formato, estrategia)` esconde dessa escolha
-dos scrapers: eles só dizem "extraia este PDF com a estratégia X" e recebem de
-volta texto + metadados num contrato uniforme.
+Eixos do dispatcher:
+    formato_arquivo ∈ {"pdf", "html", "docx", "xlsx"}   ← origem
+    formato_saida   ∈ {"texto", "markdown"}             ← saída
+
+Mapa de extratores (cada célula é uma ferramenta concreta):
+
+    +------+-------------------+-------------------+
+    |      |       texto       |     markdown      |
+    +------+-------------------+-------------------+
+    | pdf  | pymupdf           | pymupdf4llm       |
+    | html | html_parser (bs4) | html2markdown     |
+    | docx | python_docx       | mammoth           |
+    | xlsx | openpyxl          | pandas_tabulate   |
+    +------+-------------------+-------------------+
 
 Contrato de retorno (todos os extratores):
-    {texto: str, num_paginas: int|None, qualidade_extracao: float, metodo: str}
-
-O campo `metodo` vira `metodo_extracao` no schema — é o que distingue as linhas
-de um mesmo documento extraído por estratégias diferentes (ver docs/schema.md).
+    {
+        texto: str,
+        num_paginas: int | None,
+        qualidade_extracao: float,
+        formato_saida: "texto" | "markdown",   → vira coluna metodo_extracao
+        extrator: str                          → vira coluna extrator (rastreio)
+    }
 
 Como usar:
     from src.ingestion.extractors import extrair_texto
 
-    resultado = extrair_texto(pdf_bytes, "pdf")                           # PyMuPDF (default)
-    resultado = extrair_texto(pdf_bytes, "pdf", estrategia="pymupdf4llm") # Markdown
+    # Default — texto plano com a ferramenta baseline do formato
+    resultado = extrair_texto(pdf_bytes, "pdf")
+
+    # Markdown — usa a ferramenta Markdown do formato (pymupdf4llm para PDF)
+    resultado = extrair_texto(pdf_bytes, "pdf", formato_saida="markdown")
 """
 
 from src.ingestion.extractors.html import extrair_texto_html
+from src.ingestion.extractors.html2markdown import extrair_texto_html_markdown
+from src.ingestion.extractors.mammoth_md import extrair_texto_docx_markdown
 from src.ingestion.extractors.office import extrair_texto_docx, extrair_texto_xlsx
 from src.ingestion.extractors.pymupdf import extrair_texto_pdf
 from src.ingestion.extractors.pymupdf4llm import extrair_texto_pdf_pymupdf4llm
+from src.ingestion.extractors.xlsx_markdown import extrair_texto_xlsx_markdown
 
-# Mapa (formato, estratégia) → extrator. A primeira estratégia de cada formato é
-# o default usado quando o chamador não especifica `estrategia`.
+# Mapa (formato_arquivo, formato_saida) → função extratora.
+# Cada formato de arquivo tem uma célula para "texto" e outra para "markdown" —
+# simetria total. A coluna `metodo_extracao` no Hub recebe o valor de
+# `formato_saida`; a coluna `extrator` recebe o nome da ferramenta real.
 _EXTRATORES: dict[str, dict[str, object]] = {
     "pdf": {
-        "pymupdf": extrair_texto_pdf,
-        "pymupdf4llm": extrair_texto_pdf_pymupdf4llm,
+        "texto": extrair_texto_pdf,
+        "markdown": extrair_texto_pdf_pymupdf4llm,
     },
     "html": {
-        "beautifulsoup": extrair_texto_html,
+        "texto": extrair_texto_html,
+        "markdown": extrair_texto_html_markdown,
     },
     "docx": {
-        "python_docx": extrair_texto_docx,
+        "texto": extrair_texto_docx,
+        "markdown": extrair_texto_docx_markdown,
     },
     "xlsx": {
-        "openpyxl": extrair_texto_xlsx,
+        "texto": extrair_texto_xlsx,
+        "markdown": extrair_texto_xlsx_markdown,
     },
 }
 
-# Estratégia default por formato (primeira registrada).
-_ESTRATEGIA_DEFAULT: dict[str, str] = {
-    fmt: next(iter(estrategias)) for fmt, estrategias in _EXTRATORES.items()
-}
+# Formatos de saída válidos — usados na validação do dispatcher e do schema.
+FORMATOS_SAIDA_VALIDOS: frozenset[str] = frozenset({"texto", "markdown"})
 
 
 def extrair_texto(
     conteudo: bytes | str,
-    formato: str,
-    estrategia: str | None = None,
+    formato_arquivo: str,
+    formato_saida: str = "texto",
 ) -> dict:
     """
-    Dispatcher principal — extrai texto de qualquer formato/estratégia suportado.
-
-    Este é o ponto de entrada que os scrapers usam. Delega para o extrator
-    específico de cada (formato, estratégia).
+    Dispatcher principal — extrai texto de qualquer (formato_arquivo, formato_saida).
 
     Args:
         conteudo: bytes (PDF, DOCX, XLSX) ou str (HTML)
-        formato: "pdf", "html", "docx", "xlsx"
-        estrategia: nome da estratégia. Se None, usa a default do formato.
-            PDF aceita "pymupdf" (default) e "docling". HTML/DOCX/XLSX têm
-            estratégia única.
+        formato_arquivo: "pdf", "html", "docx", "xlsx"
+        formato_saida: "texto" (default) ou "markdown"
 
     Returns:
-        dict com texto, num_paginas, qualidade_extracao, metodo
+        dict com texto, num_paginas, qualidade_extracao, formato_saida, extrator
 
     Raises:
-        ValueError: formato desconhecido ou estratégia inválida para o formato
-        TypeError: tipo de `conteudo` incompatível com o formato
+        ValueError: formato_arquivo desconhecido ou formato_saida inválido
+        TypeError: tipo de `conteudo` incompatível com o formato_arquivo
     """
-    formato_lower = formato.lower()
+    formato_arquivo_lower = formato_arquivo.lower()
 
-    if formato_lower not in _EXTRATORES:
+    if formato_arquivo_lower not in _EXTRATORES:
         raise ValueError(
-            f"Formato '{formato}' não é suportado. "
+            f"Formato de arquivo '{formato_arquivo}' não é suportado. "
             f"Formatos válidos: {', '.join(_EXTRATORES)}."
         )
 
-    estrategias = _EXTRATORES[formato_lower]
-    estrategia = estrategia or _ESTRATEGIA_DEFAULT[formato_lower]
-    if estrategia not in estrategias:
+    if formato_saida not in FORMATOS_SAIDA_VALIDOS:
         raise ValueError(
-            f"Estratégia '{estrategia}' não é válida para formato '{formato_lower}'. "
-            f"Estratégias válidas: {', '.join(estrategias)}."
+            f"Formato de saída '{formato_saida}' não é válido. "
+            f"Valores aceitos: {', '.join(sorted(FORMATOS_SAIDA_VALIDOS))}."
         )
 
-    extrator = estrategias[estrategia]
+    extrator = _EXTRATORES[formato_arquivo_lower][formato_saida]
 
-    if formato_lower == "html":
+    if formato_arquivo_lower == "html":
         # HTML aceita bytes ou str — decodifica bytes com fallback latin-1.
         if isinstance(conteudo, bytes):
             try:
@@ -108,5 +124,7 @@ def extrair_texto(
 
     # PDF, DOCX, XLSX exigem bytes.
     if not isinstance(conteudo, bytes):
-        raise TypeError(f"Para {formato_lower.upper()}, conteudo deve ser bytes.")
+        raise TypeError(
+            f"Para {formato_arquivo_lower.upper()}, conteudo deve ser bytes."
+        )
     return extrator(conteudo)

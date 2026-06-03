@@ -14,16 +14,19 @@ Fontes disponíveis:
     procedimentos-rede → SharePoint ONS (Procedimentos de Rede)
     manuais            → gov.br (manuais, modelos e instruções)
 
-Estratégias de extração de PDF (benchmark de ingestão):
-    pymupdf   → PyMuPDF (baseline, rápido, PDFs nativos)
-    docling   → Docling/IBM (IA layout detection, melhor em tabelas e scans)
+Estratégias de extração (eixo do benchmark de ingestão):
+    texto     → texto plano       (pymupdf, html_parser, python_docx, openpyxl)
+    markdown  → Markdown estruturado (pymupdf4llm, html2markdown, mammoth, pandas_tabulate)
+
+Vira a coluna `metodo_extracao` no schema e a partição `metodo_extracao=Y/` no Hub.
+A ferramenta real (pymupdf, mammoth, …) viaja na coluna `extrator` — rastreio do benchmark.
 
 Como usar:
-    # Ingestão incremental de uma fonte
+    # Ingestão incremental de uma fonte (texto)
     python -m src.ingestion.run --fonte procedimentos-rede
 
-    # Benchmark de extração (Docling na amostra de proc de rede)
-    python -m src.ingestion.run --fonte procedimentos-rede --estrategia docling --amostra 10
+    # Benchmark Markdown sobre uma amostra
+    python -m src.ingestion.run --fonte procedimentos-rede --estrategia markdown --amostra 10
 
     # Dry-run (valida schema, não sobe ao Hub)
     python -m src.ingestion.run --fonte leis --dry-run
@@ -87,12 +90,15 @@ def _coletar_fonte(
     estrategia: str,
     amostra: int | None,
 ) -> list[dict]:
-    """Despacha para o(s) scraper(s) correto(s) e retorna docs coletados."""
+    """Despacha para o(s) scraper(s) correto(s) e retorna docs coletados.
+
+    `estrategia` ∈ {"texto", "markdown"} — vale para qualquer fonte, qualquer
+    formato. O dispatcher de extractors traduz para a ferramenta correta.
+    """
     if fonte == "atos":
         return _coletar_atos(estrategia, max_docs=amostra)
     if fonte == "leis":
-        # Leis são HTML — estratégia de PDF é ignorada silenciosamente.
-        return coletar_leis()
+        return coletar_leis(estrategia=estrategia)
     if fonte == "procedimentos":
         return _coletar_procedimentos(estrategia)
     if fonte == "procedimentos-rede":
@@ -124,9 +130,9 @@ def main() -> int:
     )
     parser.add_argument(
         "--estrategia",
-        default="pymupdf",
-        choices=["pymupdf", "pymupdf4llm"],
-        help="Estratégia de extração de PDF (default: pymupdf)",
+        default="texto",
+        choices=["texto", "markdown"],
+        help="Formato de saída da extração (default: texto)",
     )
     parser.add_argument(
         "--amostra",
@@ -194,7 +200,9 @@ def main() -> int:
 
     df_novos = pd.DataFrame(docs_novos)
 
-    mesclar = not args.sem_merge
+    # --limpar-estrutura implica --sem-merge: estamos reescrevendo o Hub do zero,
+    # não faz sentido mesclar com dados antigos (que podem ter schema diferente).
+    mesclar = not args.sem_merge and not args.limpar_estrutura
     if mesclar and not args.dry_run:
         try:
             df_hub = carregar_corpus_hub()

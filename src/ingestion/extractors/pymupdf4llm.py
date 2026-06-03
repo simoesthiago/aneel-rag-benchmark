@@ -31,7 +31,8 @@ def extrair_texto_pdf_pymupdf4llm(conteudo: bytes) -> dict:
             texto (str): conteúdo em Markdown
             num_paginas (int): total de páginas do PDF
             qualidade_extracao (float): 0.0 a 1.0 (fração de páginas com texto)
-            metodo (str): sempre "pymupdf4llm"
+            formato_saida (str): sempre "markdown"
+            extrator (str): sempre "pymupdf4llm"
     """
     try:
         import pymupdf4llm
@@ -59,5 +60,6 @@ def extrair_texto_pdf_pymupdf4llm(conteudo: bytes) -> dict:
         "texto": texto,
         "num_paginas": num_paginas,
         "qualidade_extracao": qualidade,
-        "metodo": "pymupdf4llm",
+        "formato_saida": "markdown",
+        "extrator": "pymupdf4llm",
     }
