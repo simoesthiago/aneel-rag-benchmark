@@ -195,6 +195,33 @@ class TestExtrairTextoDispatcher:
         assert "distribuidora" in resultado["texto"]
 
 
+class TestExtrairMarkdownPdf:
+    """Testes de heurísticas específicas do extrator Markdown de PDF."""
+
+    def test_markdown_apenas_com_imagens_omitidas_nao_e_conteudo_util(self):
+        """Placeholders de imagem não devem entrar como texto do corpus."""
+        from src.ingestion.extractors.pymupdf4llm import _markdown_tem_conteudo_util
+
+        markdown = (
+            "**==> picture [100 x 28] intentionally omitted <==**\n\n"
+            "**==> picture [275 x 234] intentionally omitted <==**\n\n"
+            "**==> picture [386 x 58] intentionally omitted <==**"
+        )
+
+        assert _markdown_tem_conteudo_util(markdown) is False
+
+    def test_markdown_com_texto_normativo_e_conteudo_util(self):
+        """Texto regulatório real deve continuar sendo aceito."""
+        from src.ingestion.extractors.pymupdf4llm import _markdown_tem_conteudo_util
+
+        markdown = (
+            "## RESOLUÇÃO NORMATIVA Nº 1000/2021\n\n"
+            "Art. 1º Esta Resolução estabelece regras de prestação do serviço."
+        )
+
+        assert _markdown_tem_conteudo_util(markdown) is True
+
+
 # =========================================================================
 # Testes do scraper_atos.py
 # =========================================================================
@@ -467,6 +494,20 @@ class TestValidarSchema:
         with pytest.raises(RuntimeError, match="texto_bruto < 100"):
             validar_schema(df)
 
+    def test_validador_detecta_id_sem_as_duas_estrategias(self):
+        """Corpus do benchmark exige par texto/markdown para cada id."""
+        from scripts.validate_corpus import encontrar_ids_assimetricos
+
+        df_texto = self._criar_df_valido(metodo="texto", extrator="html_parser")
+        df_md = self._criar_df_valido(metodo="markdown", extrator="html2markdown")
+        df_apenas_texto = self._criar_df_valido(metodo="texto", extrator="pymupdf")
+        df_apenas_texto.loc[0, "id"] = "ren-2021-1000"
+        df = pd.concat([df_texto, df_md, df_apenas_texto], ignore_index=True)
+
+        assimetricos = encontrar_ids_assimetricos(df)
+
+        assert assimetricos == [{"id": "ren-2021-1000", "presente": ["texto"], "faltante": ["markdown"]}]
+
 
 class TestMesclarCorpus:
     """Testes de merge incremental."""
@@ -533,6 +574,82 @@ class TestMesclarCorpus:
         merged = mesclar_corpus(df1, df2)
         assert len(merged) == 2
         assert set(merged["metodo_extracao"]) == {"texto", "markdown"}
+
+
+class TestRepairMissingExtractions:
+    """Testes do reparo cirúrgico de pares texto/markdown ausentes."""
+
+    def _doc(
+        self,
+        doc_id: str,
+        metodo: str,
+        extrator: str,
+    ) -> dict:
+        return {
+            "id": doc_id,
+            "tipo": "ato_normativo",
+            "subtipo": "ren",
+            "numero": "1000",
+            "ano": 2021,
+            "titulo": "REN 1000/2021",
+            "assunto": None,
+            "situacao": "vigente",
+            "data_publicacao": "2021-12-07",
+            "fonte": "cedoc",
+            "url_original": "https://www2.aneel.gov.br/cedoc/ren20211000.pdf",
+            "url_consolidado": "https://www2.aneel.gov.br/cedoc/bren20211000.pdf",
+            "formato_original": "pdf",
+            "texto_bruto": "A" * 200,
+            "num_paginas": 1,
+            "metodo_extracao": metodo,
+            "extrator": extrator,
+            "qualidade_extracao": 1.0,
+            "hf_path": None,
+            "scraped_at": "2026-06-03T00:00:00Z",
+        }
+
+    def test_encontrar_reparos_lista_apenas_metodos_faltantes(self):
+        """Reparo deve mirar só ids incompletos, não reprocessar corpus inteiro."""
+        from src.ingestion.repair_missing_extractions import encontrar_reparos
+
+        df = pd.DataFrame(
+            [
+                self._doc("ren-2021-1000", "texto", "pymupdf"),
+                self._doc("ren-2021-1000", "markdown", "pymupdf4llm"),
+                self._doc("ren-2025-1125", "markdown", "pymupdf4llm"),
+            ]
+        )
+
+        reparos = encontrar_reparos(df)
+
+        assert len(reparos) == 1
+        assert reparos[0].doc_id == "ren-2025-1125"
+        assert reparos[0].metodo_faltante == "texto"
+
+    def test_montar_documento_reparado_preserva_metadados(self):
+        """Linha reparada reaproveita metadados e troca só campos de extração."""
+        from src.ingestion.repair_missing_extractions import montar_documento_reparado
+
+        row = self._doc("ren-2025-1125", "markdown", "pymupdf4llm")
+        resultado = {
+            "texto": "B" * 200,
+            "num_paginas": 3,
+            "formato_saida": "texto",
+            "extrator": "pymupdf",
+            "qualidade_extracao": 1.0,
+        }
+
+        reparado = montar_documento_reparado(
+            row,
+            resultado,
+            scraped_at="2026-06-04T00:00:00Z",
+        )
+
+        assert reparado["id"] == "ren-2025-1125"
+        assert reparado["titulo"] == "REN 1000/2021"
+        assert reparado["metodo_extracao"] == "texto"
+        assert reparado["extrator"] == "pymupdf"
+        assert reparado["texto_bruto"].startswith("B")
 
 
 class TestColetarProretMock:

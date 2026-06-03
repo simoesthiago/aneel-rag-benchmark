@@ -21,7 +21,7 @@
 # =============================================================================
 
 .PHONY: help install check-env test lint format \
-        ingest-all benchmark-markdown corpus-reset validate-corpus \
+        ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -40,6 +40,7 @@ help:
 	@echo "  INGESTÃO (fluxo principal)"
 	@echo "    make ingest-all         Coleta todas as fontes em texto plano (baseline)"
 	@echo "    make benchmark-markdown Re-extrai tudo em Markdown (segunda estratégia)"
+	@echo "    make repair-corpus      Repara pares texto/markdown ausentes no Hub"
 	@echo "    make corpus-reset       Apaga o Hub e reconstrói do zero (texto + markdown)"
 	@echo ""
 	@echo "  VALIDAÇÃO"
@@ -100,10 +101,19 @@ print(f'✅ HuggingFace Hub acessível: {repo}')" \
 ingest-all:
 	python3 -m src.ingestion.run --todas --estrategia texto
 
-# Re-extrai todas as fontes em Markdown e mescla com o corpus de texto já no Hub.
+# Re-extrai todas as fontes em Markdown, repara eventuais lacunas texto/markdown
+# causadas por rate limit/transientes e valida o corpus final do benchmark.
 # Rode DEPOIS de `make ingest-all`.
 benchmark-markdown:
 	python3 -m src.ingestion.run --todas --estrategia markdown
+	python3 -m src.ingestion.repair_missing_extractions
+	python3 scripts/validate_corpus.py
+
+# Repara somente documentos que ficaram com uma estratégia de extração faltante.
+# Útil quando o cedoc/ aplica rate limit no meio de uma rodada.
+repair-corpus:
+	python3 -m src.ingestion.repair_missing_extractions
+	python3 scripts/validate_corpus.py
 
 # Apaga o Hub e reconstrói do zero com texto + markdown.
 # Use apenas quando quiser resetar o corpus por completo (ex.: mudança de schema).
@@ -113,6 +123,8 @@ corpus-reset:
 	@sleep 5
 	python3 -m src.ingestion.run --todas --estrategia texto --limpar-estrutura
 	python3 -m src.ingestion.run --todas --estrategia markdown
+	python3 -m src.ingestion.repair_missing_extractions
+	python3 scripts/validate_corpus.py
 
 # ------------------------------------------------------------------------------
 # VALIDAÇÃO

@@ -109,7 +109,7 @@ make ingest-manuais        # manuais gov.br
 make ingest-all            # todas as fontes em texto (merge incremental)
 
 # Benchmark de extração: re-roda tudo em Markdown
-make benchmark-markdown
+make benchmark-markdown  # inclui reparo de lacunas texto/markdown + validação
 
 # Conferir dataset publicado
 make validate-corpus

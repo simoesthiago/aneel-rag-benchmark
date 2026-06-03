@@ -15,6 +15,26 @@ sinais naturais) e facilita a extração de artigos e incisos.
 """
 
 import io
+import re
+
+_PICTURE_OMITTED_RE = re.compile(
+    r"\*\*==>\s*picture\s*\[[^\]]+\]\s*intentionally omitted\s*<==\*\*",
+    re.IGNORECASE,
+)
+
+
+def _markdown_tem_conteudo_util(texto: str) -> bool:
+    """
+    Retorna True quando o Markdown contém texto real, não só imagens omitidas.
+
+    PDFs escaneados podem gerar muitos marcadores "picture intentionally
+    omitted" no PyMuPDF4LLM. Isso aumenta `len(texto)`, mas não produz conteúdo
+    recuperável para RAG; portanto deve ser tratado como extração vazia.
+    """
+    sem_imagens = _PICTURE_OMITTED_RE.sub("", texto)
+    sem_markdown = re.sub(r"[*_`#~>|\\-]+", " ", sem_imagens)
+    tokens = re.findall(r"[A-Za-zÀ-ÿ0-9]{3,}", sem_markdown)
+    return len(tokens) >= 10
 
 
 def extrair_texto_pdf_pymupdf4llm(conteudo: bytes) -> dict:
@@ -55,6 +75,9 @@ def extrair_texto_pdf_pymupdf4llm(conteudo: bytes) -> dict:
     # to_markdown recebe o fitz.Document aberto (não BytesIO)
     texto = pymupdf4llm.to_markdown(pdf, show_progress=False)
     pdf.close()
+
+    if not _markdown_tem_conteudo_util(texto):
+        texto = ""
 
     return {
         "texto": texto,

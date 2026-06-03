@@ -17,10 +17,10 @@ __pycache__/
 .env
 
 # Contexto local para Claude Code (contém paths e dados pessoais)
-CLAUDE.md
+AGENTS.md
 DECISIONS.md
 PROGRESS.md
-SCRATCHPAD.md
+NOTES.md
 
 # Jupyter
 .ipynb_checkpoints/
