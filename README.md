@@ -5,8 +5,6 @@ da ANEEL. O projeto coleta documentos públicos, estrutura chunks citáveis,
 compara estratégias de recuperação e mede qualidade regulatória, custo e
 latência.
 
-O foco deixou de ser apenas "qual RAG vence" e passou a ser:
-
 > Qual combinação de chunking, retrieval, geração e citação normativa produz a
 > melhor resposta regulatória com norma vigente, fonte correta, custo aceitável e
 > latência viável?
