@@ -19,17 +19,17 @@ O corpus cobre quatro famílias de documentos:
 
 | Fonte | Exemplos | Status |
 |---|---|---|
-| Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | ✅ ~991 docs |
-| Procedimentos regulatórios | PRODIST (11 mód.), Regras de Transmissão (6 mód.), PRORET | ✅ ~395 docs |
-| Procedimentos de Rede (ONS) | 9 módulos, ~165 submódulos vigentes (tipos OP/RS/PR/CR/IN/RQ) | ✅ ~165 docs |
-| Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | ✅ ~87 docs |
-| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | ✅ 4 docs |
+| Atos normativos | RENs, REHs, despachos e outros atos do estoque regulatório | ~990 docs |
+| Procedimentos regulatórios | PRODIST (11 mód.), Regras de Transmissão (6 mód.), PRORET | ~395 docs |
+| Procedimentos de Rede (ONS) | 9 módulos, ~165 submódulos vigentes (tipos OP/RS/PR/CR/IN/RQ) | ~165 docs |
+| Manuais, modelos e instruções | Guias operacionais, modelos e planilhas públicas | ~85 docs |
+| Leis estruturantes | Lei 9.427/1996, Lei 8.987/1995, Lei 9.074/1995, Lei 13.848/2019 | 4 docs |
 
 ---
 
 ## Arquitetura
 
-O pipeline é organizado em 5 camadas:
+O pipeline de construção é organizado em 5 camadas:
 
 1. **Ingestão** — coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub.
 2. **Processamento** — gera chunks `fixed-size`, `article-aware` e `hierarchical`, embeddings e índices.
