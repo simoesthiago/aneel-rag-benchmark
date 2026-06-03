@@ -1,15 +1,13 @@
 from src.embeddings.embedder import (
-    DEFAULT_EMBEDDING_MODEL,
+    DEFAULT_OPENAI_EMBEDDING_MODEL,
     HashEmbeddingProvider,
-    OpenAIEmbedder,
-    SentenceTransformerEmbedder,
+    OpenAIEmbeddingProvider,
     build_embedder,
 )
 
 __all__ = [
-    "DEFAULT_EMBEDDING_MODEL",
+    "DEFAULT_OPENAI_EMBEDDING_MODEL",
     "HashEmbeddingProvider",
-    "OpenAIEmbedder",
-    "SentenceTransformerEmbedder",
+    "OpenAIEmbeddingProvider",
     "build_embedder",
 ]

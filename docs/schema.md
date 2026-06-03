@@ -126,8 +126,10 @@ da Camada 1.
 
 | Coluna | Tipo Python | Nullable | Descrição |
 |---|---|---|---|
-| `chunk_id` | `str` | Não | Identificador único do chunk: `{document_id}::{strategy}::{index}` |
-| `document_id` | `str` | Não | FK lógica para `documents.id` |
+| `chunk_id` | `str` | Não | Identificador único do chunk: `{document_id}::{metodo_extracao}::{strategy}::{index}` |
+| `document_id` | `str` | Não | Parte da FK lógica para `documents.id` |
+| `metodo_extracao` | `str` | Não | Parte da FK lógica para `documents.metodo_extracao`; distingue chunks de `texto` e `markdown` |
+| `extrator` | `str` | Sim | Herdado de `documents.extrator`; ferramenta concreta que produziu o texto base |
 | `parent_chunk_id` | `str` | Sim | Chunk pai em estratégias hierárquicas |
 | `chunk_strategy` | `str` | Não | `"fixed-size"`, `"article-aware"`, `"hierarchical"` ou `"hierarchical-child"` |
 | `chunk_level` | `str` | Não | `"chunk"`, `"article"`, `"section"` ou `"paragraph"` |
@@ -143,7 +145,12 @@ da Camada 1.
 | `subtipo` | `str` | Sim | Herdado de `documents.subtipo` |
 | `numero` | `str` | Sim | Herdado de `documents.numero` |
 | `ano` | `int` | Sim | Herdado de `documents.ano` |
+| `titulo` | `str` | Não | Herdado de `documents.titulo` |
+| `assunto` | `str` | Sim | Herdado de `documents.assunto` |
 | `situacao` | `str` | Sim | Herdado de `documents.situacao` |
+| `fonte` | `str` | Não | Herdado de `documents.fonte` |
+| `formato_original` | `str` | Não | Herdado de `documents.formato_original` |
+| `qualidade_extracao` | `float` | Sim | Herdado de `documents.qualidade_extracao` |
 | `url_original` | `str` | Não | Herdado de `documents.url_original` |
 | `url_consolidado` | `str` | Sim | Herdado de `documents.url_consolidado` |
 
@@ -152,8 +159,31 @@ da Camada 1.
 | Estratégia | Uso no benchmark | Observação |
 |---|---|---|
 | `fixed-size` | Baseline simples | Divide por janela de palavras com overlap |
-| `article-aware` | Baseline regulatório | Prioriza `Art.`, `§`, incisos e alíneas |
-| `hierarchical` | Parent context | Recupera filhos pequenos e responde com pai mais amplo |
+| `article-aware` | Baseline regulatório | Prioriza `Art.`, `Artigo`, `§`, incisos e alíneas; fallback por seções/parágrafos |
+| `hierarchical` | Parent context | Gera pais estruturais e filhos `hierarchical-child` menores para retrieval |
+
+---
+
+## Artefato derivado: `embeddings`
+
+Embeddings são gerados sobre `chunks.texto`, nunca sobre o documento inteiro.
+O `chunk_id` é a chave lógica entre vetor e metadados. A Camada 2.2 produz
+vetores em memória para a Camada 2.3; o artefato persistente será o índice FAISS
+com metadados separados.
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `vectors` | `float32[n_chunks, dimension]` | Matriz de embeddings na mesma ordem de `metadata` |
+| `metadata` | `DataFrame` | Chunks e metadados, incluindo `chunk_id`, `texto`, `citation_label`, URLs e estrutura legal |
+| `manifest` | `dict` | Provider, modelo, dimensão, filtros de chunk, contagem e timestamp |
+
+### Providers de embedding
+
+| Provider | Modelo | Uso |
+|---|---|---|
+| `openai` | `text-embedding-3-large` | Caminho principal de qualidade |
+| `openai` | `text-embedding-3-small` | Baseline barato |
+| `hash` | `hash` | Testes offline, sem API |
 
 ---
 
@@ -171,12 +201,27 @@ aneel-corpus/
       tipo=manual/metodo_extracao=markdown/part-0.parquet
       tipo=lei/metodo_extracao=texto/part-0.parquet
       tipo=lei/metodo_extracao=markdown/part-0.parquet
+    chunks/
+      chunk_strategy=fixed-size/metodo_extracao=texto/tipo=ato_normativo/part-0.parquet
+      chunk_strategy=fixed-size/metodo_extracao=markdown/tipo=ato_normativo/part-0.parquet
+      chunk_strategy=article-aware/metodo_extracao=texto/tipo=procedimento/part-0.parquet
+      chunk_strategy=hierarchical/metodo_extracao=markdown/tipo=lei/part-0.parquet
+      chunk_strategy=hierarchical-child/metodo_extracao=markdown/tipo=lei/part-0.parquet
 ```
 
-Particionado por `(tipo, metodo_extracao)` — **exatamente 2 partições por tipo**.
-A coluna `extrator` (ferramenta concreta) viaja dentro do Parquet, não particiona.
-Em manuais (formatos heterogêneos), a partição `markdown` pode conter linhas com
-`extrator ∈ {pymupdf4llm, mammoth, pandas_tabulate, html2markdown}`.
+Documentos são particionados por `(tipo, metodo_extracao)` — **exatamente 2
+partições por tipo**. A coluna `extrator` (ferramenta concreta) viaja dentro do
+Parquet, não particiona. Em manuais (formatos heterogêneos), a partição
+`markdown` pode conter linhas com `extrator ∈ {pymupdf4llm, mammoth,
+pandas_tabulate, html2markdown}`.
+
+Chunks são particionados por `(chunk_strategy, metodo_extracao, tipo)` e gravados
+em `data/chunks/`. Ao publicar chunks, o pipeline substitui apenas `data/chunks/`
+e preserva `data/documents/`, porque chunks são artefatos derivados da Camada 2.
+
+Embeddings crus não são publicados como Parquet nesta fase. Na Camada 2.3, FAISS
+será publicado com `index.faiss`, `metadata.parquet` e `manifest.json`, usando o
+mesmo provider/modelo tanto para indexação quanto para consulta.
 
 Não há mais retrocompatibilidade com corpus legado: o uploader exige que todo
 Parquet tenha partição `metodo_extracao=`. A migração foi feita uma única vez com

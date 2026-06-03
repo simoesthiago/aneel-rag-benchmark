@@ -54,13 +54,11 @@ jupyter>=1.0             # notebooks exploratórios em notebooks/
 # =============================================================================
 #
 # rank-bm25 já aparece nos testes — será instalado assim que a Camada 2 começar.
-# Embedding e vector store serão decididos no benchmark comparativo.
+# Embedding via API foi definido como caminho principal da Camada 2.2.
 #
 # rank-bm25>=0.2.2             # [confirmado] baseline lexical BM25 — sem alternativa
-#
-# [a escolher] modelo de embedding — candidatos:
-#   sentence-transformers>=3.0 # local, sem custo de API; suporte a modelos multilíngues
-#   # openai embeddings via openai>=1.35 (ver Camada 3)
+
+openai>=1.35                  # OpenAI embeddings API
 #
 # [a escolher] vector store — candidatos:
 #   faiss-cpu>=1.8             # arquivo .faiss, sem servidor, portável para HF Spaces

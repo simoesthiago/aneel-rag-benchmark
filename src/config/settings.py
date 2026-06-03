@@ -78,11 +78,34 @@ def get_llm_api_key() -> str:
     return _get_required("LLM_API_KEY")
 
 
+def get_openai_api_key() -> str:
+    """
+    Chave da OpenAI API.
+
+    Preferimos `OPENAI_API_KEY`, que é o nome padrão do SDK da OpenAI.
+    `LLM_API_KEY` fica como fallback temporário para compatibilidade com o
+    projeto antes da Camada 2.2.
+    """
+    value = os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
+    placeholders = {"sua_chave_aqui", "seu_token_aqui", "your_api_key_here"}
+    if not value or value.strip().lower() in placeholders:
+        raise RuntimeError(
+            "Defina OPENAI_API_KEY no .env para usar embeddings via API. "
+            "LLM_API_KEY ainda é aceito como fallback temporário."
+        )
+    return value
+
+
 # -----------------------------------------------------------------------------
 # Repositórios e modelos (configuráveis, mas com default sensato)
 # -----------------------------------------------------------------------------
 HF_DATASET_REPO: str = _get_optional("HF_DATASET_REPO", "simoesthiago/aneel-corpus")
 LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-4o-mini")
+EMBEDDING_PROVIDER: str = _get_optional("EMBEDDING_PROVIDER", "openai")
+EMBEDDING_MODEL: str = _get_optional(
+    "EMBEDDING_MODEL", "text-embedding-3-large"
+)
+EMBEDDING_BATCH_SIZE: int = int(_get_optional("EMBEDDING_BATCH_SIZE", "100"))
 
 
 # -----------------------------------------------------------------------------

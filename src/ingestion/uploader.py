@@ -49,7 +49,11 @@ def carregar_corpus_hub(repo_id: str | None = None) -> pd.DataFrame:
     print(f"  Carregando corpus existente de {repo_id}...")
     api = HfApi()
     arquivos = api.list_repo_files(repo_id, repo_type="dataset")
-    parquets = sorted(f for f in arquivos if f.endswith(".parquet"))
+    parquets = sorted(
+        f
+        for f in arquivos
+        if f.startswith("data/documents/") and f.endswith(".parquet")
+    )
 
     if not parquets:
         raise RuntimeError(f"Nenhum Parquet encontrado em {repo_id}")

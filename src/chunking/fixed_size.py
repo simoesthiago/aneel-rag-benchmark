@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.chunking.common import build_chunk, document_text
+from src.chunking.common import build_chunk, document_text, split_text_by_words
 
 
 def chunk_fixed_size(
@@ -26,25 +26,19 @@ def chunk_fixed_size(
     if overlap >= chunk_size:
         raise ValueError("overlap deve ser menor que chunk_size")
 
-    words = document_text(document).split()
-    if not words:
+    parts = split_text_by_words(
+        document_text(document), max_words=chunk_size, overlap=overlap
+    )
+    if not parts:
         return []
 
-    chunks: list[dict[str, Any]] = []
-    step = chunk_size - overlap
-    for index, start in enumerate(range(0, len(words), step)):
-        window = words[start : start + chunk_size]
-        if not window:
-            break
-        chunks.append(
-            build_chunk(
-                document,
-                strategy="fixed-size",
-                level="chunk",
-                index=index,
-                text=" ".join(window),
-            )
+    return [
+        build_chunk(
+            document,
+            strategy="fixed-size",
+            level="chunk",
+            index=index,
+            text=part,
         )
-        if start + chunk_size >= len(words):
-            break
-    return chunks
+        for index, part in enumerate(parts)
+    ]

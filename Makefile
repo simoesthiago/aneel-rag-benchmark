@@ -22,6 +22,7 @@
 
 .PHONY: help install check-env test lint format \
         ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
+        validate-chunks chunk-all embeddings-sample \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -45,6 +46,11 @@ help:
 	@echo ""
 	@echo "  VALIDAÇÃO"
 	@echo "    make validate-corpus    Confere métricas e estrutura do corpus no Hub"
+	@echo "    make validate-chunks    Confere chunks publicados no Hub"
+	@echo ""
+	@echo "  PROCESSAMENTO"
+	@echo "    make chunk-all          Gera e publica todos os chunks"
+	@echo "    make embeddings-sample  Testa embeddings offline em amostra"
 	@echo ""
 	@echo "  DESENVOLVIMENTO"
 	@echo "    make test               Roda testes unitários"
@@ -132,6 +138,19 @@ corpus-reset:
 
 validate-corpus:
 	python3 scripts/validate_corpus.py
+
+validate-chunks:
+	python3 scripts/validate_chunks.py
+
+# ------------------------------------------------------------------------------
+# PROCESSAMENTO — CAMADA 2
+# ------------------------------------------------------------------------------
+
+chunk-all:
+	python3 -m src.chunking.run --estrategia todas --metodo-extracao todos --publicar
+
+embeddings-sample:
+	python3 -m src.embeddings.run --provider hash --chunk-strategy fixed-size --metodo-extracao markdown --amostra 20
 
 # ------------------------------------------------------------------------------
 # DESENVOLVIMENTO

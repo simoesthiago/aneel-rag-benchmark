@@ -4,39 +4,51 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.chunking.common import build_chunk
 from src.chunking.article_aware import chunk_article_aware
+from src.chunking.common import build_chunk, split_text_by_words
 
 
-def chunk_parent_child(document: dict[str, Any]) -> list[dict[str, Any]]:
+def chunk_parent_child(
+    document: dict[str, Any],
+    *,
+    child_size: int = 300,
+    overlap: int = 40,
+) -> list[dict[str, Any]]:
     """
-    Cria chunks de artigo e filhos por paragrafos simples.
+    Cria chunks pai estruturais e filhos menores para retrieval.
 
     A busca pode mirar os filhos pequenos e a resposta pode usar o contexto pai
     (`parent_chunk_id`) para devolver o artigo inteiro.
     """
-    parents = chunk_article_aware(document)
+    structural_chunks = chunk_article_aware(document)
     chunks: list[dict[str, Any]] = []
-    for parent in parents:
-        parent = dict(parent)
-        parent["chunk_strategy"] = "hierarchical"
-        parent["chunk_id"] = parent["chunk_id"].replace("article-aware", "hierarchical")
-        parent["parent_chunk_id"] = None
+    child_index = 0
+
+    for parent_index, source in enumerate(structural_chunks):
+        parent = build_chunk(
+            document,
+            strategy="hierarchical",
+            level=source["chunk_level"],
+            index=parent_index,
+            text=source["texto"],
+            secao=source.get("secao"),
+            artigo=source.get("artigo"),
+            paragrafo=source.get("paragrafo"),
+            inciso=source.get("inciso"),
+            alinea=source.get("alinea"),
+        )
         chunks.append(parent)
 
-        paragraphs = [
-            part.strip() for part in parent["texto"].split("\n") if part.strip()
-        ]
-        if len(paragraphs) <= 1:
-            continue
-        for child_index, paragraph in enumerate(paragraphs):
+        for child_text in split_text_by_words(
+            parent["texto"], max_words=child_size, overlap=overlap
+        ):
             chunks.append(
                 build_chunk(
                     document,
                     strategy="hierarchical-child",
                     level="paragraph",
-                    index=len(chunks),
-                    text=paragraph,
+                    index=child_index,
+                    text=child_text,
                     parent_chunk_id=parent["chunk_id"],
                     secao=parent.get("secao"),
                     artigo=parent.get("artigo"),
@@ -45,4 +57,5 @@ def chunk_parent_child(document: dict[str, Any]) -> list[dict[str, Any]]:
                     alinea=parent.get("alinea"),
                 )
             )
+            child_index += 1
     return chunks
