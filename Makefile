@@ -23,6 +23,7 @@
 .PHONY: help install check-env test lint format \
         ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
         validate-chunks chunk-all embeddings-sample \
+        vectorstore-sample vectorstore-main validate-vectorstore \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -49,8 +50,11 @@ help:
 	@echo "    make validate-chunks    Confere chunks publicados no Hub"
 	@echo ""
 	@echo "  PROCESSAMENTO"
-	@echo "    make chunk-all          Gera e publica todos os chunks"
-	@echo "    make embeddings-sample  Testa embeddings offline em amostra"
+	@echo "    make chunk-all              Gera e publica todos os chunks"
+	@echo "    make embeddings-sample      Testa embeddings offline em amostra"
+	@echo "    make vectorstore-sample     Smoke barato da vector store (hash, baixa chunks do Hub)"
+	@echo "    make vectorstore-main       Gera e publica vector store principal (large+article-aware+markdown)"
+	@echo "    make validate-vectorstore   Valida vector store publicada no Hub"
 	@echo ""
 	@echo "  DESENVOLVIMENTO"
 	@echo "    make test               Roda testes unitários"
@@ -142,6 +146,20 @@ validate-corpus:
 validate-chunks:
 	python3 scripts/validate_chunks.py
 
+# Valida a vector store principal publicada no Hub (5 consultas-canário).
+# Para outras combinações, passar PROVIDER/MODEL/STRATEGY/METODO.
+PROVIDER ?= openai
+MODEL ?= text-embedding-3-large
+STRATEGY ?= article-aware
+METODO ?= markdown
+
+validate-vectorstore:
+	python3 scripts/validate_vectorstore.py \
+		--provider $(PROVIDER) \
+		--model $(MODEL) \
+		--chunk-strategy $(STRATEGY) \
+		--metodo-extracao $(METODO)
+
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2
 # ------------------------------------------------------------------------------
@@ -151,6 +169,25 @@ chunk-all:
 
 embeddings-sample:
 	python3 -m src.embeddings.run --provider hash --chunk-strategy fixed-size --metodo-extracao markdown --amostra 20
+
+# Smoke barato da Camada 2.3: provider hash, sem custo OpenAI.
+# Ainda baixa chunks do HuggingFace Hub, então exige rede.
+vectorstore-sample:
+	python3 -m src.vectorstore.run \
+		--provider hash \
+		--chunk-strategy article-aware \
+		--metodo-extracao markdown \
+		--amostra 100
+
+# Vector store principal: OpenAI large + article-aware + markdown.
+# Entrega mínima da Camada 2.3. Custa cerca de US$ por geração; rode com cuidado.
+vectorstore-main:
+	python3 -m src.vectorstore.run \
+		--provider openai \
+		--model text-embedding-3-large \
+		--chunk-strategy article-aware \
+		--metodo-extracao markdown \
+		--publicar
 
 # ------------------------------------------------------------------------------
 # DESENVOLVIMENTO

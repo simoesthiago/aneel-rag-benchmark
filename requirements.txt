@@ -59,11 +59,9 @@ jupyter>=1.0             # notebooks exploratórios em notebooks/
 # rank-bm25>=0.2.2             # [confirmado] baseline lexical BM25 — sem alternativa
 
 openai>=1.35                  # OpenAI embeddings API
-#
-# [a escolher] vector store — candidatos:
-#   faiss-cpu>=1.8             # arquivo .faiss, sem servidor, portável para HF Spaces
-#   # chromadb                 # alternativa com metadados mais ricos
-#   # qdrant-client            # alternativa com filtros avançados
+tiktoken>=0.7                 # contagem/truncamento seguro de tokens para OpenAI
+faiss-cpu>=1.8                # vector store: arquivo .faiss, sem servidor, portável para HF Spaces
+numpy>=1.26                   # arrays float32 para FAISS (já dep transitiva, pinned aqui para clareza)
 
 
 # =============================================================================

@@ -19,6 +19,9 @@ OPENAI_EMBEDDING_DIMENSIONS = {
     "text-embedding-3-small": 1536,
 }
 MAX_OPENAI_BATCH_ITEMS = 2048
+MAX_OPENAI_INPUT_TOKENS = 8192
+MAX_OPENAI_BATCH_TOKENS = 300_000
+TOKEN_SAFETY_MARGIN = 1
 
 
 class HashEmbeddingProvider:
@@ -64,6 +67,8 @@ class OpenAIEmbeddingProvider:
         self.dimension = OPENAI_EMBEDDING_DIMENSIONS[model_name]
         self._api_key = api_key
         self._client = client
+        self.last_truncation_stats: dict[str, Any] = {}
+        self.total_truncated_inputs = 0
 
     def _load_client(self):
         if self._client is None:
@@ -85,6 +90,9 @@ class OpenAIEmbeddingProvider:
                 f"Lote com {len(inputs)} textos excede o limite de "
                 f"{MAX_OPENAI_BATCH_ITEMS} itens da API de embeddings."
             )
+        inputs, truncation_stats = prepare_openai_embedding_inputs(inputs)
+        self.last_truncation_stats = truncation_stats
+        self.total_truncated_inputs += int(truncation_stats["num_truncated"])
 
         response = self._load_client().embeddings.create(
             model=self.model_name,
@@ -134,6 +142,84 @@ def _validate_texts(texts: Iterable[str]) -> list[str]:
             f"Índices vazios: {empty_indexes[:10]}"
         )
     return inputs
+
+
+def prepare_openai_embedding_inputs(
+    texts: Iterable[str],
+    *,
+    max_input_tokens: int = MAX_OPENAI_INPUT_TOKENS,
+    max_batch_tokens: int = MAX_OPENAI_BATCH_TOKENS,
+) -> tuple[list[str], dict[str, Any]]:
+    """Trunca textos para respeitar limites da API de embeddings da OpenAI.
+
+    Mantemos essa lógica antes da chamada à API para evitar desperdiçar uma
+    execução longa quando um único chunk patológico passa do limite de tokens.
+    A camada de vector store preserva o texto completo no metadata; a versão
+    truncada é usada somente para gerar o vetor.
+    """
+    inputs = _validate_texts(texts)
+    per_input_limit = min(
+        max_input_tokens - TOKEN_SAFETY_MARGIN,
+        max_batch_tokens // len(inputs),
+    )
+    encoding = _load_tiktoken_encoding()
+
+    prepared: list[str] = []
+    num_truncated = 0
+    max_tokens_seen = 0
+
+    for text in inputs:
+        truncated, token_count = _truncate_text_for_embedding(
+            text,
+            per_input_limit=per_input_limit,
+            encoding=encoding,
+        )
+        max_tokens_seen = max(max_tokens_seen, token_count)
+        if truncated != text:
+            num_truncated += 1
+        prepared.append(truncated)
+
+    stats = {
+        "num_inputs": len(inputs),
+        "num_truncated": num_truncated,
+        "max_tokens_seen": max_tokens_seen,
+        "per_input_token_limit": per_input_limit,
+        "max_batch_tokens": max_batch_tokens,
+        "tokenizer": "tiktoken:cl100k_base" if encoding is not None else "fallback",
+    }
+    return prepared, stats
+
+
+def _load_tiktoken_encoding() -> Any | None:
+    """Carrega tiktoken quando disponível; fallback conserva testes sem a dep."""
+    try:
+        import tiktoken
+        return tiktoken.get_encoding("cl100k_base")
+    except Exception:
+        return None
+
+
+def _truncate_text_for_embedding(
+    text: str,
+    *,
+    per_input_limit: int,
+    encoding: Any | None,
+) -> tuple[str, int]:
+    """Devolve `(texto_para_embedding, tokens_estimados_ou_reais)`."""
+    if encoding is not None:
+        tokens = encoding.encode(text)
+        if len(tokens) <= per_input_limit:
+            return text, len(tokens)
+        return encoding.decode(tokens[:per_input_limit]), len(tokens)
+
+    # Fallback conservador quando tiktoken ainda não está instalado. Para o
+    # corpus ANEEL (português/markdown), 3 chars por token é prudente o bastante
+    # para evitar estouros sem apagar metadados ou texto original.
+    max_chars = per_input_limit * 3
+    token_estimate = max(1, math.ceil(len(text) / 3))
+    if len(text) <= max_chars:
+        return text, token_estimate
+    return text[:max_chars], token_estimate
 
 
 def _validate_dimensions(

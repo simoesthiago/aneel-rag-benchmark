@@ -30,6 +30,7 @@ NOTES.md
 *.parquet
 *.faiss
 *.index
+.artifacts/
 data/
 
 # macOS

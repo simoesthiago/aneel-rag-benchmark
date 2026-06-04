@@ -109,6 +109,19 @@ EMBEDDING_BATCH_SIZE: int = int(_get_optional("EMBEDDING_BATCH_SIZE", "100"))
 
 
 # -----------------------------------------------------------------------------
+# Vector store (Camada 2.3)
+# -----------------------------------------------------------------------------
+# Baseline FAISS exato: IndexFlatIP + vetores L2-normalizados. Inner product
+# sobre vetores normalizados é matematicamente equivalente a cosine similarity,
+# então este é o índice mais simples e auditável para começar o benchmark.
+# Índices aproximados (IVF, HNSW, PQ) ficam para uma etapa posterior, depois
+# que o baseline exato estiver validado.
+FAISS_INDEX_TYPE: str = "IndexFlatIP"
+FAISS_METRIC: str = "ip"
+VECTORSTORE_HUB_PREFIX: str = "data/vectorstores"
+
+
+# -----------------------------------------------------------------------------
 # Constantes do domínio (fixas no código — não são segredos)
 # -----------------------------------------------------------------------------
 

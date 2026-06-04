@@ -90,6 +90,33 @@ def test_openai_provider_preserva_ordem_com_client_mockado():
     assert embeddings[1][0] == 2.0
 
 
+def test_openai_provider_trunca_texto_longo_antes_da_api():
+    from src.embeddings.embedder import OpenAIEmbeddingProvider
+
+    texto_longo = "palavra " * 20_000
+
+    class FakeEmbeddings:
+        def create(self, model, input, encoding_format):
+            assert model == "text-embedding-3-small"
+            assert encoding_format == "float"
+            assert len(input) == 1
+            assert len(input[0]) < len(texto_longo)
+            return SimpleNamespace(
+                data=[SimpleNamespace(index=0, embedding=[1.0] * 1536)]
+            )
+
+    client = SimpleNamespace(embeddings=FakeEmbeddings())
+    provider = OpenAIEmbeddingProvider(
+        model_name="text-embedding-3-small", client=client
+    )
+
+    embeddings = provider.embed_documents([texto_longo])
+
+    assert len(embeddings[0]) == 1536
+    assert provider.last_truncation_stats["num_truncated"] == 1
+    assert provider.total_truncated_inputs == 1
+
+
 def test_openai_provider_falha_sem_chave(monkeypatch):
     from src.embeddings.embedder import OpenAIEmbeddingProvider
 
