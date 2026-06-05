@@ -27,8 +27,8 @@ O pipeline de construção é organizado em 5 camadas:
 | # | Camada | Responsabilidade | Status |
 |---|---|---|---|
 | 1 | **Ingestão** | Coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub | ✅ |
-| 2 | **Processamento** | Gera chunks (`fixed-size`, `article-aware`, `hierarchical-child`), embeddings e índices FAISS | 🔄 |
-| 3 | **RAG** | Compara BM25, Dense FAISS, Hybrid BM25+dense e Hierarchical parent-child | ⬜ |
+| 2 | **Processamento** | Gera chunks (`fixed-size`, `article-aware`, `hierarchical-child`), embeddings e índices FAISS | ✅ |
+| 3 | **RAG** | Compara BM25, Dense FAISS, Hybrid BM25+dense e Hierarchical parent-child | 🔄 |
 | 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | ⬜ |
 | 5 | **Interface** | Chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada | ⬜ |
 

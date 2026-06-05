@@ -22,7 +22,8 @@
 
 .PHONY: help install check-env test lint format \
         ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
-        validate-chunks chunk-all embeddings-sample \
+        validate-chunks validate-ground-truth validate-ground-truth-hub \
+        publish-ground-truth chunk-all embeddings-sample \
         vectorstore-sample vectorstore-main vectorstore-all \
         validate-vectorstore validate-vectorstore-all \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
@@ -49,7 +50,10 @@ help:
 	@echo "  VALIDAÇÃO"
 	@echo "    make validate-corpus    Confere métricas e estrutura do corpus no Hub"
 	@echo "    make validate-chunks    Confere chunks publicados no Hub"
+	@echo "    make validate-ground-truth Confere ground truth retrieval-50 local"
+	@echo "    make validate-ground-truth-hub Confere ground truth retrieval-50 publicado"
 	@echo "    make validate-vectorstore-all Confere as 12 vector stores no Hub"
+	@echo "    make publish-ground-truth Publica ground truth retrieval-50 no HuggingFace Hub"
 	@echo ""
 	@echo "  PROCESSAMENTO"
 	@echo "    make chunk-all              Gera e publica todos os chunks"
@@ -149,6 +153,15 @@ validate-corpus:
 
 validate-chunks:
 	python3 scripts/validate_chunks.py
+
+validate-ground-truth:
+	python3 scripts/validate_ground_truth.py
+
+validate-ground-truth-hub:
+	python3 scripts/validate_ground_truth.py --hub
+
+publish-ground-truth:
+	python3 scripts/publish_ground_truth.py
 
 # Valida a vector store principal publicada no Hub (5 consultas-canário).
 # Para outras combinações, passar PROVIDER/MODEL/STRATEGY/METODO.

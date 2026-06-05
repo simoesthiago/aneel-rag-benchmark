@@ -122,6 +122,13 @@ VECTORSTORE_HUB_PREFIX: str = "data/vectorstores"
 
 
 # -----------------------------------------------------------------------------
+# Ground truth de avaliação (Camada 4 / eixo de avaliação)
+# -----------------------------------------------------------------------------
+GROUND_TRUTH_HUB_PREFIX: str = "data/evaluation/ground_truth"
+GROUND_TRUTH_VERSION: str = _get_optional("GROUND_TRUTH_VERSION", "retrieval-50")
+
+
+# -----------------------------------------------------------------------------
 # Constantes do domínio (fixas no código — não são segredos)
 # -----------------------------------------------------------------------------
 
