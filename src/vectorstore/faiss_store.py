@@ -112,6 +112,11 @@ class FAISSVectorStore:
         faiss.write_index(self.index, str(path))
         return path
 
+    def to_bytes(self) -> bytes:
+        """Serializa o índice FAISS em memória, sem criar arquivo local."""
+        faiss = _load_faiss()
+        return faiss.serialize_index(self.index).tobytes()
+
     @classmethod
     def load(cls, directory: str | Path) -> "FAISSVectorStore":
         """Carrega `index.faiss` de `directory` e devolve a vector store."""

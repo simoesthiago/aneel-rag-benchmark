@@ -19,12 +19,13 @@ filtrando por `allow_patterns` neste prefixo.
 
 from __future__ import annotations
 
-import tempfile
+import io
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import HfApi, snapshot_download
+from huggingface_hub import CommitOperationAdd, HfApi, snapshot_download
 
 from src.config.settings import (
     HF_DATASET_REPO,
@@ -110,41 +111,117 @@ def publicar_vectorstore(
     token = get_hf_token()
     api = HfApi(token=token)
 
-    arquivos = [
-        INDEX_FILENAME,
-        METADATA_FILENAME,
-        MANIFEST_FILENAME,
-    ]
+    arquivos = [INDEX_FILENAME, METADATA_FILENAME, MANIFEST_FILENAME]
     if chunk_strategy == "hierarchical-child":
         arquivos.append(PARENTS_FILENAME)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        destino = Path(tmpdir) / prefix
-        destino.mkdir(parents=True, exist_ok=True)
-        for nome in arquivos:
-            origem = local_dir / nome
-            destino_arq = destino / nome
-            destino_arq.write_bytes(origem.read_bytes())
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    commit_msg = (
+        f"Vector store: provider={provider} model={model} "
+        f"strategy={chunk_strategy} metodo={metodo_extracao} ({timestamp})"
+    )
 
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        commit_msg = (
-            f"Vector store: provider={provider} model={model} "
-            f"strategy={chunk_strategy} metodo={metodo_extracao} ({timestamp})"
-        )
-
-        print(f"  Fazendo upload de vector store para {repo_id}...")
-        print(f"  Prefixo: {prefix}/")
-        api.upload_folder(
-            folder_path=tmpdir,
-            repo_id=repo_id,
-            repo_type="dataset",
-            commit_message=commit_msg,
-            delete_patterns=[f"{prefix}/*"],
-        )
+    print(f"  Fazendo upload de vector store para {repo_id}...")
+    print(f"  Prefixo: {prefix}/")
+    api.create_commit(
+        repo_id=repo_id,
+        repo_type="dataset",
+        commit_message=commit_msg,
+        operations=[
+            CommitOperationAdd(
+                path_in_repo=f"{prefix}/{nome}",
+                path_or_fileobj=local_dir / nome,
+            )
+            for nome in arquivos
+        ],
+    )
 
     url = f"https://huggingface.co/datasets/{repo_id}"
     print(f"  Upload concluido: {url}")
     return url
+
+
+def publicar_vectorstore_memoria(
+    *,
+    store: FAISSVectorStore,
+    metadata,
+    manifest: dict[str, Any],
+    parents=None,
+    provider: str,
+    model: str,
+    chunk_strategy: str,
+    metodo_extracao: str,
+    repo_id: str | None = None,
+) -> str:
+    """Publica a vector store no Hub sem criar arquivos no filesystem local."""
+    if chunk_strategy == "hierarchical-child" and parents is None:
+        raise RuntimeError(
+            "hierarchical-child exige parents.parquet para publicação."
+        )
+    if repo_id is None:
+        repo_id = HF_DATASET_REPO
+
+    prefix = hub_prefix(
+        provider=provider,
+        model=model,
+        chunk_strategy=chunk_strategy,
+        metodo_extracao=metodo_extracao,
+    )
+
+    token = get_hf_token()
+    api = HfApi(token=token)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    commit_msg = (
+        f"Vector store: provider={provider} model={model} "
+        f"strategy={chunk_strategy} metodo={metodo_extracao} ({timestamp})"
+    )
+
+    operations = [
+        CommitOperationAdd(
+            path_in_repo=f"{prefix}/{INDEX_FILENAME}",
+            path_or_fileobj=store.to_bytes(),
+        ),
+        CommitOperationAdd(
+            path_in_repo=f"{prefix}/{METADATA_FILENAME}",
+            path_or_fileobj=_dataframe_to_parquet_bytes(metadata),
+        ),
+        CommitOperationAdd(
+            path_in_repo=f"{prefix}/{MANIFEST_FILENAME}",
+            path_or_fileobj=json.dumps(
+                manifest,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ).encode("utf-8"),
+        ),
+    ]
+    if parents is not None:
+        operations.append(
+            CommitOperationAdd(
+                path_in_repo=f"{prefix}/{PARENTS_FILENAME}",
+                path_or_fileobj=_dataframe_to_parquet_bytes(parents),
+            )
+        )
+
+    print(f"  Fazendo upload em memória para {repo_id}...")
+    print(f"  Prefixo: {prefix}/")
+    api.create_commit(
+        repo_id=repo_id,
+        repo_type="dataset",
+        commit_message=commit_msg,
+        operations=operations,
+    )
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    print(f"  Upload concluido: {url}")
+    return url
+
+
+def _dataframe_to_parquet_bytes(df) -> bytes:
+    """Serializa DataFrame em Parquet na memória."""
+    buffer = io.BytesIO()
+    df.to_parquet(buffer, index=False, engine="pyarrow")
+    return buffer.getvalue()
 
 
 def carregar_vectorstore(
@@ -192,6 +269,37 @@ def carregar_vectorstore(
         "manifest": load_manifest(local_dir),
         "dir": local_dir,
     }
+
+
+def vectorstore_artifacts_present_hub(
+    *,
+    provider: str,
+    model: str,
+    chunk_strategy: str,
+    metodo_extracao: str,
+    repo_id: str | None = None,
+) -> bool:
+    """True se os arquivos da vector store já existem no HuggingFace Hub."""
+    if repo_id is None:
+        repo_id = HF_DATASET_REPO
+
+    prefix = hub_prefix(
+        provider=provider,
+        model=model,
+        chunk_strategy=chunk_strategy,
+        metodo_extracao=metodo_extracao,
+    )
+    required = {
+        f"{prefix}/{INDEX_FILENAME}",
+        f"{prefix}/{METADATA_FILENAME}",
+        f"{prefix}/{MANIFEST_FILENAME}",
+    }
+    if chunk_strategy == "hierarchical-child":
+        required.add(f"{prefix}/{PARENTS_FILENAME}")
+
+    api = HfApi()
+    arquivos = set(api.list_repo_files(repo_id, repo_type="dataset"))
+    return required.issubset(arquivos)
 
 
 def vectorstore_artifacts_present(directory: str | Path) -> bool:

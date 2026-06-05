@@ -23,7 +23,8 @@
 .PHONY: help install check-env test lint format \
         ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
         validate-chunks chunk-all embeddings-sample \
-        vectorstore-sample vectorstore-main validate-vectorstore \
+        vectorstore-sample vectorstore-main vectorstore-all \
+        validate-vectorstore \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -54,6 +55,8 @@ help:
 	@echo "    make embeddings-sample      Testa embeddings offline em amostra"
 	@echo "    make vectorstore-sample     Smoke barato da vector store (hash, baixa chunks do Hub)"
 	@echo "    make vectorstore-main       Gera e publica vector store principal (large+article-aware+markdown)"
+	@echo "    make vectorstore-all        Gera e publica a matriz completa de vector stores"
+	@echo "                                Use SKIP_EXISTING=0 para forçar regeração"
 	@echo "    make validate-vectorstore   Valida vector store publicada no Hub"
 	@echo ""
 	@echo "  DESENVOLVIMENTO"
@@ -188,6 +191,41 @@ vectorstore-main:
 		--chunk-strategy article-aware \
 		--metodo-extracao markdown \
 		--publicar
+
+VECTORSTORE_MODELS := text-embedding-3-large text-embedding-3-small
+VECTORSTORE_STRATEGIES := fixed-size article-aware hierarchical-child
+VECTORSTORE_METODOS := markdown texto
+SKIP_EXISTING ?= 1
+
+# Matriz completa da Camada 2.3: 2 modelos × 3 estratégias × 2 métodos.
+# Default: pula combinações já publicadas no HuggingFace Hub.
+# Para forçar a matriz completa do zero: make vectorstore-all SKIP_EXISTING=0
+vectorstore-all:
+	@echo "Gerando/publicando matriz completa de vector stores OpenAI."
+	@echo "Modelos: $(VECTORSTORE_MODELS)"
+	@echo "Estratégias: $(VECTORSTORE_STRATEGIES)"
+	@echo "Métodos: $(VECTORSTORE_METODOS)"
+	@echo "Skip existentes: $(SKIP_EXISTING)"
+	@set -e; \
+	skip_flag=""; \
+	if [ "$(SKIP_EXISTING)" != "0" ]; then \
+		skip_flag="--skip-existing"; \
+	fi; \
+	for model in $(VECTORSTORE_MODELS); do \
+		for strategy in $(VECTORSTORE_STRATEGIES); do \
+			for metodo in $(VECTORSTORE_METODOS); do \
+				echo ""; \
+				echo "==> provider=openai model=$$model strategy=$$strategy metodo=$$metodo"; \
+				python3 -m src.vectorstore.run \
+					--provider openai \
+					--model $$model \
+					--chunk-strategy $$strategy \
+					--metodo-extracao $$metodo \
+					--publicar \
+					$$skip_flag; \
+			done; \
+		done; \
+	done
 
 # ------------------------------------------------------------------------------
 # DESENVOLVIMENTO

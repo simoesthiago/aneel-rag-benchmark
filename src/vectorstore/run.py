@@ -8,8 +8,8 @@ Fluxo de uma execução:
   3. Gera embeddings via `build_embedder` (OpenAI ou hash) em batches.
   4. Normaliza, indexa em `IndexFlatIP`, monta metadata na MESMA ordem.
   5. Valida integridade (ordem, dimensão, FKs pai/filho).
-  6. Salva localmente em `--output-dir`.
-  7. Se `--publicar`, faz upload ao HF Hub no layout Hive-style.
+  6. Se `--publicar`, faz upload em memória ao HF Hub.
+  7. Só grava localmente quando `--output-dir` é passado explicitamente.
 
 A entrega mínima da Camada 2.3 publica apenas
 `openai / text-embedding-3-large / article-aware / markdown`.
@@ -40,8 +40,10 @@ from src.embeddings.embedder import (
 )
 from src.vectorstore.faiss_store import FAISSVectorStore
 from src.vectorstore.hub import (
+    publicar_vectorstore_memoria,
     publicar_vectorstore,
     vectorstore_artifacts_present,
+    vectorstore_artifacts_present_hub,
 )
 from src.vectorstore.manifest import (
     build_manifest,
@@ -167,20 +169,36 @@ def persistir_vectorstore(
 def main() -> int:
     args = _parse_args()
     effective_model = _effective_model_name(args.provider, args.model)
-    output_dir = Path(args.output_dir or _default_output_dir(
-        provider=args.provider,
-        model=effective_model,
-        chunk_strategy=args.chunk_strategy,
-        metodo_extracao=args.metodo_extracao,
-    ))
 
-    if args.skip_existing and vectorstore_artifacts_present(output_dir):
-        print(
-            f"  Vector store já existe em {output_dir}; "
-            "use --no-skip-existing para regerar."
-        )
-        return 0
+    if args.skip_existing and args.publicar:
+        if vectorstore_artifacts_present_hub(
+            provider=args.provider,
+            model=effective_model,
+            chunk_strategy=args.chunk_strategy,
+            metodo_extracao=args.metodo_extracao,
+            repo_id=args.repo_id,
+        ):
+            print(
+                "  Vector store já existe no HuggingFace Hub; "
+                "use --no-skip-existing para regerar."
+            )
+            return 0
 
+    if args.output_dir is not None:
+        output_dir = Path(args.output_dir)
+        if args.skip_existing and vectorstore_artifacts_present(output_dir):
+            print(
+                f"  Vector store já existe em {output_dir}; "
+                "use --no-skip-existing para regerar."
+            )
+            return 0
+        return _run_with_output_dir(args, output_dir)
+
+    return _run_in_memory(args)
+
+
+def _gerar_vectorstore(args: argparse.Namespace):
+    """Carrega chunks do Hub e constrói índice, metadata e manifest em memória."""
     df_chunks_corpus = carregar_chunks_hub(args.repo_id)
     df_chunks_filtrados = _filtrar_chunks(
         df_chunks_corpus,
@@ -204,6 +222,35 @@ def main() -> int:
         batch_size=args.batch_size,
         corpus_repo=args.repo_id,
     )
+    return store, metadata, parents, manifest
+
+
+def _run_in_memory(args: argparse.Namespace) -> int:
+    """Gera e, se solicitado, publica sem criar arquivos locais."""
+    store, metadata, parents, manifest = _gerar_vectorstore(args)
+
+    print("  Vector store gerada em memória; nenhum artefato local foi gravado.")
+    _imprimir_resumo(store, metadata, parents, manifest)
+
+    if args.publicar:
+        publicar_vectorstore_memoria(
+            store=store,
+            metadata=metadata,
+            parents=parents,
+            manifest=manifest,
+            provider=manifest["provider"],
+            model=manifest["model"],
+            chunk_strategy=args.chunk_strategy,
+            metodo_extracao=args.metodo_extracao,
+            repo_id=args.repo_id,
+        )
+
+    return 0
+
+
+def _run_with_output_dir(args: argparse.Namespace, output_dir: Path) -> int:
+    """Gera a vector store e grava em diretório local explícito para debug."""
+    store, metadata, parents, manifest = _gerar_vectorstore(args)
 
     persistir_vectorstore(
         output_dir,
@@ -274,9 +321,8 @@ def _parse_args() -> argparse.Namespace:
         "--output-dir",
         default=None,
         help=(
-            "Diretório local de saída. "
-            "Default: .artifacts/vectorstores/<provider>/<model>/"
-            "<chunk_strategy>/<metodo_extracao>/"
+            "Diretório local de saída. Default: não grava arquivos locais. "
+            "Use apenas para debug."
         ),
     )
     parser.add_argument(
@@ -292,29 +338,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-existing",
         action="store_true",
-        help="Pula a geração se index+metadata+manifest já existem no output-dir.",
+        help=(
+            "Pula a geração se a combinação já existe no Hub quando --publicar "
+            "está ativo; com --output-dir, consulta o diretório local explícito."
+        ),
     )
 
     args = parser.parse_args()
     _validar_batch_size(args.batch_size)
     return args
-
-
-def _default_output_dir(
-    *,
-    provider: str,
-    model: str,
-    chunk_strategy: str,
-    metodo_extracao: str,
-) -> Path:
-    return (
-        Path(".artifacts")
-        / "vectorstores"
-        / provider
-        / model
-        / chunk_strategy
-        / metodo_extracao
-    )
 
 
 def _effective_model_name(provider: str, model: str) -> str:

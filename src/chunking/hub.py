@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import io
+import os
 import re
 
 import pandas as pd
-from huggingface_hub import HfApi, hf_hub_download
+import requests
+from huggingface_hub import HfApi, hf_hub_url
 
 from src.config.settings import HF_DATASET_REPO
 
@@ -40,10 +43,7 @@ def carregar_chunks_hub(repo_id: str | None = None) -> pd.DataFrame:
         metodo = _extract_partition(path, "metodo_extracao")
         tipo = _extract_partition(path, "tipo")
 
-        local = hf_hub_download(
-            repo_id=repo_id, filename=path, repo_type="dataset"
-        )
-        df_part = pd.read_parquet(local, engine="pyarrow")
+        df_part = _read_parquet_hub_sem_cache(repo_id, path)
         df_part["chunk_strategy"] = strategy
         df_part["metodo_extracao"] = metodo
         df_part["tipo"] = tipo
@@ -52,6 +52,18 @@ def carregar_chunks_hub(repo_id: str | None = None) -> pd.DataFrame:
     df = pd.concat(partes, ignore_index=True)
     print(f"  {len(df)} chunks no Hub")
     return df
+
+
+def _read_parquet_hub_sem_cache(repo_id: str, path: str) -> pd.DataFrame:
+    """Lê um Parquet do Hub em memória, sem gravar no cache local."""
+    url = hf_hub_url(repo_id=repo_id, filename=path, repo_type="dataset")
+    headers = {}
+    token = os.environ.get("HF_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    response = requests.get(url, headers=headers, timeout=120)
+    response.raise_for_status()
+    return pd.read_parquet(io.BytesIO(response.content), engine="pyarrow")
 
 
 def _extract_partition(path: str, name: str) -> str:

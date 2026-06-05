@@ -1,19 +1,14 @@
 # ANEEL RAG Benchmark
 
-Benchmark comparativo de estratégias de RAG aplicadas ao ecossistema regulatório
-da ANEEL. O projeto coleta documentos públicos, estrutura chunks citáveis,
-compara estratégias de recuperação e mede qualidade regulatória, custo e
-latência.
+Benchmark comparativo de estratégias de RAG aplicadas ao ecossistema regulatório da ANEEL. O projeto coleta documentos públicos, estrutura chunks citáveis, compara estratégias de recuperação e mede qualidade regulatória, custo e latência.
 
-> Qual combinação de chunking, retrieval, geração e citação normativa produz a
-> melhor resposta regulatória com norma vigente, fonte correta, custo aceitável e
-> latência viável?
+> Qual combinação de chunking, retrieval, geração e citação normativa produz a melhor resposta regulatória com norma vigente, fonte correta, custo aceitável e latência viável?
 
 ---
 
 ## Escopo do corpus
 
-O corpus cobre quatro famílias de documentos:
+O corpus cobre cinco famílias de documentos:
 
 | Fonte | Exemplos | Status |
 |---|---|---|
@@ -29,11 +24,15 @@ O corpus cobre quatro famílias de documentos:
 
 O pipeline de construção é organizado em 5 camadas:
 
-1. **Ingestão** — coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub.
-2. **Processamento** — gera chunks `fixed-size`, `article-aware` e `hierarchical`, embeddings e índices.
-3. **RAG** — compara BM25, dense FAISS, hybrid BM25+dense e hierarchical parent-child.
-4. **Avaliação** — mede retrieval, citação, status normativo, latência e métricas LLM opcionais.
-5. **Interface** — chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada.
+| # | Camada | Responsabilidade | Status |
+|---|---|---|---|
+| 1 | **Ingestão** | Coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub | ✅ |
+| 2 | **Processamento** | Gera chunks (`fixed-size`, `article-aware`, `hierarchical-child`), embeddings e índices FAISS | 🔄 |
+| 3 | **RAG** | Compara BM25, Dense FAISS, Hybrid BM25+dense e Hierarchical parent-child | ⬜ |
+| 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | ⬜ |
+| 5 | **Interface** | Chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada | ⬜ |
+
+Legenda: ✅ concluída · 🔄 em construção · ⬜ não iniciada.
 
 ---
 
@@ -50,14 +49,53 @@ A ferramenta concreta fica na coluna `extrator` para rastreio. O Hub é particio
 
 ---
 
-## Estratégias comparadas
+## Estratégias de chunking
+
+| Estratégia | Unidade | Observação |
+|---|---|---|
+| `fixed-size` | Janela fixa de tokens com overlap | Baseline agnóstico de estrutura — referência mínima para comparar as demais |
+| `article-aware` | Artigos, seções e parágrafos do documento regulatório | Respeita a granularidade citável da norma — favorece `article_hit@5` e `citation_accuracy` |
+| `hierarchical-child` | Filhos pequenos com referência ao chunk pai | Busca no filho, responde com contexto do pai — testa a hipótese de melhor recall em normas longas |
+
+---
+
+## Estratégias de retrieval
 
 | Estratégia | Chunking | Retrieval | Observação |
 |---|---|---|---|
 | BM25 baseline | `article-aware` ou `fixed-size` | Lexical | Forte para siglas, números e artigos |
-| Dense FAISS | `fixed-size` ou `article-aware` | Embeddings BGE-M3 | Baseline semântico zero-custo |
+| Dense FAISS | `fixed-size` ou `article-aware` | Embeddings OpenAI (`text-embedding-3-large` / `-3-small`) | Baseline semântico |
 | Hybrid | Mesmo corpus | BM25 + dense via RRF | Primeiro candidato para domínio regulatório |
-| Hierarchical | Parent-child | Busca filhos, responde com contexto pai | Melhor para artigos/seções |
+| Hierarchical | `hierarchical-child` (parent-child) | Busca filhos, responde com contexto pai | Melhor para artigos/seções |
+
+---
+
+## Matriz de vector stores publicadas
+
+A Camada 2 publica uma vector store FAISS por combinação do produto cartesiano abaixo, totalizando **12 índices** no Hub. Cada índice é um pacote autocontido (`index.faiss` + `metadata.parquet` + `manifest.json`, com `parents.parquet` adicional para `hierarchical-child`).
+
+| Eixo | Valores | Cardinalidade |
+|---|---|---|
+| Modelo de embedding | `text-embedding-3-large`, `text-embedding-3-small` | 2 |
+| Estratégia de chunking | `fixed-size`, `article-aware`, `hierarchical-child` | 3 |
+| Método de extração | `markdown`, `texto` | 2 |
+| **Total** | 2 × 3 × 2 | **12** |
+
+Layout no Hub (Hive-style, consistente com `data/chunks/`):
+
+```
+data/vectorstores/
+  provider=openai/
+    model=<embedding-model>/
+      chunk_strategy=<strategy>/
+        metodo_extracao=<metodo>/
+          index.faiss
+          metadata.parquet
+          manifest.json
+          parents.parquet   # apenas para hierarchical-child
+```
+
+Geração via `make vectorstore-all` (a matriz) ou `make vectorstore-main` (apenas `large + article-aware + markdown`, a entrega mínima da Camada 2).
 
 ---
 
@@ -69,9 +107,7 @@ A ferramenta concreta fica na coluna `extrator` para rastreio. O Hub é particio
 | Resposta | `citation_accuracy`, `status_accuracy`, `faithfulness`, `answer_correctness` |
 | Operacional | `latency_avg`, `latency_p95`, custo por consulta e tempo de build |
 
-`faithfulness` e `answer_correctness` são opcionais: rodam apenas quando
-`LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra
-`skipped_no_llm_key` e continua.
+`faithfulness` e `answer_correctness` são opcionais: rodam apenas quando `LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra `skipped_no_llm_key` e continua.
 
 ---
 
@@ -84,8 +120,7 @@ A ferramenta concreta fica na coluna `extrator` para rastreio. O Hub é particio
 | Código-fonte | GitHub |
 | Chatbot | HuggingFace Spaces |
 
-O repositório Git contém apenas código, configuração e documentação. Dados,
-PDFs, Parquet e índices ficam fora do Git.
+O repositório Git contém apenas código, configuração e documentação. Dados, PDFs, Parquet e índices ficam fora do Git.
 
 ---
 
@@ -109,8 +144,16 @@ make ingest-all            # todas as fontes em texto (merge incremental)
 # Benchmark de extração: re-roda tudo em Markdown
 make benchmark-markdown  # inclui reparo de lacunas texto/markdown + validação
 
-# Conferir dataset publicado
+# Conferir corpus publicado (Camada 1)
 make validate-corpus
+
+# Camada 2 — Processamento
+make chunk-all           # gera e publica chunks (3 estratégias × 2 métodos)
+make validate-chunks     # confere chunks publicados no Hub
+
+make vectorstore-main    # vector store principal (large + article-aware + markdown)
+make vectorstore-all     # matriz completa de 12 vector stores (use SKIP_EXISTING=0 para regerar)
+make validate-vectorstore  # valida vector store publicada no Hub
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)

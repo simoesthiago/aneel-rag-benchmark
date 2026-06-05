@@ -406,7 +406,7 @@ def test_run_ponta_a_ponta_com_hash(tmp_path: Path, monkeypatch):
     assert store.ntotal == 3
 
 
-def test_run_hash_sem_output_dir_usa_modelo_hash_no_path(tmp_path: Path, monkeypatch):
+def test_run_hash_sem_output_dir_nao_cria_artifact_local(tmp_path: Path, monkeypatch):
     from src.vectorstore import run as vectorstore_run
 
     df = _chunks_df_simples()
@@ -427,18 +427,80 @@ def test_run_hash_sem_output_dir_usa_modelo_hash_no_path(tmp_path: Path, monkeyp
 
     exit_code = vectorstore_run.main()
 
-    expected = (
-        tmp_path
-        / ".artifacts"
-        / "vectorstores"
-        / "hash"
-        / "hash"
-        / "article-aware"
-        / "markdown"
-    )
     assert exit_code == 0
-    assert vectorstore_artifacts_present(expected)
-    assert load_manifest(expected)["model"] == "hash"
+    assert not (tmp_path / ".artifacts").exists()
+
+
+def test_run_publicar_sem_output_dir_usa_upload_em_memoria(
+    tmp_path: Path, monkeypatch
+):
+    from src.vectorstore import run as vectorstore_run
+
+    df = _chunks_df_simples()
+    chamadas = []
+    monkeypatch.setattr(
+        vectorstore_run, "carregar_chunks_hub", lambda repo_id: df
+    )
+    monkeypatch.setattr(
+        vectorstore_run,
+        "publicar_vectorstore_memoria",
+        lambda **kwargs: chamadas.append(kwargs),
+    )
+    monkeypatch.setattr(
+        vectorstore_run,
+        "publicar_vectorstore",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("nao deve publicar por diretorio")
+        ),
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "vectorstore.run",
+            "--provider", "hash",
+            "--chunk-strategy", "article-aware",
+            "--metodo-extracao", "markdown",
+            "--publicar",
+        ],
+    )
+
+    exit_code = vectorstore_run.main()
+
+    assert exit_code == 0
+    assert len(chamadas) == 1
+    assert chamadas[0]["manifest"]["provider"] == "hash"
+    assert not (tmp_path / ".artifacts").exists()
+    assert not list(tmp_path.rglob("*.faiss"))
+
+
+def test_run_skip_existing_publicar_consulta_hub_sem_baixar_chunks(monkeypatch):
+    from src.vectorstore import run as vectorstore_run
+
+    monkeypatch.setattr(
+        vectorstore_run,
+        "vectorstore_artifacts_present_hub",
+        lambda **kwargs: True,
+    )
+    monkeypatch.setattr(
+        vectorstore_run,
+        "carregar_chunks_hub",
+        lambda repo_id: (_ for _ in ()).throw(AssertionError("nao deve baixar")),
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "vectorstore.run",
+            "--provider", "openai",
+            "--model", "text-embedding-3-large",
+            "--chunk-strategy", "article-aware",
+            "--metodo-extracao", "markdown",
+            "--publicar",
+            "--skip-existing",
+        ],
+    )
+
+    assert vectorstore_run.main() == 0
 
 
 def test_run_hierarchical_child_gera_parents(tmp_path: Path, monkeypatch):
