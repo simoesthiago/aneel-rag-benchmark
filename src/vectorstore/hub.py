@@ -21,11 +21,19 @@ from __future__ import annotations
 
 import io
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import CommitOperationAdd, HfApi, snapshot_download
+import pandas as pd
+import requests
+from huggingface_hub import (
+    CommitOperationAdd,
+    HfApi,
+    hf_hub_url,
+    snapshot_download,
+)
 
 from src.config.settings import (
     HF_DATASET_REPO,
@@ -300,6 +308,79 @@ def vectorstore_artifacts_present_hub(
     api = HfApi()
     arquivos = set(api.list_repo_files(repo_id, repo_type="dataset"))
     return required.issubset(arquivos)
+
+
+def carregar_vectorstore_metadata_hub(
+    *,
+    provider: str,
+    model: str,
+    chunk_strategy: str,
+    metodo_extracao: str,
+    repo_id: str | None = None,
+) -> dict[str, Any]:
+    """Carrega manifest/metadata/parents do Hub em memória, sem baixar índice.
+
+    Usado no gate leve da matriz completa: confirma a presença do `index.faiss`
+    no Hub, mas não baixa o índice para evitar cache/disco local.
+    """
+    if repo_id is None:
+        repo_id = HF_DATASET_REPO
+
+    prefix = hub_prefix(
+        provider=provider,
+        model=model,
+        chunk_strategy=chunk_strategy,
+        metodo_extracao=metodo_extracao,
+    )
+    required = {
+        f"{prefix}/{INDEX_FILENAME}",
+        f"{prefix}/{METADATA_FILENAME}",
+        f"{prefix}/{MANIFEST_FILENAME}",
+    }
+    if chunk_strategy == "hierarchical-child":
+        required.add(f"{prefix}/{PARENTS_FILENAME}")
+
+    api = HfApi()
+    arquivos = set(api.list_repo_files(repo_id, repo_type="dataset"))
+    missing = sorted(required - arquivos)
+    if missing:
+        raise FileNotFoundError(
+            f"Vector store incompleta no Hub ({prefix}/): {missing}"
+        )
+
+    manifest = json.loads(
+        _read_hub_file_bytes(repo_id, f"{prefix}/{MANIFEST_FILENAME}").decode(
+            "utf-8"
+        )
+    )
+    metadata = _read_parquet_hub_sem_cache(repo_id, f"{prefix}/{METADATA_FILENAME}")
+    parents = None
+    if chunk_strategy == "hierarchical-child":
+        parents = _read_parquet_hub_sem_cache(repo_id, f"{prefix}/{PARENTS_FILENAME}")
+
+    return {
+        "manifest": manifest,
+        "metadata": metadata,
+        "parents": parents,
+        "prefix": prefix,
+    }
+
+
+def _read_parquet_hub_sem_cache(repo_id: str, path: str) -> pd.DataFrame:
+    """Lê Parquet do Hub em memória, sem gravar em cache local."""
+    return pd.read_parquet(io.BytesIO(_read_hub_file_bytes(repo_id, path)), engine="pyarrow")
+
+
+def _read_hub_file_bytes(repo_id: str, path: str) -> bytes:
+    """Lê arquivo do Hub em memória, sem `snapshot_download`/cache local."""
+    url = hf_hub_url(repo_id=repo_id, filename=path, repo_type="dataset")
+    headers = {}
+    token = os.environ.get("HF_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    response = requests.get(url, headers=headers, timeout=120)
+    response.raise_for_status()
+    return response.content
 
 
 def vectorstore_artifacts_present(directory: str | Path) -> bool:

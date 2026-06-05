@@ -24,7 +24,7 @@
         ingest-all benchmark-markdown repair-corpus corpus-reset validate-corpus \
         validate-chunks chunk-all embeddings-sample \
         vectorstore-sample vectorstore-main vectorstore-all \
-        validate-vectorstore \
+        validate-vectorstore validate-vectorstore-all \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -49,6 +49,7 @@ help:
 	@echo "  VALIDAÇÃO"
 	@echo "    make validate-corpus    Confere métricas e estrutura do corpus no Hub"
 	@echo "    make validate-chunks    Confere chunks publicados no Hub"
+	@echo "    make validate-vectorstore-all Confere as 12 vector stores no Hub"
 	@echo ""
 	@echo "  PROCESSAMENTO"
 	@echo "    make chunk-all              Gera e publica todos os chunks"
@@ -162,6 +163,9 @@ validate-vectorstore:
 		--model $(MODEL) \
 		--chunk-strategy $(STRATEGY) \
 		--metodo-extracao $(METODO)
+
+validate-vectorstore-all:
+	python3 scripts/validate_vectorstores.py
 
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2
