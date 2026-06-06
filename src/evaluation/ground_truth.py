@@ -88,6 +88,13 @@ STOPWORDS = frozenset(
     """.split()
 )
 
+DOMAIN_SHORT_TOKENS = frozenset(
+    """
+    dec fec dic fic dmic ren reh res ons te
+    pch ena ear gsf pis kv kw mwh gwh
+    """.split()
+)
+
 
 class GroundTruthValidationError(ValueError):
     """Erro de contrato do ground truth."""
@@ -219,7 +226,8 @@ def informative_tokens(text: str) -> list[str]:
     return [
         token
         for token in normalize_text(text).split()
-        if len(token) >= 4 and token not in STOPWORDS
+        if token not in STOPWORDS
+        and (len(token) >= 4 or token in DOMAIN_SHORT_TOKENS)
     ]
 
 

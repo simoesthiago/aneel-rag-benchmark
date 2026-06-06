@@ -81,6 +81,8 @@ help:
 # SETUP
 # ------------------------------------------------------------------------------
 
+PYTHON ?= .venv/bin/python
+
 install:
 	pip3 install -r requirements.txt
 
@@ -179,6 +181,23 @@ validate-vectorstore:
 
 validate-vectorstore-all:
 	python3 scripts/validate_vectorstores.py
+
+# ------------------------------------------------------------------------------
+# AVALIAÇÃO — CAMADA 4 (benchmark de retrieval)
+# ------------------------------------------------------------------------------
+
+# Smoke barato: 2 perguntas × 1 configuração. Útil pra validar o pipeline
+# antes de pagar embeddings da matriz completa.
+benchmark-retrieval-smoke:
+	$(PYTHON) scripts/run_benchmark.py \
+		--top-k 5 \
+		--limit-configs 1 \
+		--limit-questions 2
+
+# Roda as 50 perguntas × 16 configurações. Custa embeddings de query OpenAI
+# (50 perguntas × 2 modelos = 100 embeddings de query).
+benchmark-retrieval:
+	$(PYTHON) scripts/run_benchmark.py --top-k 10
 
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2

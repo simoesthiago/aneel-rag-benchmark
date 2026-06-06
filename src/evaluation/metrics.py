@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from statistics import mean
 from typing import Any, Iterable
@@ -38,6 +39,28 @@ def mrr_at_k(
     return 0.0
 
 
+def ndcg_at_k(relevances: Iterable[int], k: int = 10) -> float:
+    """nDCG@k a partir de um vetor de relevâncias na ordem do ranking.
+
+    `relevances[i]` é a nota de relevância (0-3) do chunk recuperado na
+    posição i. Use `src.evaluation.matching.build_relevance_vector` para
+    produzir esse vetor a partir de chunks + relevant_sources.
+
+    DCG@k = sum_i rel_i / log2(i + 2)  (i começa em 0)
+    IDCG@k = DCG@k com `relevances` ordenado decrescente
+    nDCG@k = DCG@k / IDCG@k
+
+    Retorna 0.0 se não houver nenhum item relevante (IDCG = 0).
+    """
+    vetor = [max(0, int(value)) for value in list(relevances)[:k]]
+    dcg = sum(rel / math.log2(index + 2) for index, rel in enumerate(vetor))
+    ideal = sorted(vetor, reverse=True)
+    idcg = sum(rel / math.log2(index + 2) for index, rel in enumerate(ideal))
+    if idcg == 0:
+        return 0.0
+    return dcg / idcg
+
+
 def article_hit_at_k(
     contexts: Iterable[dict[str, Any]],
     expected_article_refs: Iterable[str],
@@ -54,7 +77,10 @@ def article_hit_at_k(
     return 1.0 if retrieved & expected else 0.0
 
 
-def citation_accuracy(citations: Iterable[str], expected_refs: Iterable[str]) -> float:
+def citation_accuracy(
+    citations: Iterable[str],
+    expected_refs: Iterable[str],
+) -> float:
     expected = [ref for ref in expected_refs if ref]
     if not expected:
         return 0.0
@@ -106,7 +132,11 @@ def optional_llm_metrics(
             "answer_correctness": None,
             "llm_status": "skipped_no_llm_key",
         }
-    return _run_openai_judge(answer=answer, contexts=contexts, reference=reference)
+    return _run_openai_judge(
+        answer=answer,
+        contexts=contexts,
+        reference=reference,
+    )
 
 
 def _run_openai_judge(
@@ -127,7 +157,8 @@ def _run_openai_judge(
     from src.config.settings import LLM_MODEL, get_llm_api_key
 
     context_text = "\n\n".join(
-        str(context.get("texto") or context.get("text") or "") for context in contexts
+        str(context.get("texto") or context.get("text") or "")
+        for context in contexts
     )
     prompt = (
         "Avalie uma resposta RAG regulatoria da ANEEL. "
@@ -155,7 +186,9 @@ def _run_openai_judge(
         parsed = json.loads(content)
         return {
             "faithfulness": _coerce_score(parsed.get("faithfulness")),
-            "answer_correctness": _coerce_score(parsed.get("answer_correctness")),
+            "answer_correctness": _coerce_score(
+                parsed.get("answer_correctness")
+            ),
             "llm_status": "ok",
         }
     except Exception as exc:
@@ -170,7 +203,7 @@ def _run_openai_judge(
 def _coerce_score(value: Any) -> float | None:
     try:
         score = float(value)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return None
     return max(0.0, min(1.0, score))
 
@@ -182,20 +215,33 @@ def evaluate_response(
 ) -> dict[str, Any]:
     contexts = response.get("contexts", [])
     retrieved_doc_ids = [
-        context.get("document_id") for context in contexts if context.get("document_id")
+        context.get("document_id")
+        for context in contexts
+        if context.get("document_id")
     ]
     expected_docs = question.get("expected_document_ids", [])
     expected_articles = question.get("expected_article_refs", [])
     metrics = {
-        "recall@5": recall_at_k(retrieved_doc_ids, expected_docs, k=k),
-        "precision@5": precision_at_k(retrieved_doc_ids, expected_docs, k=k),
-        "mrr@5": mrr_at_k(retrieved_doc_ids, expected_docs, k=k),
-        "article_hit@5": article_hit_at_k(contexts, expected_articles, k=k),
+        f"recall@{k}": recall_at_k(retrieved_doc_ids, expected_docs, k=k),
+        f"precision@{k}": precision_at_k(
+            retrieved_doc_ids,
+            expected_docs,
+            k=k,
+        ),
+        f"mrr@{k}": mrr_at_k(retrieved_doc_ids, expected_docs, k=k),
+        f"article_hit@{k}": article_hit_at_k(
+            contexts,
+            expected_articles,
+            k=k,
+        ),
         "citation_accuracy": citation_accuracy(
             response.get("citations", []),
             expected_articles,
         ),
-        "status_accuracy": status_accuracy(contexts, question.get("expected_status")),
+        "status_accuracy": status_accuracy(
+            contexts,
+            question.get("expected_status"),
+        ),
         "latency_ms": response.get("latency_ms"),
     }
     metrics.update(

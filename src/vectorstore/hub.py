@@ -13,8 +13,8 @@ Layout (Hive-style, consistente com `data/chunks/`):
               (parents.parquet apenas para chunk_strategy=hierarchical-child)
 
 Cada combinação `(provider, model, chunk_strategy, metodo_extracao)` é um
-pacote autocontido — Camada 3 baixa só o que precisa via `snapshot_download`
-filtrando por `allow_patterns` neste prefixo.
+pacote autocontido. A Camada 3 lê os artefatos do Hub em memória para evitar
+cache local de índices grandes.
 """
 
 from __future__ import annotations
@@ -32,7 +32,6 @@ from huggingface_hub import (
     CommitOperationAdd,
     HfApi,
     hf_hub_url,
-    snapshot_download,
 )
 
 from src.config.settings import (
@@ -46,13 +45,10 @@ from src.vectorstore.faiss_store import (
 )
 from src.vectorstore.manifest import (
     MANIFEST_FILENAME,
-    load_manifest,
 )
 from src.vectorstore.metadata import (
     METADATA_FILENAME,
     PARENTS_FILENAME,
-    load_metadata,
-    load_parents,
 )
 
 
@@ -63,7 +59,7 @@ def hub_prefix(
     chunk_strategy: str,
     metodo_extracao: str,
 ) -> str:
-    """Retorna o prefixo Hive-style usado tanto no upload quanto no download."""
+    """Retorna o prefixo Hive-style usado no upload e download."""
     return (
         f"{VECTORSTORE_HUB_PREFIX}/"
         f"provider={provider}/"
@@ -240,12 +236,11 @@ def carregar_vectorstore(
     metodo_extracao: str,
     repo_id: str | None = None,
 ) -> dict[str, Any]:
-    """Baixa a vector store do Hub e devolve `{index, metadata, parents, manifest, dir}`.
+    """Carrega a vector store do Hub em memória.
 
     `index` é uma `FAISSVectorStore` já carregada (pronta para `.search`).
     `parents` é `None` para estratégias diferentes de `hierarchical-child`.
-    `dir` é o diretório local onde os arquivos foram materializados — útil
-    se o consumidor quiser passar adiante.
+    `dir` é sempre `None`: este caminho não materializa arquivos locais.
     """
     if repo_id is None:
         repo_id = HF_DATASET_REPO
@@ -257,25 +252,30 @@ def carregar_vectorstore(
         metodo_extracao=metodo_extracao,
     )
 
-    print(f"  Baixando vector store de {repo_id}: {prefix}/ ...")
-    snapshot = snapshot_download(
-        repo_id=repo_id,
-        repo_type="dataset",
-        allow_patterns=[f"{prefix}/*"],
-    )
-    local_dir = Path(snapshot) / prefix
-    if not local_dir.exists():
-        raise FileNotFoundError(
-            f"Vector store não encontrada no Hub: {prefix}/. "
-            "Verifique provider/model/chunk_strategy/metodo_extracao."
+    print(f"  Carregando vector store em memória de {repo_id}: {prefix}/ ...")
+    manifest = json.loads(
+        _read_hub_file_bytes(repo_id, f"{prefix}/{MANIFEST_FILENAME}").decode(
+            "utf-8"
         )
+    )
+    metadata = _read_parquet_hub_sem_cache(
+        repo_id, f"{prefix}/{METADATA_FILENAME}"
+    )
+    parents = None
+    if chunk_strategy == "hierarchical-child":
+        parents = _read_parquet_hub_sem_cache(
+            repo_id, f"{prefix}/{PARENTS_FILENAME}"
+        )
+    index = FAISSVectorStore.from_bytes(
+        _read_hub_file_bytes(repo_id, f"{prefix}/{INDEX_FILENAME}")
+    )
 
     return {
-        "index": FAISSVectorStore.load(local_dir),
-        "metadata": load_metadata(local_dir),
-        "parents": load_parents(local_dir),
-        "manifest": load_manifest(local_dir),
-        "dir": local_dir,
+        "index": index,
+        "metadata": metadata,
+        "parents": parents,
+        "manifest": manifest,
+        "dir": None,
     }
 
 
@@ -353,10 +353,14 @@ def carregar_vectorstore_metadata_hub(
             "utf-8"
         )
     )
-    metadata = _read_parquet_hub_sem_cache(repo_id, f"{prefix}/{METADATA_FILENAME}")
+    metadata = _read_parquet_hub_sem_cache(
+        repo_id, f"{prefix}/{METADATA_FILENAME}"
+    )
     parents = None
     if chunk_strategy == "hierarchical-child":
-        parents = _read_parquet_hub_sem_cache(repo_id, f"{prefix}/{PARENTS_FILENAME}")
+        parents = _read_parquet_hub_sem_cache(
+            repo_id, f"{prefix}/{PARENTS_FILENAME}"
+        )
 
     return {
         "manifest": manifest,
@@ -368,7 +372,8 @@ def carregar_vectorstore_metadata_hub(
 
 def _read_parquet_hub_sem_cache(repo_id: str, path: str) -> pd.DataFrame:
     """Lê Parquet do Hub em memória, sem gravar em cache local."""
-    return pd.read_parquet(io.BytesIO(_read_hub_file_bytes(repo_id, path)), engine="pyarrow")
+    data = io.BytesIO(_read_hub_file_bytes(repo_id, path))
+    return pd.read_parquet(data, engine="pyarrow")
 
 
 def _read_hub_file_bytes(repo_id: str, path: str) -> bytes:

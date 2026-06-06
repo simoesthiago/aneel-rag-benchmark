@@ -22,6 +22,8 @@ MAX_OPENAI_BATCH_ITEMS = 2048
 MAX_OPENAI_INPUT_TOKENS = 8192
 MAX_OPENAI_BATCH_TOKENS = 300_000
 TOKEN_SAFETY_MARGIN = 1
+DEFAULT_EMBED_BATCH_SIZE = 256
+DEFAULT_RETRY_ATTEMPTS = 5
 
 
 class HashEmbeddingProvider:
@@ -83,29 +85,88 @@ class OpenAIEmbeddingProvider:
             self._client = OpenAI(api_key=api_key)
         return self._client
 
-    def embed_documents(self, texts: Iterable[str]) -> list[list[float]]:
+    def embed_documents(
+        self,
+        texts: Iterable[str],
+        *,
+        batch_size: int = DEFAULT_EMBED_BATCH_SIZE,
+    ) -> list[list[float]]:
+        """Embedda uma lista arbitrariamente grande de textos em sub-lotes.
+
+        Divide o input em lotes de até `batch_size` itens
+        (≤ MAX_OPENAI_BATCH_ITEMS) e faz cada chamada com retry+backoff.
+        Os textos individuais já são truncados para respeitar o limite.
+        """
         inputs = _validate_texts(texts)
-        if len(inputs) > MAX_OPENAI_BATCH_ITEMS:
-            raise ValueError(
-                f"Lote com {len(inputs)} textos excede o limite de "
-                f"{MAX_OPENAI_BATCH_ITEMS} itens da API de embeddings."
-            )
         inputs, truncation_stats = prepare_openai_embedding_inputs(inputs)
         self.last_truncation_stats = truncation_stats
         self.total_truncated_inputs += int(truncation_stats["num_truncated"])
 
-        response = self._load_client().embeddings.create(
-            model=self.model_name,
-            input=inputs,
-            encoding_format="float",
-        )
-        data = sorted(response.data, key=lambda item: item.index)
-        embeddings = [list(item.embedding) for item in data]
+        effective_batch = max(1, min(batch_size, MAX_OPENAI_BATCH_ITEMS))
+        embeddings: list[list[float]] = []
+        for start in range(0, len(inputs), effective_batch):
+            batch = inputs[start: start + effective_batch]
+            data = _call_openai_embeddings_with_retry(
+                client=self._load_client(),
+                model=self.model_name,
+                inputs=batch,
+            )
+            embeddings.extend([list(item.embedding) for item in data])
+
         _validate_dimensions(embeddings, self.dimension)
         return embeddings
 
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
+
+
+def _call_openai_embeddings_with_retry(
+    *,
+    client: Any,
+    model: str,
+    inputs: list[str],
+    max_attempts: int = DEFAULT_RETRY_ATTEMPTS,
+) -> list[Any]:
+    """Chama a API com retry exponencial em erros transitórios.
+
+    Re-tenta `max_attempts` vezes com backoff exponencial (1s → 16s) em
+    falhas comuns: rate limits, timeouts, erros 5xx. Erros 4xx que não sejam
+    rate limit (ex: input inválido) propagam imediatamente.
+    """
+    from tenacity import (
+        retry,
+        retry_if_exception,
+        stop_after_attempt,
+        wait_random_exponential,
+    )
+
+    def _is_retryable(exc: BaseException) -> bool:
+        name = type(exc).__name__
+        return name in {
+            "RateLimitError",
+            "APITimeoutError",
+            "APIConnectionError",
+            "InternalServerError",
+            "APIError",
+            "TimeoutError",
+            "ConnectionError",
+        }
+
+    @retry(
+        wait=wait_random_exponential(min=1, max=16),
+        stop=stop_after_attempt(max_attempts),
+        retry=retry_if_exception(_is_retryable),
+        reraise=True,
+    )
+    def _call() -> list[Any]:
+        response = client.embeddings.create(
+            model=model,
+            input=inputs,
+            encoding_format="float",
+        )
+        return sorted(response.data, key=lambda item: item.index)
+
+    return _call()
 
 
 def build_embedder(
@@ -185,13 +246,15 @@ def prepare_openai_embedding_inputs(
         "max_tokens_seen": max_tokens_seen,
         "per_input_token_limit": per_input_limit,
         "max_batch_tokens": max_batch_tokens,
-        "tokenizer": "tiktoken:cl100k_base" if encoding is not None else "fallback",
+        "tokenizer": (
+            "tiktoken:cl100k_base" if encoding is not None else "fallback"
+        ),
     }
     return prepared, stats
 
 
 def _load_tiktoken_encoding() -> Any | None:
-    """Carrega tiktoken quando disponível; fallback conserva testes sem a dep."""
+    """Carrega tiktoken quando disponível; fallback conserva testes."""
     try:
         import tiktoken
         return tiktoken.get_encoding("cl100k_base")
@@ -213,8 +276,8 @@ def _truncate_text_for_embedding(
         return encoding.decode(tokens[:per_input_limit]), len(tokens)
 
     # Fallback conservador quando tiktoken ainda não está instalado. Para o
-    # corpus ANEEL (português/markdown), 3 chars por token é prudente o bastante
-    # para evitar estouros sem apagar metadados ou texto original.
+    # corpus ANEEL (português/markdown), 3 chars por token é prudente
+    # o bastante para evitar estouros sem apagar metadados ou texto original.
     max_chars = per_input_limit * 3
     token_estimate = max(1, math.ceil(len(text) / 3))
     if len(text) <= max_chars:

@@ -9,7 +9,7 @@ from src.rag.generator import generate_extractive_answer
 
 
 class NaiveRAG(BaseRAG):
-    def __init__(self, retriever, *, strategy: str = "bm25"):
+    def __init__(self, retriever, *, strategy: str = "dense"):
         self.retriever = retriever
         self.strategy = strategy
 

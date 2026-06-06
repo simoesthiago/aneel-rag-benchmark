@@ -28,8 +28,8 @@ O pipeline de construção é organizado em 5 camadas:
 |---|---|---|---|
 | 1 | **Ingestão** | Coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub | ✅ |
 | 2 | **Processamento** | Gera chunks (`fixed-size`, `article-aware`, `hierarchical-child`), embeddings e índices FAISS | ✅ |
-| 3 | **RAG** | Compara BM25, Dense FAISS, Hybrid BM25+dense e Hierarchical parent-child | 🔄 |
-| 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | ⬜ |
+| 3 | **RAG** | Compara Dense FAISS, Hierarchical parent-child e reranking opcional | 🔄 |
+| 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | 🔄 |
 | 5 | **Interface** | Chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada | ⬜ |
 
 Legenda: ✅ concluída · 🔄 em construção · ⬜ não iniciada.
@@ -63,10 +63,10 @@ A ferramenta concreta fica na coluna `extrator` para rastreio. O Hub é particio
 
 | Estratégia | Chunking | Retrieval | Observação |
 |---|---|---|---|
-| BM25 baseline | `article-aware` ou `fixed-size` | Lexical | Forte para siglas, números e artigos |
 | Dense FAISS | `fixed-size` ou `article-aware` | Embeddings OpenAI (`text-embedding-3-large` / `-3-small`) | Baseline semântico |
-| Hybrid | Mesmo corpus | BM25 + dense via RRF | Primeiro candidato para domínio regulatório |
-| Hierarchical | `hierarchical-child` (parent-child) | Busca filhos, responde com contexto pai | Melhor para artigos/seções |
+| Hierarchical flat | `hierarchical-child` | Busca filhos e devolve filhos | Controle para isolar o efeito parent-child |
+| Hierarchical parent-child | `hierarchical-child` | Busca filhos, devolve pais deduplicados | Testa contexto pai para normas longas |
+| Rerank opcional | Qualquer estratégia acima | Cohere Rerank sobre candidatos FAISS | Segunda fase; não substitui o baseline sem rerank |
 
 ---
 
@@ -103,9 +103,13 @@ Geração via `make vectorstore-all` (a matriz) ou `make vectorstore-main` (apen
 
 | Grupo | Métricas |
 |---|---|
-| Retrieval | `recall@5`, `precision@5`, `mrr@5`, `article_hit@5` |
+| Retrieval | `recall_at_k`, `precision_at_k`, `mrr_at_k`, `ndcg_at_k` |
 | Resposta | `citation_accuracy`, `status_accuracy`, `faithfulness`, `answer_correctness` |
 | Operacional | `latency_avg`, `latency_p95`, custo por consulta e tempo de build |
+
+No benchmark de retrieval, perguntas `source_only` ficam rastreadas no detalhe,
+mas não entram nas métricas agregadas porque não têm suporte textual confiável
+no corpus extraído.
 
 `faithfulness` e `answer_correctness` são opcionais: rodam apenas quando `LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra `skipped_no_llm_key` e continua.
 

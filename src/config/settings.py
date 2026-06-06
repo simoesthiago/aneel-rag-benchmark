@@ -17,7 +17,11 @@ A solução padrão de mercado:
 
 Como usar
 ---------
-    from src.config.settings import ANEEL_CEDOC_URL, LEIS_ESTRUTURANTES, get_hf_token
+    from src.config.settings import (
+        ANEEL_CEDOC_URL,
+        LEIS_ESTRUTURANTES,
+        get_hf_token,
+    )
 
     response = requests.get(f"{ANEEL_CEDOC_URL}/ren20211000.pdf")
     token = get_hf_token()  # só é lido aqui, falha cedo se faltar
@@ -78,6 +82,17 @@ def get_llm_api_key() -> str:
     return _get_required("LLM_API_KEY")
 
 
+def get_cohere_api_key() -> str:
+    """Chave da Cohere API. Usada pelo reranker (Camada 3 → Sprint 7)."""
+    value = os.environ.get("COHERE_API_KEY")
+    placeholders = {"sua_chave_aqui", "seu_token_aqui", "your_api_key_here"}
+    if not value or value.strip().lower() in placeholders:
+        raise RuntimeError(
+            "Defina COHERE_API_KEY no .env para usar o reranker da Cohere."
+        )
+    return value
+
+
 def get_openai_api_key() -> str:
     """
     Chave da OpenAI API.
@@ -99,13 +114,20 @@ def get_openai_api_key() -> str:
 # -----------------------------------------------------------------------------
 # Repositórios e modelos (configuráveis, mas com default sensato)
 # -----------------------------------------------------------------------------
-HF_DATASET_REPO: str = _get_optional("HF_DATASET_REPO", "simoesthiago/aneel-corpus")
+HF_DATASET_REPO: str = _get_optional(
+    "HF_DATASET_REPO",
+    "simoesthiago/aneel-corpus",
+)
 LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-4o-mini")
 EMBEDDING_PROVIDER: str = _get_optional("EMBEDDING_PROVIDER", "openai")
 EMBEDDING_MODEL: str = _get_optional(
     "EMBEDDING_MODEL", "text-embedding-3-large"
 )
 EMBEDDING_BATCH_SIZE: int = int(_get_optional("EMBEDDING_BATCH_SIZE", "100"))
+COHERE_RERANK_MODEL: str = _get_optional(
+    "COHERE_RERANK_MODEL",
+    "rerank-multilingual-v3.0",
+)
 
 
 # -----------------------------------------------------------------------------
@@ -125,7 +147,10 @@ VECTORSTORE_HUB_PREFIX: str = "data/vectorstores"
 # Ground truth de avaliação (Camada 4 / eixo de avaliação)
 # -----------------------------------------------------------------------------
 GROUND_TRUTH_HUB_PREFIX: str = "data/evaluation/ground_truth"
-GROUND_TRUTH_VERSION: str = _get_optional("GROUND_TRUTH_VERSION", "retrieval-50")
+GROUND_TRUTH_VERSION: str = _get_optional(
+    "GROUND_TRUTH_VERSION",
+    "retrieval-50",
+)
 
 
 # -----------------------------------------------------------------------------
@@ -166,10 +191,10 @@ ANEEL_GITLAB_URL: str = "https://git.aneel.gov.br"
 ANEEL_GITLAB_PROJECT: str = "publico/centralconteudo"
 
 # 2b. Procedimentos de Rede (SharePoint público do ONS)
-# Embora propostos pelo ONS, são aprovados parcialmente pela ANEEL (REN 903/2020)
+# Embora propostos pelo ONS, são aprovados pela ANEEL (REN 903/2020)
 # e obrigatórios para toda distribuidora, geradora e transmissora no SIN.
 # O SharePoint permite acesso anônimo (ContentTypeId fixo para os documentos).
-# Nota: EE/P&D (PROPEE + PROPDI) são RENs (920/2021 e 1045/2022) → scraper_atos.
+# Nota: EE/P&D são RENs (920/2021 e 1045/2022) → scraper_atos.
 ONS_PROXY_URL: str = (
     "https://proxyportais.ons.org.br/ons.portalempregado.proxy"
 )
@@ -209,10 +234,19 @@ MANUAIS_SUBCATEGORIAS: list[str] = [
 # --- Fonte 4: Leis estruturantes (planalto.gov.br) ---
 # HTML estático — 4 leis de base do setor elétrico.
 LEIS_ESTRUTURANTES: dict[str, str] = {
-    "lei-9427-1996": "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm",
-    "lei-8987-1995": "https://www.planalto.gov.br/ccivil_03/leis/l8987compilada.htm",
-    "lei-9074-1995": "https://www.planalto.gov.br/ccivil_03/leis/l9074compilada.htm",
-    "lei-13848-2019": "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/lei/l13848.htm",
+    "lei-9427-1996": (
+        "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm"
+    ),
+    "lei-8987-1995": (
+        "https://www.planalto.gov.br/ccivil_03/leis/l8987compilada.htm"
+    ),
+    "lei-9074-1995": (
+        "https://www.planalto.gov.br/ccivil_03/leis/l9074compilada.htm"
+    ),
+    "lei-13848-2019": (
+        "https://www.planalto.gov.br/ccivil_03/"
+        "_ato2019-2022/2019/lei/l13848.htm"
+    ),
 }
 
 
@@ -221,4 +255,6 @@ LEIS_ESTRUTURANTES: dict[str, str] = {
 # -----------------------------------------------------------------------------
 # Diretório temporário para escrita intermediária durante o pipeline.
 # NUNCA criar nada permanente aqui — tudo é publicado no HF Hub no fim.
-RUNTIME_TMP_DIR: Path = Path(_get_optional("RUNTIME_TMP_DIR", "/tmp/aneel-rag"))
+RUNTIME_TMP_DIR: Path = Path(
+    _get_optional("RUNTIME_TMP_DIR", "/tmp/aneel-rag")
+)

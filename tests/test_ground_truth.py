@@ -188,6 +188,35 @@ def test_text_coverage_normaliza_encoding_do_planalto():
     assert missing == []
 
 
+def test_informative_tokens_preserva_siglas_regulatorias_curtas():
+    from src.evaluation.ground_truth import informative_tokens
+
+    tokens = informative_tokens(
+        "DEC FEC DIC FIC DMIC REN ONS TE PCH ENA EAR GSF "
+        "ICMS PIS COFINS kV kW MWh GWh ANEEL PRODIST"
+    )
+
+    assert "dec" in tokens
+    assert "fec" in tokens
+    assert "dic" in tokens
+    assert "fic" in tokens
+    assert "dmic" in tokens
+    assert "ren" in tokens
+    assert "ons" in tokens
+    assert "te" in tokens
+    assert "pch" in tokens
+    assert "ena" in tokens
+    assert "ear" in tokens
+    assert "gsf" in tokens
+    assert "icms" in tokens
+    assert "pis" in tokens
+    assert "cofins" in tokens
+    assert "kv" in tokens
+    assert "kw" in tokens
+    assert "mwh" in tokens
+    assert "gwh" in tokens
+
+
 def test_build_ground_truth_manifest_inclui_hash_e_validacao(tmp_path: Path):
     from src.evaluation.ground_truth import build_ground_truth_manifest
 

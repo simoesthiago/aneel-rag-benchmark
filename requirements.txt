@@ -50,13 +50,10 @@ jupyter>=1.0             # notebooks exploratórios em notebooks/
 
 
 # =============================================================================
-# CAMADA 2 — PROCESSAMENTO (ainda não instalado)
+# CAMADA 2 — PROCESSAMENTO
 # =============================================================================
 #
-# rank-bm25 já aparece nos testes — será instalado assim que a Camada 2 começar.
 # Embedding via API foi definido como caminho principal da Camada 2.2.
-#
-# rank-bm25>=0.2.2             # [confirmado] baseline lexical BM25 — sem alternativa
 
 openai>=1.35                  # OpenAI embeddings API
 tiktoken>=0.7                 # contagem/truncamento seguro de tokens para OpenAI
@@ -65,7 +62,7 @@ numpy>=1.26                   # arrays float32 para FAISS (já dep transitiva, p
 
 
 # =============================================================================
-# CAMADA 3 — RAG (ainda não instalado)
+# CAMADA 3 — RAG
 # =============================================================================
 #
 # LangChain como orquestrador e OpenAI como LLM estão confirmados no stack
@@ -74,6 +71,9 @@ numpy>=1.26                   # arrays float32 para FAISS (já dep transitiva, p
 # langchain>=0.2               # [confirmado] orquestração de RAG
 # langchain-community>=0.2     # [confirmado] integrações (FAISS, loaders, etc.)
 # openai>=1.35                 # [confirmado] LLM principal
+
+tenacity>=9.0                  # retry+backoff nas chamadas OpenAI (Sprint 6)
+cohere>=5.11                   # reranker Cohere Rerank 3 (Sprint 7)
 
 
 # =============================================================================

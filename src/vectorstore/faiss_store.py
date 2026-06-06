@@ -25,7 +25,7 @@ DEFAULT_TOP_K = 5
 
 
 def _load_faiss():
-    """Importa o módulo `faiss` com mensagem amigável se faltar a dependência."""
+    """Importa `faiss` com mensagem amigável se faltar a dependência."""
     try:
         import faiss
     except ImportError as exc:  # pragma: no cover - falha de instalação
@@ -79,7 +79,9 @@ class FAISSVectorStore:
     def ntotal(self) -> int:
         return int(self.index.ntotal)
 
-    def build(self, vectors: np.ndarray | list[list[float]]) -> "FAISSVectorStore":
+    def build(
+        self, vectors: np.ndarray | list[list[float]]
+    ) -> "FAISSVectorStore":
         """Normaliza e indexa os vetores em um `IndexFlatIP` novo."""
         array = _to_float32_2d(vectors)
         if array.shape[1] != self.dimension:
@@ -116,6 +118,16 @@ class FAISSVectorStore:
         """Serializa o índice FAISS em memória, sem criar arquivo local."""
         faiss = _load_faiss()
         return faiss.serialize_index(self.index).tobytes()
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "FAISSVectorStore":
+        """Carrega índice FAISS por bytes, sem materializar arquivo."""
+        faiss = _load_faiss()
+        buffer = np.frombuffer(data, dtype="uint8")
+        index = faiss.deserialize_index(buffer)
+        store = cls(dimension=int(index.d))
+        store._index = index
+        return store
 
     @classmethod
     def load(cls, directory: str | Path) -> "FAISSVectorStore":

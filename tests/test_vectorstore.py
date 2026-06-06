@@ -10,7 +10,11 @@ import pytest
 
 from src.vectorstore.faiss_store import FAISSVectorStore, normalize
 from src.vectorstore.hub import vectorstore_artifacts_present
-from src.vectorstore.manifest import build_manifest, load_manifest, save_manifest
+from src.vectorstore.manifest import (
+    build_manifest,
+    load_manifest,
+    save_manifest,
+)
 from src.vectorstore.metadata import (
     build_metadata_df,
     build_parents_df,
@@ -170,6 +174,20 @@ def test_search_retorna_vetor_mais_similar_no_topo():
     assert indices[0][1] == 2
     # Inner product entre vetores unitários ∈ [-1, 1].
     assert pytest.approx(float(scores[0][0]), abs=1e-5) == 1.0
+
+
+def test_faiss_store_round_trip_em_bytes():
+    vectors = np.array(
+        [[1.0, 0.0], [0.0, 1.0], [0.7071, 0.7071]], dtype="float32"
+    )
+    store = FAISSVectorStore(dimension=2).build(vectors)
+
+    loaded = FAISSVectorStore.from_bytes(store.to_bytes())
+
+    assert loaded.ntotal == 3
+    assert loaded.dimension == 2
+    _, indices = loaded.search(np.array([1.0, 0.0], dtype="float32"), top_k=1)
+    assert indices[0][0] == 0
 
 
 def test_faiss_store_rejeita_dimensao_errada():
@@ -406,7 +424,10 @@ def test_run_ponta_a_ponta_com_hash(tmp_path: Path, monkeypatch):
     assert store.ntotal == 3
 
 
-def test_run_hash_sem_output_dir_nao_cria_artifact_local(tmp_path: Path, monkeypatch):
+def test_run_hash_sem_output_dir_nao_cria_artifact_local(
+    tmp_path: Path,
+    monkeypatch,
+):
     from src.vectorstore import run as vectorstore_run
 
     df = _chunks_df_simples()
@@ -474,7 +495,9 @@ def test_run_publicar_sem_output_dir_usa_upload_em_memoria(
     assert not list(tmp_path.rglob("*.faiss"))
 
 
-def test_run_skip_existing_publicar_consulta_hub_sem_baixar_chunks(monkeypatch):
+def test_run_skip_existing_publicar_consulta_hub_sem_baixar_chunks(
+    monkeypatch,
+):
     from src.vectorstore import run as vectorstore_run
 
     monkeypatch.setattr(
@@ -485,7 +508,9 @@ def test_run_skip_existing_publicar_consulta_hub_sem_baixar_chunks(monkeypatch):
     monkeypatch.setattr(
         vectorstore_run,
         "carregar_chunks_hub",
-        lambda repo_id: (_ for _ in ()).throw(AssertionError("nao deve baixar")),
+        lambda repo_id: (_ for _ in ()).throw(
+            AssertionError("nao deve baixar")
+        ),
     )
     monkeypatch.setattr(
         "sys.argv",
