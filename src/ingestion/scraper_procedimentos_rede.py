@@ -16,7 +16,9 @@ accordions renderizados por JS.
 
 Fonte: SharePoint ONS via proxy público
     API:      proxyportais.ons.org.br/ons.portalempregado.proxy/garproxy/_api/
-    Download: proxyportais.ons.org.br/ons.portalempregado.proxy/garapi/api/processo/retornarpdf
+    Download:
+        proxyportais.ons.org.br/ons.portalempregado.proxy/garapi/api/processo/
+        retornarpdf
 
 Estrutura:
     - 9 módulos, ~50 submódulos, ~165 documentos vigentes
@@ -156,7 +158,11 @@ def coletar_procedimentos_rede(estrategia: str = "texto") -> list[dict]:
         pdf_url = _pdf_url(server_url)
 
         # Número do submódulo: "1.1 - Descrição" → "1.1"
-        num_submod = submodulo.split(" - ")[0].strip() if " - " in submodulo else submodulo
+        num_submod = (
+            submodulo.split(" - ")[0].strip()
+            if " - " in submodulo
+            else submodulo
+        )
 
         # Código do tipo (ex.: OP, RS) a partir do nome do arquivo
         tipo_match = re.search(r"-([A-Z]+)_", nome_arquivo)

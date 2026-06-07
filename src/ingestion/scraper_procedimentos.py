@@ -14,7 +14,8 @@ Subcategorias de Procedimentos Regulatórios (5 no portal gov.br):
     2. PRORET — Procedimentos de Regulação Tarifária → GitLab: procreg/proret/
     3. Regras de Transmissão (6 módulos) → GitLab: procreg/regtransm/
     4. Procedimentos de Rede → scraper_procedimentos_rede.py (ONS SharePoint)
-    5. EE/P&D (PROPEE + PROPDI) → FORA DO ESCOPO (são RENs, já cobertas por scraper_atos.py)
+    5. EE/P&D (PROPEE + PROPDI) → FORA DO ESCOPO
+       (são RENs, já cobertas por scraper_atos.py)
 
 Este scraper cobre as subcategorias 1, 2 e 3 — todas no mesmo GitLab.
 
@@ -42,13 +43,13 @@ from datetime import datetime, timezone
 import requests
 import urllib3
 
-# git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
-# Suprimimos o aviso para não poluir o output do pipeline.
-warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
-
 from src.config.settings import ANEEL_GITLAB_URL, ANEEL_GITLAB_PROJECT
 from src.ingestion.extractors import extrair_texto
 from src.ingestion.schema import montar_documento
+
+# git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
+# Suprimimos o aviso para não poluir o output do pipeline.
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 # Path do projeto URL-encoded (GitLab aceita path ou ID numérico)
 _GITLAB_PROJECT_PATH = urllib.parse.quote(ANEEL_GITLAB_PROJECT, safe="")
@@ -423,17 +424,26 @@ _REGRAS_TRANSMISSAO_MODULOS = [
     {
         "modulo": 2,
         "titulo": "Regras de Transmissão — Módulo 2 — Classificação das Instalações",
-        "gitlab_path": "procreg/regtransm/Modulo 02_Classificacao Instalacoes_aren2020905_2_1.pdf",
+        "gitlab_path": (
+            "procreg/regtransm/"
+            "Modulo 02_Classificacao Instalacoes_aren2020905_2_1.pdf"
+        ),
     },
     {
         "modulo": 3,
         "titulo": "Regras de Transmissão — Módulo 3 — Instalações e Equipamentos",
-        "gitlab_path": "procreg/regtransm/Modulo 03_Instalacoes_Equipamentos_aren2020905_2_2.pdf",
+        "gitlab_path": (
+            "procreg/regtransm/"
+            "Modulo 03_Instalacoes_Equipamentos_aren2020905_2_2.pdf"
+        ),
     },
     {
         "modulo": 4,
         "titulo": "Regras de Transmissão — Módulo 4 — Prestação dos Serviços",
-        "gitlab_path": "procreg/regtransm/Modulo 04_Prestacao_Servicos_aren2020905_2_3.pdf",
+        "gitlab_path": (
+            "procreg/regtransm/"
+            "Modulo 04_Prestacao_Servicos_aren2020905_2_3.pdf"
+        ),
     },
     {
         "modulo": 5,
@@ -442,8 +452,14 @@ _REGRAS_TRANSMISSAO_MODULOS = [
     },
     {
         "modulo": 6,
-        "titulo": "Regras de Transmissão — Módulo 6 — Coordenação e Controle da Operação",
-        "gitlab_path": "procreg/regtransm/Modulo 06_Coordenacao_Controle_Opercao_aren2020905_2_5.pdf",
+        "titulo": (
+            "Regras de Transmissão — Módulo 6 — "
+            "Coordenação e Controle da Operação"
+        ),
+        "gitlab_path": (
+            "procreg/regtransm/"
+            "Modulo 06_Coordenacao_Controle_Opercao_aren2020905_2_5.pdf"
+        ),
     },
 ]
 

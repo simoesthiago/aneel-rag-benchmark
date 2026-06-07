@@ -16,17 +16,20 @@ Fontes disponíveis:
 
 Estratégias de extração (eixo do benchmark de ingestão):
     texto     → texto plano       (pymupdf, html_parser, python_docx, openpyxl)
-    markdown  → Markdown estruturado (pymupdf4llm, html2markdown, mammoth, pandas_tabulate)
+    markdown  → Markdown estruturado
+                (pymupdf4llm, html2markdown, mammoth, pandas_tabulate)
 
-Vira a coluna `metodo_extracao` no schema e a partição `metodo_extracao=Y/` no Hub.
-A ferramenta real (pymupdf, mammoth, …) viaja na coluna `extrator` — rastreio do benchmark.
+Vira a coluna `metodo_extracao` no schema e a partição
+`metodo_extracao=Y/` no Hub. A ferramenta real (pymupdf, mammoth, …) viaja na
+coluna `extrator` — rastreio do benchmark.
 
 Como usar:
     # Ingestão incremental de uma fonte (texto)
     python -m src.ingestion.run --fonte procedimentos-rede
 
     # Benchmark Markdown sobre uma amostra
-    python -m src.ingestion.run --fonte procedimentos-rede --estrategia markdown --amostra 10
+    python -m src.ingestion.run \
+        --fonte procedimentos-rede --estrategia markdown --amostra 10
 
     # Dry-run (valida schema, não sobe ao Hub)
     python -m src.ingestion.run --fonte leis --dry-run

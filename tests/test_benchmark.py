@@ -66,6 +66,20 @@ def test_build_store_configs_com_rerank_duplica_matriz():
     assert len({c.label for c in configs}) == 32
 
 
+def test_build_store_configs_aplica_pool_apenas_no_rerank():
+    configs = build_store_configs(
+        include_rerank=True,
+        rerank_candidates_k=100,
+    )
+
+    rerank_configs = [c for c in configs if c.rerank]
+    baseline_configs = [c for c in configs if not c.rerank]
+
+    assert {c.candidates_k_override for c in rerank_configs} == {100}
+    assert {c.candidates_k_override for c in baseline_configs} == {None}
+    assert all("+rerank@pool100" in c.label for c in rerank_configs)
+
+
 def test_evaluate_question_calcula_metricas_de_retrieval():
     chunks = [
         {
@@ -86,6 +100,7 @@ def test_evaluate_question_calcula_metricas_de_retrieval():
     resultado = evaluate_question(retriever, _question(), top_k=2)
 
     assert resultado["recall_at_k"] == 1.0
+    assert resultado["doc_recall_at_k"] == 1.0
     assert resultado["precision_at_k"] == 0.5
     assert resultado["mrr_at_k"] == 1.0
     assert resultado["ndcg_at_k"] == 1.0

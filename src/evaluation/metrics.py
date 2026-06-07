@@ -12,11 +12,53 @@ from typing import Any, Iterable
 def recall_at_k(
     retrieved_ids: Iterable[str], expected_ids: Iterable[str], k: int = 5
 ) -> float:
+    """Recall genérico por id (chunk_id, document_id ou qualquer chave).
+
+    No benchmark de retrieval atual essa métrica é alimentada com chunks
+    casados via `source_coverage` (chunk casa fonte por estrutura
+    hierárquica ou cobertura de support_excerpt). Logo, é semanticamente
+    equivalente a **passage_recall_at_k** — mede se o trecho relevante foi
+    recuperado, não apenas se o documento certo apareceu.
+
+    Para medir "achou o documento certo independente do trecho", use
+    `doc_recall_at_k`.
+    """
     retrieved = set(list(retrieved_ids)[:k])
     expected = set(expected_ids)
     if not expected:
         return 0.0
     return len(retrieved & expected) / len(expected)
+
+
+def doc_recall_at_k(
+    contexts: Iterable[dict[str, Any]],
+    expected_document_ids: Iterable[str],
+    k: int = 10,
+) -> float:
+    """Fração de `document_id`s esperados cobertos por algum chunk no top-k.
+
+    Diferente de `recall_at_k` (que mede passage-level via matching de
+    section/excerpt), esta métrica olha apenas o `document_id` dos chunks
+    retornados. Se a melhor config tem `doc_recall` alto mas `recall` baixo,
+    significa que o retriever encontra o documento certo mas erra o trecho
+    específico — sinal de problema de chunking/granularidade, não de
+    retrieval por se.
+
+    Args:
+        contexts: chunks devolvidos pelo Retriever, com campo `document_id`
+        expected_document_ids: ids únicos dos documentos esperados (do GT)
+        k: top-k a considerar
+    """
+    expected = {str(doc_id) for doc_id in expected_document_ids if doc_id}
+    if not expected:
+        return 0.0
+    top_k = list(contexts)[:k]
+    retrieved_docs = {
+        str(ctx.get("document_id"))
+        for ctx in top_k
+        if ctx.get("document_id")
+    }
+    return len(retrieved_docs & expected) / len(expected)
 
 
 def precision_at_k(

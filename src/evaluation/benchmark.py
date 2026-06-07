@@ -30,6 +30,7 @@ import pandas as pd
 from src.embeddings.cache import QueryEmbeddingCache
 from src.evaluation.matching import build_relevance_vector, source_coverage
 from src.evaluation.metrics import (
+    doc_recall_at_k,
     evaluate_response,
     latency_summary,
     ndcg_at_k,
@@ -46,7 +47,13 @@ EVALUATED_ANSWERABILITIES = frozenset({"corpus_supported"})
 
 @dataclass(frozen=True)
 class StoreConfig:
-    """Identifica uma configuração avaliável do benchmark."""
+    """Identifica uma configuração avaliável do benchmark.
+
+    `candidates_k_override` é opcional e só faz sentido quando `rerank=True`:
+    o Retriever pega `candidates_k_override` candidatos densos antes de
+    reordenar via reranker. Sem rerank, usa `top_k` direto. Default None =
+    comportamento padrão do Retriever (~50 com rerank ativo).
+    """
 
     provider: str
     model: str
@@ -54,10 +61,13 @@ class StoreConfig:
     metodo_extracao: str
     mode: RetrieverMode
     rerank: bool = False
+    candidates_k_override: int | None = None
 
     @property
     def label(self) -> str:
         suffix = "+rerank" if self.rerank else ""
+        if self.rerank and self.candidates_k_override:
+            suffix += f"@pool{self.candidates_k_override}"
         return (
             f"{self.model}|{self.chunk_strategy}|{self.metodo_extracao}|"
             f"{self.mode}{suffix}"
@@ -73,11 +83,19 @@ class BenchmarkResult:
     cache_stats: dict[str, int]
 
 
-def build_store_configs(*, include_rerank: bool = False) -> list[StoreConfig]:
+def build_store_configs(
+    *,
+    include_rerank: bool = False,
+    rerank_candidates_k: int | None = None,
+) -> list[StoreConfig]:
     """Gera as configurações da matriz de retrieval.
 
     - 16 configs base (Dense FAISS + Hierarchical, sem rerank).
     - Se `include_rerank=True`, duplica cada config com `rerank=True` → 32.
+    - Se `rerank_candidates_k` for fornecido (ex: 100), aplica nas variantes
+      rerank. Diagnóstico em 1.3-alt-b/Opção A mostrou que pool 50 (default
+      do Retriever) deixa trechos profundos fora do alcance; pool 100 sobe
+      passage_recall +4 pp ao custo de doc_recall -2 pp.
     """
     configs: list[StoreConfig] = []
     for model in EMBEDDING_MODELS:
@@ -111,6 +129,7 @@ def build_store_configs(*, include_rerank: bool = False) -> list[StoreConfig]:
                 metodo_extracao=c.metodo_extracao,
                 mode=c.mode,
                 rerank=True,
+                candidates_k_override=rerank_candidates_k,
             )
             for c in configs
         ]
@@ -151,11 +170,21 @@ def evaluate_question(
     """Roda uma pergunta no retriever e calcula as métricas de retrieval.
 
     - `recall_at_k`: fração de fontes esperadas cobertas por algum chunk
+       (passage-level: exige que o trecho/seção case, não só o documento)
+    - `doc_recall_at_k`: fração de `document_id`s esperados cobertos por
+       algum chunk (document-level: ignora section/excerpt). Diferença com
+       `recall_at_k` revela problema de granularidade vs problema de
+       retrieval.
     - `precision_at_k`: fração de chunks no top-k que tiveram relevância > 0
     - `mrr_at_k`: 1/posição do primeiro chunk relevante (0 se nenhum)
     - `ndcg_at_k`: nDCG ponderado pela nota de relevância (1, 2, 3)
     """
     fontes = list(question.get("relevant_sources") or [])
+    expected_doc_ids = [
+        str(src.get("document_id") or "")
+        for src in fontes
+        if src.get("document_id")
+    ]
 
     start = perf_counter()
     retrieved = retriever.retrieve(question["question"], top_k=top_k)
@@ -175,6 +204,9 @@ def evaluate_question(
     return {
         "question_id": question.get("question_id"),
         "recall_at_k": source_coverage(retrieved, fontes),
+        "doc_recall_at_k": doc_recall_at_k(
+            retrieved, expected_doc_ids, k=top_k
+        ),
         "precision_at_k": precision,
         "mrr_at_k": mrr,
         "ndcg_at_k": ndcg_at_k(relevances, k=top_k),
@@ -203,6 +235,7 @@ def _default_retriever_factory(
         repo_id=repo_id,
         query_cache=query_cache,
         reranker=reranker,
+        candidates_k=config.candidates_k_override,
     )
 
 
@@ -233,6 +266,7 @@ def run_config(
             "rerank": config.rerank,
             "num_questions": 0,
             "recall_at_k": 0.0,
+            "doc_recall_at_k": 0.0,
             "precision_at_k": 0.0,
             "mrr_at_k": 0.0,
             "ndcg_at_k": 0.0,
@@ -249,6 +283,9 @@ def run_config(
         "rerank": config.rerank,
         "num_questions": len(por_pergunta),
         "recall_at_k": mean(row["recall_at_k"] for row in por_pergunta),
+        "doc_recall_at_k": mean(
+            row["doc_recall_at_k"] for row in por_pergunta
+        ),
         "precision_at_k": mean(row["precision_at_k"] for row in por_pergunta),
         "mrr_at_k": mean(row["mrr_at_k"] for row in por_pergunta),
         "ndcg_at_k": mean(row["ndcg_at_k"] for row in por_pergunta),

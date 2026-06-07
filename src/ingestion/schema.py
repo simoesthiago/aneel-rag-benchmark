@@ -166,7 +166,7 @@ def validar_schema(df: pd.DataFrame) -> None:
                 f"IDs afetados (primeiros 5): {ids_nulos}"
             )
 
-    # 3. Pares (id, metodo_extracao) únicos — Opção A: doc pode repetir entre estratégias
+    # 3. Pares (id, metodo_extracao) únicos — doc repete entre estratégias.
     duplicados = df[df.duplicated(subset=_CHAVE_UNICA, keep=False)]
     if len(duplicados) > 0:
         pares_dup = (

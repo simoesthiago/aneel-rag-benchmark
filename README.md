@@ -103,13 +103,18 @@ Geração via `make vectorstore-all` (a matriz) ou `make vectorstore-main` (apen
 
 | Grupo | Métricas |
 |---|---|
-| Retrieval | `recall_at_k`, `precision_at_k`, `mrr_at_k`, `ndcg_at_k` |
+| Retrieval | `recall_at_k`, `doc_recall_at_k`, `precision_at_k`, `mrr_at_k`, `ndcg_at_k` |
 | Resposta | `citation_accuracy`, `status_accuracy`, `faithfulness`, `answer_correctness` |
 | Operacional | `latency_avg`, `latency_p95`, custo por consulta e tempo de build |
 
 No benchmark de retrieval, perguntas `source_only` ficam rastreadas no detalhe,
 mas não entram nas métricas agregadas porque não têm suporte textual confiável
 no corpus extraído.
+
+`recall_at_k` mede cobertura de trecho/fonte esperada. `doc_recall_at_k` mede
+se o documento esperado apareceu no top-k, mesmo quando o trecho exato não foi
+recuperado. Essa separação evita confundir falha de retrieval com falha de
+granularidade de chunk.
 
 `faithfulness` e `answer_correctness` são opcionais: rodam apenas quando `LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra `skipped_no_llm_key` e continua.
 
@@ -161,3 +166,27 @@ make validate-vectorstore  # valida vector store publicada no Hub
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)
+
+---
+
+## Troubleshooting
+
+### HuggingFace Xet bridge falha (`cas-bridge.xethub.hf.co`)
+
+Arquivos grandes no Hub são servidos por trás do Xet content-addressed storage. Em alguns ambientes (DNS local intermitente, redes corporativas), o domínio `cas-bridge.xethub.hf.co` falha em resolver enquanto `huggingface.co` funciona normalmente. Sintoma: `requests.get` quebra com `NameResolutionError` no meio de `make benchmark-retrieval` ou de scripts de diagnóstico.
+
+Workaround:
+
+```bash
+HF_HUB_DISABLE_XET=1 make benchmark-retrieval
+```
+
+A variável força o cliente `huggingface_hub` a usar o caminho tradicional (sem Xet). Útil também quando o cliente Xet local trava em redes restritivas. Não afeta correção dos resultados — apenas a rota de download.
+
+### Scripts de diagnóstico (`scripts/diagnostics/`) usam cache local
+
+A regra Hub-first do projeto vale para ingestão e publicação. **Os scripts de diagnóstico** em `scripts/diagnostics/diagnose_*.py` são exceção explícita: usam `huggingface_hub.hf_hub_download` para evitar problemas intermitentes com o Xet bridge. Isso materializa arquivos em `~/.cache/huggingface/hub/` (cache local da biblioteca, não em `data/`). É aceitável porque:
+
+1. Os artefatos baixados são apenas para diagnóstico pontual, não fluxo oficial
+2. O cache é gerenciado pela biblioteca, não versionado no repo
+3. Reduz dependência da rede em diagnósticos longos
