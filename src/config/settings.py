@@ -78,8 +78,19 @@ def get_hf_token() -> str:
 
 
 def get_llm_api_key() -> str:
-    """Chave da API do LLM (OpenAI ou outro)."""
-    return _get_required("LLM_API_KEY")
+    """Chave da API do LLM.
+
+    Preferimos `OPENAI_API_KEY`, nome padrão do SDK da OpenAI. `LLM_API_KEY`
+    fica como compatibilidade com os primeiros testes de avaliação LLM.
+    """
+    value = os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")
+    placeholders = {"sua_chave_aqui", "seu_token_aqui", "your_api_key_here"}
+    if not value or value.strip().lower() in placeholders:
+        raise RuntimeError(
+            "Defina OPENAI_API_KEY no .env para usar geração/juiz LLM. "
+            "LLM_API_KEY ainda é aceito como fallback temporário."
+        )
+    return value
 
 
 def get_cohere_api_key() -> str:
@@ -118,11 +129,26 @@ HF_DATASET_REPO: str = _get_optional(
     "HF_DATASET_REPO",
     "simoesthiago/aneel-corpus",
 )
-LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-4o-mini")
-EMBEDDING_PROVIDER: str = _get_optional("EMBEDDING_PROVIDER", "openai")
-EMBEDDING_MODEL: str = _get_optional(
-    "EMBEDDING_MODEL", "text-embedding-3-large"
+# Gerador da Camada 3.5: modelo barato para smoke. A tarefa é estruturada
+# (PT-BR + JSON com `resposta`/`indices_citados`), então o nano cobre. Se as
+# métricas indicarem que o gerador é o gargalo, sobe para "gpt-5.4-mini".
+LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-5.4-nano")
+
+# Juiz da Camada 4 (faithfulness, answer_correctness): mantemos um nível acima
+# do gerador para o sinal ser discriminativo, sem inflar custo (1 chamada por
+# pergunta, igual ao gerador).
+LLM_JUDGE_MODEL: str = _get_optional("LLM_JUDGE_MODEL", "gpt-5.4-mini")
+
+# Reprodutibilidade: temperatura 0 para o gerador (resposta determinística sobre
+# norma) e um teto de tokens generoso o bastante para resposta + tabela de
+# citações sem cortar.
+LLM_GENERATION_TEMPERATURE: float = float(
+    _get_optional("LLM_GENERATION_TEMPERATURE", "0")
 )
+LLM_GENERATION_MAX_TOKENS: int = int(_get_optional("LLM_GENERATION_MAX_TOKENS", "800"))
+
+EMBEDDING_PROVIDER: str = _get_optional("EMBEDDING_PROVIDER", "openai")
+EMBEDDING_MODEL: str = _get_optional("EMBEDDING_MODEL", "text-embedding-3-large")
 EMBEDDING_BATCH_SIZE: int = int(_get_optional("EMBEDDING_BATCH_SIZE", "100"))
 COHERE_RERANK_MODEL: str = _get_optional(
     "COHERE_RERANK_MODEL",
@@ -195,9 +221,7 @@ ANEEL_GITLAB_PROJECT: str = "publico/centralconteudo"
 # e obrigatórios para toda distribuidora, geradora e transmissora no SIN.
 # O SharePoint permite acesso anônimo (ContentTypeId fixo para os documentos).
 # Nota: EE/P&D são RENs (920/2021 e 1045/2022) → scraper_atos.
-ONS_PROXY_URL: str = (
-    "https://proxyportais.ons.org.br/ons.portalempregado.proxy"
-)
+ONS_PROXY_URL: str = "https://proxyportais.ons.org.br/ons.portalempregado.proxy"
 
 # --- Fonte 3: Manuais, Modelos e Instruções (gov.br) ---
 ANEEL_MANUAIS_URL: str = (
@@ -234,18 +258,11 @@ MANUAIS_SUBCATEGORIAS: list[str] = [
 # --- Fonte 4: Leis estruturantes (planalto.gov.br) ---
 # HTML estático — 4 leis de base do setor elétrico.
 LEIS_ESTRUTURANTES: dict[str, str] = {
-    "lei-9427-1996": (
-        "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm"
-    ),
-    "lei-8987-1995": (
-        "https://www.planalto.gov.br/ccivil_03/leis/l8987compilada.htm"
-    ),
-    "lei-9074-1995": (
-        "https://www.planalto.gov.br/ccivil_03/leis/l9074compilada.htm"
-    ),
+    "lei-9427-1996": ("https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm"),
+    "lei-8987-1995": ("https://www.planalto.gov.br/ccivil_03/leis/l8987compilada.htm"),
+    "lei-9074-1995": ("https://www.planalto.gov.br/ccivil_03/leis/l9074compilada.htm"),
     "lei-13848-2019": (
-        "https://www.planalto.gov.br/ccivil_03/"
-        "_ato2019-2022/2019/lei/l13848.htm"
+        "https://www.planalto.gov.br/ccivil_03/" "_ato2019-2022/2019/lei/l13848.htm"
     ),
 }
 
@@ -255,6 +272,4 @@ LEIS_ESTRUTURANTES: dict[str, str] = {
 # -----------------------------------------------------------------------------
 # Diretório temporário para escrita intermediária durante o pipeline.
 # NUNCA criar nada permanente aqui — tudo é publicado no HF Hub no fim.
-RUNTIME_TMP_DIR: Path = Path(
-    _get_optional("RUNTIME_TMP_DIR", "/tmp/aneel-rag")
-)
+RUNTIME_TMP_DIR: Path = Path(_get_optional("RUNTIME_TMP_DIR", "/tmp/aneel-rag"))

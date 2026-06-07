@@ -1,15 +1,15 @@
-"""CLI do benchmark de retrieval (Camada 3 -> Camada 4).
+"""CLI dos benchmarks de retrieval e RAG (Camada 3 -> Camada 4).
 
 Carrega o ground truth `retrieval-50` do HuggingFace Hub (ou de um arquivo
-local) e roda todas as 16 configurações da matriz contra o `Retriever`
-publicado. Salva a tabela final em CSV e (opcionalmente) um JSON detalhado
-por pergunta para análise post-hoc.
+local). Em `--mode retrieval`, roda a matriz de retrievers publicada. Em
+`--mode rag`, roda o smoke ponta-a-ponta com geração, citações e juiz LLM
+opcional. Salva a tabela final em CSV e um JSON detalhado por pergunta.
 
 Uso:
 
     python3 scripts/run_benchmark.py --top-k 10
-    python3 scripts/run_benchmark.py \
-      --ground-truth data/evaluation/ground_truth/aneel_retrieval_50.jsonl
+    python3 scripts/run_benchmark.py --mode rag --limit 5
+    python3 scripts/run_benchmark.py --ground-truth <arquivo.jsonl>
 """
 
 from __future__ import annotations
@@ -27,8 +27,10 @@ import pandas as pd  # noqa: E402
 
 from src.embeddings.cache import QueryEmbeddingCache  # noqa: E402
 from src.evaluation.benchmark import (  # noqa: E402
+    build_rag_baseline_configs,
     build_store_configs,
     run_full_benchmark,
+    run_rag_benchmark,
 )
 from src.evaluation.ground_truth import (  # noqa: E402
     load_ground_truth_hub,
@@ -37,7 +39,19 @@ from src.evaluation.ground_truth import (  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("retrieval", "rag"),
+        default="retrieval",
+        help=(
+            "Modo do benchmark. `retrieval` avalia apenas busca; `rag` roda "
+            "retrieve -> geração -> juiz LLM nas configs do smoke RAG."
+        ),
+    )
     parser.add_argument(
         "--ground-truth",
         type=Path,
@@ -56,8 +70,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("data/evaluation/results/retrieval-50"),
-        help="Diretório de saída para o CSV agregado e JSON detalhado.",
+        default=None,
+        help=(
+            "Diretório de saída para o CSV agregado e JSON detalhado. "
+            "Default: retrieval-50 para --mode retrieval; rag-50 para --mode rag."
+        ),
     )
     parser.add_argument(
         "--repo-id",
@@ -76,8 +93,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--limit-questions",
+        "--limit",
         type=int,
         default=None,
+        dest="limit_questions",
         help="Quando definido, roda apenas as N primeiras perguntas do GT.",
     )
     parser.add_argument(
@@ -139,10 +158,18 @@ def main() -> None:
         "(somente corpus_supported entra nas métricas agregadas)."
     )
 
-    configs = build_store_configs(
-        include_rerank=args.rerank,
-        rerank_candidates_k=args.rerank_candidates_k,
-    )
+    if args.mode == "rag":
+        configs = build_rag_baseline_configs()
+        if args.rerank:
+            print(
+                "  Aviso: --mode rag já inclui baseline sem rerank e com "
+                "rerank; --rerank foi ignorado."
+            )
+    else:
+        configs = build_store_configs(
+            include_rerank=args.rerank,
+            rerank_candidates_k=args.rerank_candidates_k,
+        )
     if args.limit_configs:
         configs = configs[: args.limit_configs]
     print(f"  {len(configs)} configurações a avaliar.")
@@ -153,24 +180,42 @@ def main() -> None:
         else None
     )
 
-    result = run_full_benchmark(
-        questions,
-        top_k=args.top_k,
-        configs=configs,
-        repo_id=args.repo_id,
-        query_cache=query_cache,
-        max_workers=args.max_workers,
-    )
+    if args.mode == "rag":
+        result = run_rag_benchmark(
+            questions,
+            top_k=args.top_k,
+            configs=configs,
+            repo_id=args.repo_id,
+            query_cache=query_cache,
+        )
+    else:
+        result = run_full_benchmark(
+            questions,
+            top_k=args.top_k,
+            configs=configs,
+            repo_id=args.repo_id,
+            query_cache=query_cache,
+            max_workers=args.max_workers,
+        )
     df = result.metrics
 
     if query_cache is not None and args.cache_path is not None:
         query_cache.save()
         print(f"  Cache persistido: {args.cache_path}")
 
-    output_dir: Path = args.output_dir
+    output_dir: Path = args.output_dir or Path(
+        "data/evaluation/results/rag-50"
+        if args.mode == "rag"
+        else "data/evaluation/results/retrieval-50"
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     aggregate = df.drop(columns=["per_question"])
+    for column in ("llm_status_counts", "generator_status_counts"):
+        if column in aggregate.columns:
+            aggregate[column] = aggregate[column].map(
+                lambda value: json.dumps(value, ensure_ascii=False)
+            )
     csv_path = output_dir / "results.csv"
     aggregate.to_csv(csv_path, index=False)
     print(f"  Tabela agregada salva: {csv_path}")
@@ -184,6 +229,8 @@ def main() -> None:
                 "metodo_extracao": row["metodo_extracao"],
                 "mode": row["mode"],
                 "rerank": bool(row["rerank"]),
+                "llm_status_counts": row.get("llm_status_counts"),
+                "generator_status_counts": row.get("generator_status_counts"),
                 "per_question": row["per_question"],
             }
         )

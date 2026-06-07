@@ -26,6 +26,8 @@
         publish-ground-truth chunk-all embeddings-sample \
         vectorstore-sample vectorstore-main vectorstore-all \
         validate-vectorstore validate-vectorstore-all \
+        benchmark-retrieval benchmark-retrieval-smoke \
+        benchmark-retrieval-rerank benchmark-rag \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -84,14 +86,14 @@ help:
 PYTHON ?= .venv/bin/python
 
 install:
-	pip3 install -r requirements.txt
+	$(PYTHON) -m pip install -r requirements.txt
 
 check-env:
 	@echo "Verificando pré-requisitos..."
 	@test -f .env || (echo "\n❌ Arquivo .env não encontrado." \
 		&& echo "   Copie o exemplo: cp .env.example .env" \
 		&& echo "   Depois preencha HF_TOKEN e HF_DATASET_REPO\n" && exit 1)
-	@python3 -c "\
+	@$(PYTHON) -c "\
 from dotenv import load_dotenv; load_dotenv(); \
 import os; \
 token = os.getenv('HF_TOKEN', ''); \
@@ -101,7 +103,7 @@ errors = []; \
 (not repo or repo == 'seu-usuario/aneel-corpus') and errors.append('HF_DATASET_REPO não configurado'); \
 [print(f'❌ {e}') for e in errors]; \
 errors and exit(1) or print('✅ .env OK')"
-	@python3 -c "\
+	@$(PYTHON) -c "\
 from dotenv import load_dotenv; load_dotenv(); \
 from huggingface_hub import HfApi; import os; \
 api = HfApi(token=os.getenv('HF_TOKEN')); \
@@ -119,21 +121,21 @@ print(f'✅ HuggingFace Hub acessível: {repo}')" \
 # Coleta todas as fontes em texto plano e publica no Hub (merge incremental).
 # Primeira vez: Hub vazio → sobe tudo. Rodadas seguintes: atualiza incrementalmente.
 ingest-all:
-	python3 -m src.ingestion.run --todas --estrategia texto
+	$(PYTHON) -m src.ingestion.run --todas --estrategia texto
 
 # Re-extrai todas as fontes em Markdown, repara eventuais lacunas texto/markdown
 # causadas por rate limit/transientes e valida o corpus final do benchmark.
 # Rode DEPOIS de `make ingest-all`.
 benchmark-markdown:
-	python3 -m src.ingestion.run --todas --estrategia markdown
-	python3 -m src.ingestion.repair_missing_extractions
-	python3 scripts/validate_corpus.py
+	$(PYTHON) -m src.ingestion.run --todas --estrategia markdown
+	$(PYTHON) -m src.ingestion.repair_missing_extractions
+	$(PYTHON) scripts/validate_corpus.py
 
 # Repara somente documentos que ficaram com uma estratégia de extração faltante.
 # Útil quando o cedoc/ aplica rate limit no meio de uma rodada.
 repair-corpus:
-	python3 -m src.ingestion.repair_missing_extractions
-	python3 scripts/validate_corpus.py
+	$(PYTHON) -m src.ingestion.repair_missing_extractions
+	$(PYTHON) scripts/validate_corpus.py
 
 # Apaga o Hub e reconstrói do zero com texto + markdown.
 # Use apenas quando quiser resetar o corpus por completo (ex.: mudança de schema).
@@ -141,29 +143,29 @@ corpus-reset:
 	@echo "⚠️  Isso vai apagar o corpus no Hub e reescrever do zero."
 	@echo "   Pressione Ctrl+C para cancelar. Aguardando 5s..."
 	@sleep 5
-	python3 -m src.ingestion.run --todas --estrategia texto --limpar-estrutura
-	python3 -m src.ingestion.run --todas --estrategia markdown
-	python3 -m src.ingestion.repair_missing_extractions
-	python3 scripts/validate_corpus.py
+	$(PYTHON) -m src.ingestion.run --todas --estrategia texto --limpar-estrutura
+	$(PYTHON) -m src.ingestion.run --todas --estrategia markdown
+	$(PYTHON) -m src.ingestion.repair_missing_extractions
+	$(PYTHON) scripts/validate_corpus.py
 
 # ------------------------------------------------------------------------------
 # VALIDAÇÃO
 # ------------------------------------------------------------------------------
 
 validate-corpus:
-	python3 scripts/validate_corpus.py
+	$(PYTHON) scripts/validate_corpus.py
 
 validate-chunks:
-	python3 scripts/validate_chunks.py
+	$(PYTHON) scripts/validate_chunks.py
 
 validate-ground-truth:
-	python3 scripts/validate_ground_truth.py
+	$(PYTHON) scripts/validate_ground_truth.py
 
 validate-ground-truth-hub:
-	python3 scripts/validate_ground_truth.py --hub
+	$(PYTHON) scripts/validate_ground_truth.py --hub
 
 publish-ground-truth:
-	python3 scripts/publish_ground_truth.py
+	$(PYTHON) scripts/publish_ground_truth.py
 
 # Valida a vector store principal publicada no Hub (5 consultas-canário).
 # Para outras combinações, passar PROVIDER/MODEL/STRATEGY/METODO.
@@ -173,14 +175,14 @@ STRATEGY ?= article-aware
 METODO ?= markdown
 
 validate-vectorstore:
-	python3 scripts/validate_vectorstore.py \
+	$(PYTHON) scripts/validate_vectorstore.py \
 		--provider $(PROVIDER) \
 		--model $(MODEL) \
 		--chunk-strategy $(STRATEGY) \
 		--metodo-extracao $(METODO)
 
 validate-vectorstore-all:
-	python3 scripts/validate_vectorstores.py
+	$(PYTHON) scripts/validate_vectorstores.py
 
 # ------------------------------------------------------------------------------
 # AVALIAÇÃO — CAMADA 4 (benchmark de retrieval)
@@ -213,20 +215,26 @@ benchmark-retrieval-rerank:
 		--rerank-candidates-k 100 \
 		--output-dir data/evaluation/results/retrieval-50-rerank
 
+# Smoke RAG ponta-a-ponta: baseline atual + mesma config com rerank. Exige
+# OPENAI_API_KEY/LLM_API_KEY para gerar e julgar respostas; sem chave, registra
+# skipped_no_llm_key e preserva o fluxo para teste offline.
+benchmark-rag:
+	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10
+
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2
 # ------------------------------------------------------------------------------
 
 chunk-all:
-	python3 -m src.chunking.run --estrategia todas --metodo-extracao todos --publicar
+	$(PYTHON) -m src.chunking.run --estrategia todas --metodo-extracao todos --publicar
 
 embeddings-sample:
-	python3 -m src.embeddings.run --provider hash --chunk-strategy fixed-size --metodo-extracao markdown --amostra 20
+	$(PYTHON) -m src.embeddings.run --provider hash --chunk-strategy fixed-size --metodo-extracao markdown --amostra 20
 
 # Smoke barato da Camada 2.3: provider hash, sem custo OpenAI.
 # Ainda baixa chunks do HuggingFace Hub, então exige rede.
 vectorstore-sample:
-	python3 -m src.vectorstore.run \
+	$(PYTHON) -m src.vectorstore.run \
 		--provider hash \
 		--chunk-strategy article-aware \
 		--metodo-extracao markdown \
@@ -235,7 +243,7 @@ vectorstore-sample:
 # Vector store principal: OpenAI large + article-aware + markdown.
 # Entrega mínima da Camada 2.3. Custa cerca de US$ por geração; rode com cuidado.
 vectorstore-main:
-	python3 -m src.vectorstore.run \
+	$(PYTHON) -m src.vectorstore.run \
 		--provider openai \
 		--model text-embedding-3-large \
 		--chunk-strategy article-aware \
@@ -266,7 +274,7 @@ vectorstore-all:
 			for metodo in $(VECTORSTORE_METODOS); do \
 				echo ""; \
 				echo "==> provider=openai model=$$model strategy=$$strategy metodo=$$metodo"; \
-				python3 -m src.vectorstore.run \
+				$(PYTHON) -m src.vectorstore.run \
 					--provider openai \
 					--model $$model \
 					--chunk-strategy $$strategy \
@@ -301,16 +309,16 @@ format:
 ESTRATEGIA ?= texto
 
 ingest-atos:
-	python3 -m src.ingestion.run --fonte atos --estrategia $(ESTRATEGIA)
+	$(PYTHON) -m src.ingestion.run --fonte atos --estrategia $(ESTRATEGIA)
 
 ingest-leis:
-	python3 -m src.ingestion.run --fonte leis --estrategia $(ESTRATEGIA)
+	$(PYTHON) -m src.ingestion.run --fonte leis --estrategia $(ESTRATEGIA)
 
 ingest-procedimentos:
-	python3 -m src.ingestion.run --fonte procedimentos --estrategia $(ESTRATEGIA)
+	$(PYTHON) -m src.ingestion.run --fonte procedimentos --estrategia $(ESTRATEGIA)
 
 ingest-rede:
-	python3 -m src.ingestion.run --fonte procedimentos-rede --estrategia $(ESTRATEGIA)
+	$(PYTHON) -m src.ingestion.run --fonte procedimentos-rede --estrategia $(ESTRATEGIA)
 
 ingest-manuais:
-	python3 -m src.ingestion.run --fonte manuais --estrategia $(ESTRATEGIA)
+	$(PYTHON) -m src.ingestion.run --fonte manuais --estrategia $(ESTRATEGIA)

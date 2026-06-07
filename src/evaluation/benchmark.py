@@ -34,7 +34,10 @@ from src.evaluation.metrics import (
     evaluate_response,
     latency_summary,
     ndcg_at_k,
+    optional_llm_metrics,
 )
+from src.rag.generator import generate_llm_answer
+from src.rag.naive import NaiveRAG
 from src.rag.retriever import Retriever, RetrieverMode
 
 PROVIDER = "openai"
@@ -136,6 +139,31 @@ def build_store_configs(
     return configs
 
 
+def build_rag_baseline_configs() -> list[StoreConfig]:
+    """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
+
+    A matriz completa de retrieval já foi diagnosticada. Para geração, o
+    primeiro teste deve responder uma pergunta menor: o baseline escolhido
+    gera respostas fiéis e o rerank muda a qualidade final?
+    """
+    baseline = StoreConfig(
+        provider=PROVIDER,
+        model="text-embedding-3-large",
+        chunk_strategy="fixed-size",
+        metodo_extracao="markdown",
+        mode="flat",
+    )
+    rerank = StoreConfig(
+        provider=baseline.provider,
+        model=baseline.model,
+        chunk_strategy=baseline.chunk_strategy,
+        metodo_extracao=baseline.metodo_extracao,
+        mode=baseline.mode,
+        rerank=True,
+    )
+    return [baseline, rerank]
+
+
 def split_evaluation_questions(
     questions: Iterable[dict[str, Any]],
     *,
@@ -145,9 +173,7 @@ def split_evaluation_questions(
     avaliaveis: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     for question in questions:
-        answerability = str(
-            question.get("answerability") or "corpus_supported"
-        )
+        answerability = str(question.get("answerability") or "corpus_supported")
         if answerability in evaluated_answerabilities:
             avaliaveis.append(question)
             continue
@@ -181,9 +207,7 @@ def evaluate_question(
     """
     fontes = list(question.get("relevant_sources") or [])
     expected_doc_ids = [
-        str(src.get("document_id") or "")
-        for src in fontes
-        if src.get("document_id")
+        str(src.get("document_id") or "") for src in fontes if src.get("document_id")
     ]
 
     start = perf_counter()
@@ -204,9 +228,7 @@ def evaluate_question(
     return {
         "question_id": question.get("question_id"),
         "recall_at_k": source_coverage(retrieved, fontes),
-        "doc_recall_at_k": doc_recall_at_k(
-            retrieved, expected_doc_ids, k=top_k
-        ),
+        "doc_recall_at_k": doc_recall_at_k(retrieved, expected_doc_ids, k=top_k),
         "precision_at_k": precision,
         "mrr_at_k": mrr,
         "ndcg_at_k": ndcg_at_k(relevances, k=top_k),
@@ -251,8 +273,7 @@ def run_config(
     """Carrega 1 store, roda todas as perguntas, agrega métricas."""
     retriever = retriever_factory(config, repo_id, query_cache)
     por_pergunta = [
-        evaluate_question(retriever, question, top_k=top_k)
-        for question in questions
+        evaluate_question(retriever, question, top_k=top_k) for question in questions
     ]
     latencies = [row["latency_ms"] for row in por_pergunta]
     summary = latency_summary(latencies)
@@ -283,9 +304,7 @@ def run_config(
         "rerank": config.rerank,
         "num_questions": len(por_pergunta),
         "recall_at_k": mean(row["recall_at_k"] for row in por_pergunta),
-        "doc_recall_at_k": mean(
-            row["doc_recall_at_k"] for row in por_pergunta
-        ),
+        "doc_recall_at_k": mean(row["doc_recall_at_k"] for row in por_pergunta),
         "precision_at_k": mean(row["precision_at_k"] for row in por_pergunta),
         "mrr_at_k": mean(row["mrr_at_k"] for row in por_pergunta),
         "ndcg_at_k": mean(row["ndcg_at_k"] for row in por_pergunta),
@@ -293,6 +312,219 @@ def run_config(
         "latency_p95_ms": summary["latency_p95"],
         "per_question": por_pergunta,
     }
+
+
+def _citation_accuracy_from_response(
+    response: dict[str, Any],
+    relevances: list[int],
+) -> float:
+    """Precisão das citações: das fontes citadas, quantas eram relevantes."""
+    contexts = list(response.get("contexts") or [])
+    citations = {str(citation) for citation in response.get("citations", [])}
+    if not citations:
+        return 0.0
+
+    relevant_labels = {
+        str(context.get("citation_label"))
+        for context, rel in zip(contexts, relevances)
+        if rel > 0 and context.get("citation_label")
+    }
+    if not relevant_labels:
+        return 0.0
+    return len(citations & relevant_labels) / len(citations)
+
+
+def evaluate_question_rag(
+    rag,
+    question: dict[str, Any],
+    *,
+    top_k: int,
+    llm_metrics_fn=optional_llm_metrics,
+) -> dict[str, Any]:
+    """Roda uma pergunta no RAG e calcula retrieval + métricas de resposta."""
+    fontes = list(question.get("relevant_sources") or [])
+    expected_doc_ids = [
+        str(src.get("document_id") or "") for src in fontes if src.get("document_id")
+    ]
+
+    response = rag.query(question["question"], top_k=top_k)
+    contexts = list(response.get("contexts") or [])
+    relevances = build_relevance_vector(contexts, fontes)
+    num_hits = sum(1 for rel in relevances if rel > 0)
+
+    mrr = 0.0
+    for idx, rel in enumerate(relevances, start=1):
+        if rel > 0:
+            mrr = 1.0 / idx
+            break
+
+    precision = num_hits / len(relevances) if relevances else 0.0
+    llm_metrics = llm_metrics_fn(
+        answer=str(response.get("answer") or ""),
+        contexts=contexts,
+        reference=(
+            question.get("expected_answer")
+            or question.get("reference_answer")
+            or question.get("answer_reference")
+        ),
+    )
+
+    return {
+        "question_id": question.get("question_id"),
+        "answer": response.get("answer"),
+        "citations": response.get("citations", []),
+        "recall_at_k": source_coverage(contexts, fontes),
+        "doc_recall_at_k": doc_recall_at_k(contexts, expected_doc_ids, k=top_k),
+        "precision_at_k": precision,
+        "mrr_at_k": mrr,
+        "ndcg_at_k": ndcg_at_k(relevances, k=top_k),
+        "latency_ms": response.get("latency_ms"),
+        "num_relevant_retrieved": num_hits,
+        "num_expected_sources": len(fontes),
+        "citation_accuracy": _citation_accuracy_from_response(response, relevances),
+        "generator_status": response.get("generator_status"),
+        "generator_error": response.get("generator_error"),
+        **llm_metrics,
+    }
+
+
+def _default_rag_factory(
+    config: StoreConfig,
+    repo_id: str | None,
+    query_cache: QueryEmbeddingCache | None = None,
+) -> NaiveRAG:
+    retriever = _default_retriever_factory(config, repo_id, query_cache)
+    return NaiveRAG(
+        retriever,
+        strategy=config.label,
+        generator=generate_llm_answer,
+    )
+
+
+def _mean_present(rows: list[dict[str, Any]], key: str) -> float | None:
+    values = [row.get(key) for row in rows if row.get(key) is not None]
+    if not values:
+        return None
+    return mean(float(value) for value in values)
+
+
+def _count_status(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        status = str(row.get(key) or "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def run_rag_config(
+    config: StoreConfig,
+    questions: list[dict[str, Any]],
+    *,
+    top_k: int,
+    repo_id: str | None = None,
+    rag_factory=_default_rag_factory,
+    query_cache: QueryEmbeddingCache | None = None,
+    llm_metrics_fn=optional_llm_metrics,
+) -> dict[str, Any]:
+    """Carrega 1 RAG, gera respostas e agrega métricas de retrieval/resposta."""
+    rag = rag_factory(config, repo_id, query_cache)
+    por_pergunta = [
+        evaluate_question_rag(
+            rag,
+            question,
+            top_k=top_k,
+            llm_metrics_fn=llm_metrics_fn,
+        )
+        for question in questions
+    ]
+    latencies = [
+        row["latency_ms"] for row in por_pergunta if row.get("latency_ms") is not None
+    ]
+    summary = latency_summary(latencies)
+
+    base = {
+        "provider": config.provider,
+        "model": config.model,
+        "chunk_strategy": config.chunk_strategy,
+        "metodo_extracao": config.metodo_extracao,
+        "mode": config.mode,
+        "rerank": config.rerank,
+        "num_questions": len(por_pergunta),
+        "latency_avg_ms": summary["latency_avg"],
+        "latency_p95_ms": summary["latency_p95"],
+        "per_question": por_pergunta,
+        "llm_status_counts": _count_status(por_pergunta, "llm_status"),
+        "generator_status_counts": _count_status(por_pergunta, "generator_status"),
+    }
+    if not por_pergunta:
+        return {
+            **base,
+            "recall_at_k": 0.0,
+            "doc_recall_at_k": 0.0,
+            "precision_at_k": 0.0,
+            "mrr_at_k": 0.0,
+            "ndcg_at_k": 0.0,
+            "faithfulness_avg": None,
+            "answer_correctness_avg": None,
+            "citation_accuracy_avg": 0.0,
+        }
+
+    return {
+        **base,
+        "recall_at_k": mean(row["recall_at_k"] for row in por_pergunta),
+        "doc_recall_at_k": mean(row["doc_recall_at_k"] for row in por_pergunta),
+        "precision_at_k": mean(row["precision_at_k"] for row in por_pergunta),
+        "mrr_at_k": mean(row["mrr_at_k"] for row in por_pergunta),
+        "ndcg_at_k": mean(row["ndcg_at_k"] for row in por_pergunta),
+        "faithfulness_avg": _mean_present(por_pergunta, "faithfulness"),
+        "answer_correctness_avg": _mean_present(por_pergunta, "answer_correctness"),
+        "citation_accuracy_avg": mean(row["citation_accuracy"] for row in por_pergunta),
+    }
+
+
+def run_rag_benchmark(
+    questions: list[dict[str, Any]],
+    *,
+    top_k: int = 10,
+    configs: Iterable[StoreConfig] | None = None,
+    repo_id: str | None = None,
+    rag_factory=_default_rag_factory,
+    query_cache: QueryEmbeddingCache | None = None,
+    llm_metrics_fn=optional_llm_metrics,
+) -> BenchmarkResult:
+    """Roda o smoke RAG nas configs selecionadas."""
+    if configs is None:
+        configs = build_rag_baseline_configs()
+    configs_list = list(configs)
+    questions_list = list(questions)
+    evaluation_questions, skipped_questions = split_evaluation_questions(questions_list)
+
+    if query_cache is None:
+        query_cache = QueryEmbeddingCache()
+
+    linhas = []
+    for config in configs_list:
+        print(f"  Avaliando RAG {config.label} ...")
+        linha = run_rag_config(
+            config,
+            evaluation_questions,
+            top_k=top_k,
+            repo_id=repo_id,
+            rag_factory=rag_factory,
+            query_cache=query_cache,
+            llm_metrics_fn=llm_metrics_fn,
+        )
+        linha["num_questions_total"] = len(questions_list)
+        linha["num_questions_evaluated"] = len(evaluation_questions)
+        linha["num_questions_skipped"] = len(skipped_questions)
+        linhas.append(linha)
+
+    print(f"  Query cache: {query_cache.stats}")
+    return BenchmarkResult(
+        metrics=pd.DataFrame(linhas),
+        skipped_questions=skipped_questions,
+        cache_stats=dict(query_cache.stats),
+    )
 
 
 def run_full_benchmark(
@@ -329,9 +561,7 @@ def run_full_benchmark(
         configs = build_store_configs()
     configs_list = list(configs)
     questions_list = list(questions)
-    evaluation_questions, skipped_questions = split_evaluation_questions(
-        questions_list
-    )
+    evaluation_questions, skipped_questions = split_evaluation_questions(questions_list)
 
     if query_cache is None:
         query_cache = QueryEmbeddingCache()
@@ -394,11 +624,7 @@ def run_benchmark(
         }
         rows.append(row)
 
-    latencies = [
-        row["latency_ms"]
-        for row in rows
-        if row.get("latency_ms") is not None
-    ]
+    latencies = [row["latency_ms"] for row in rows if row.get("latency_ms") is not None]
     return {
         "strategy": getattr(rag, "strategy", "unknown"),
         "num_questions": len(rows),

@@ -54,9 +54,7 @@ def doc_recall_at_k(
         return 0.0
     top_k = list(contexts)[:k]
     retrieved_docs = {
-        str(ctx.get("document_id"))
-        for ctx in top_k
-        if ctx.get("document_id")
+        str(ctx.get("document_id")) for ctx in top_k if ctx.get("document_id")
     }
     return len(retrieved_docs & expected) / len(expected)
 
@@ -168,7 +166,7 @@ def optional_llm_metrics(
     A implementacao real pode ser conectada ao Ragas depois; por enquanto o
     contrato explicito evita falha em ambientes zero-custo.
     """
-    if not os.environ.get("LLM_API_KEY"):
+    if not (os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_API_KEY")):
         return {
             "faithfulness": None,
             "answer_correctness": None,
@@ -196,11 +194,10 @@ def _run_openai_judge(
             "llm_status": "skipped_missing_openai",
         }
 
-    from src.config.settings import LLM_MODEL, get_llm_api_key
+    from src.config.settings import LLM_JUDGE_MODEL, get_llm_api_key
 
     context_text = "\n\n".join(
-        str(context.get("texto") or context.get("text") or "")
-        for context in contexts
+        str(context.get("texto") or context.get("text") or "") for context in contexts
     )
     prompt = (
         "Avalie uma resposta RAG regulatoria da ANEEL. "
@@ -213,7 +210,7 @@ def _run_openai_judge(
     try:
         client = OpenAI(api_key=get_llm_api_key())
         response = client.chat.completions.create(
-            model=LLM_MODEL,
+            model=LLM_JUDGE_MODEL,
             temperature=0,
             response_format={"type": "json_object"},
             messages=[
@@ -228,9 +225,7 @@ def _run_openai_judge(
         parsed = json.loads(content)
         return {
             "faithfulness": _coerce_score(parsed.get("faithfulness")),
-            "answer_correctness": _coerce_score(
-                parsed.get("answer_correctness")
-            ),
+            "answer_correctness": _coerce_score(parsed.get("answer_correctness")),
             "llm_status": "ok",
         }
     except Exception as exc:
@@ -257,9 +252,7 @@ def evaluate_response(
 ) -> dict[str, Any]:
     contexts = response.get("contexts", [])
     retrieved_doc_ids = [
-        context.get("document_id")
-        for context in contexts
-        if context.get("document_id")
+        context.get("document_id") for context in contexts if context.get("document_id")
     ]
     expected_docs = question.get("expected_document_ids", [])
     expected_articles = question.get("expected_article_refs", [])

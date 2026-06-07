@@ -118,6 +118,14 @@ granularidade de chunk.
 
 `faithfulness` e `answer_correctness` são opcionais: rodam apenas quando `LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra `skipped_no_llm_key` e continua.
 
+O smoke RAG ponta-a-ponta roda com `make benchmark-rag`. Ele avalia duas
+configurações controladas — baseline atual e baseline com rerank — e grava os
+resultados em `data/evaluation/results/rag-50/`. Com chave configurada, há
+custo de geração e de juiz LLM; sem `OPENAI_API_KEY` ou `LLM_API_KEY`, o
+gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
+`COHERE_API_KEY`; para validar apenas a mecânica local sem Cohere, use
+`--limit-configs 1`.
+
 ---
 
 ## Infraestrutura
@@ -163,6 +171,9 @@ make validate-chunks     # confere chunks publicados no Hub
 make vectorstore-main    # vector store principal (large + article-aware + markdown)
 make vectorstore-all     # matriz completa de 12 vector stores (use SKIP_EXISTING=0 para regerar)
 make validate-vectorstore  # valida vector store publicada no Hub
+
+# Camada 3.5 / 4 — RAG ponta-a-ponta
+make benchmark-rag       # geração + citações + métricas LLM opcionais
 ```
 
 Dataset público: [`simoesthiago/aneel-corpus`](https://huggingface.co/datasets/simoesthiago/aneel-corpus)
