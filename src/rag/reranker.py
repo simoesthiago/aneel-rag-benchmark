@@ -10,9 +10,16 @@ permite plugar outros (BGE, voyage, etc) sem mudar `Retriever`.
 
 from __future__ import annotations
 
+import time
 from typing import Any, Protocol
 
 from src.config.settings import COHERE_RERANK_MODEL, get_cohere_api_key
+
+# Trial keys do Cohere têm rate limit de 10 req/min. Production keys
+# têm limites muito maiores. Estes defaults respeitam o trial:
+# até 5 retries, espera dobrando a partir de 6s (cabe no limite 10/min).
+DEFAULT_MAX_RETRIES = 5
+DEFAULT_INITIAL_BACKOFF_SECONDS = 6.0
 
 
 class Reranker(Protocol):
@@ -32,10 +39,14 @@ class CohereReranker:
         model: str = COHERE_RERANK_MODEL,
         api_key: str | None = None,
         client: Any | None = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        initial_backoff_seconds: float = DEFAULT_INITIAL_BACKOFF_SECONDS,
     ):
         self.model = model
         self._api_key = api_key
         self._client = client
+        self.max_retries = max_retries
+        self.initial_backoff_seconds = initial_backoff_seconds
 
     def _load_client(self):
         if self._client is None:
@@ -59,8 +70,7 @@ class CohereReranker:
         if not docs:
             return []
         textos = [str(doc.get("texto") or "") for doc in docs]
-        response = self._load_client().rerank(
-            model=self.model,
+        response = self._call_with_retry(
             query=query,
             documents=textos,
             top_n=min(top_k, len(textos)),
@@ -72,6 +82,43 @@ class CohereReranker:
             original["rank"] = rank
             ordenado.append(original)
         return ordenado
+
+    def _call_with_retry(
+        self,
+        *,
+        query: str,
+        documents: list[str],
+        top_n: int,
+    ):
+        """Chama Cohere com retry exponencial em 429/5xx.
+
+        Necessário para trial keys (rate limit 10 req/min). Production keys
+        raramente disparam — o overhead é trivial nesses casos.
+        """
+        try:
+            from cohere.errors import TooManyRequestsError
+        except ImportError:  # versões antigas do SDK
+            TooManyRequestsError = Exception  # type: ignore[assignment]
+
+        client = self._load_client()
+        backoff = self.initial_backoff_seconds
+        last_exc: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                return client.rerank(
+                    model=self.model,
+                    query=query,
+                    documents=documents,
+                    top_n=top_n,
+                )
+            except TooManyRequestsError as exc:
+                last_exc = exc
+                if attempt == self.max_retries:
+                    raise
+                time.sleep(backoff)
+                backoff *= 2
+        # Não alcançável — for-else implícito; mas mypy fica feliz
+        raise last_exc if last_exc else RuntimeError("rerank falhou")
 
 
 __all__ = ["CohereReranker", "Reranker"]

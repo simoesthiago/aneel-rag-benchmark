@@ -33,16 +33,16 @@ import urllib3
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cffi_requests
 
+from src.config.settings import ANEEL_MANUAIS_URL, MANUAIS_SUBCATEGORIAS
+from src.ingestion.extractors import extrair_texto
+from src.ingestion.schema import montar_documento
+
 # git.aneel.gov.br usa certificado intermediário não reconhecido pelo Python/macOS.
 # Suprimimos o aviso para não poluir o output do pipeline.
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 # Domínios que exigem curl_cffi (Cloudflare TLS fingerprinting).
 _CFFI_HOSTS = {"www2.aneel.gov.br"}
-
-from src.config.settings import ANEEL_MANUAIS_URL, MANUAIS_SUBCATEGORIAS
-from src.ingestion.extractors import extrair_texto
-from src.ingestion.schema import montar_documento
 
 _HEADERS = {
     "User-Agent": (
@@ -129,9 +129,18 @@ def _baixar_url(url: str) -> bytes:
 
     host = urlparse(url).hostname or ""
     if host in _CFFI_HOSTS:
-        resp = cffi_requests.get(url, impersonate="chrome120", timeout=_REQUEST_TIMEOUT_S)
+        resp = cffi_requests.get(
+            url,
+            impersonate="chrome120",
+            timeout=_REQUEST_TIMEOUT_S,
+        )
     else:
-        resp = requests.get(url, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S, verify=False)
+        resp = requests.get(
+            url,
+            headers=_HEADERS,
+            timeout=_REQUEST_TIMEOUT_S,
+            verify=False,
+        )
     resp.raise_for_status()
     return resp.content
 
@@ -167,7 +176,11 @@ def coletar_manuais(
         url_pagina = _url_subcategoria(slug)
         print(f"\n  Área: {slug}")
         try:
-            resp = requests.get(url_pagina, headers=_HEADERS, timeout=_REQUEST_TIMEOUT_S)
+            resp = requests.get(
+                url_pagina,
+                headers=_HEADERS,
+                timeout=_REQUEST_TIMEOUT_S,
+            )
             resp.raise_for_status()
         except Exception as e:
             print(f"    ❌ Falha ao abrir página: {e}")

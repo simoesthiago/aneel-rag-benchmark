@@ -199,6 +199,20 @@ benchmark-retrieval-smoke:
 benchmark-retrieval:
 	$(PYTHON) scripts/run_benchmark.py --top-k 10
 
+# Opt-in: dobra para 32 configs adicionando variantes +rerank (Cohere Rerank 3).
+# Exige COHERE_API_KEY no .env. Pool de candidatos = 100 conforme diagnóstico
+# (rerank_pool_comparison.md): pool 50 deixa trechos profundos fora do alcance,
+# pool 100 sobe passage_recall +4 pp ao custo de doc_recall -2 pp.
+# Custo Cohere: 768 chamadas (48 perguntas × 16 configs). Cabe no trial,
+# MAS trial limita 10 req/min — leva ~80 min mesmo com retry. Para uma
+# config só com rerank, use
+# scripts/diagnostics/diagnose_rerank_best_pool100.py.
+# Saída separada do baseline (não sobrescreve results.csv original).
+benchmark-retrieval-rerank:
+	$(PYTHON) scripts/run_benchmark.py --top-k 10 --rerank \
+		--rerank-candidates-k 100 \
+		--output-dir data/evaluation/results/retrieval-50-rerank
+
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2
 # ------------------------------------------------------------------------------
@@ -268,13 +282,13 @@ vectorstore-all:
 # ------------------------------------------------------------------------------
 
 test:
-	pytest tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 lint:
-	flake8 src/
+	$(PYTHON) -m flake8 src/
 
 format:
-	black src/ tests/
+	$(PYTHON) -m black src/ tests/
 
 # ------------------------------------------------------------------------------
 # INGESTÃO POR FONTE (avançado)

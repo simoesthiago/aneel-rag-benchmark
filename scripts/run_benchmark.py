@@ -92,10 +92,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-workers",
         type=int,
-        default=4,
+        default=1,
         help=(
-            "Threads em paralelo (cada uma carrega 1 store). "
-            "Use 1 pra rodar sequencialmente."
+            "Threads em paralelo (cada uma carrega 1 store inteira em "
+            "memória — FAISS + metadata.parquet). Default 1 é seguro em "
+            "máquina modesta; suba só se tiver RAM sobrando."
         ),
     )
     parser.add_argument(
@@ -104,6 +105,18 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Adiciona variantes +rerank (Cohere Rerank 3) à matriz. "
             "Dobra o número de configurações e exige COHERE_API_KEY."
+        ),
+    )
+    parser.add_argument(
+        "--rerank-candidates-k",
+        type=int,
+        default=None,
+        help=(
+            "Quando --rerank ativo, força o pool de candidatos densos antes "
+            "do rerank (default do Retriever ≈ 50). Diagnóstico em "
+            "data/evaluation/results/diagnostic/rerank_pool_comparison.md "
+            "mostrou pool 100 sobe passage_recall +4 pp na melhor config, "
+            "mas reduz doc_recall em -2 pp. Sem --rerank, é ignorado."
         ),
     )
     return parser.parse_args()
@@ -126,7 +139,10 @@ def main() -> None:
         "(somente corpus_supported entra nas métricas agregadas)."
     )
 
-    configs = build_store_configs(include_rerank=args.rerank)
+    configs = build_store_configs(
+        include_rerank=args.rerank,
+        rerank_candidates_k=args.rerank_candidates_k,
+    )
     if args.limit_configs:
         configs = configs[: args.limit_configs]
     print(f"  {len(configs)} configurações a avaliar.")

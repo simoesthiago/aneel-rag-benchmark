@@ -38,6 +38,28 @@ def test_ndcg_at_k_respeita_corte_em_k():
     assert ndcg_at_k([0, 0, 3], k=2) == 0.0
 
 
+def test_doc_recall_at_k_ignora_section_label():
+    from src.evaluation.metrics import doc_recall_at_k
+
+    # Chunks de 2 docs distintos: a métrica não olha artigo/seção,
+    # só `document_id`.
+    contexts = [
+        {"document_id": "ren-2021-1000", "artigo": "Art. 1o"},
+        {"document_id": "ren-2021-1000", "artigo": "Art. 99o"},
+        {"document_id": "outro-doc", "artigo": "Art. 1o"},
+    ]
+    expected = ["ren-2021-1000", "doc-ausente"]
+
+    # ren-2021-1000 está no top-3, doc-ausente não — recall = 1/2.
+    assert doc_recall_at_k(contexts, expected, k=3) == 0.5
+    # Sem documentos esperados, retorno = 0.0 (consistente com recall_at_k).
+    assert doc_recall_at_k(contexts, [], k=3) == 0.0
+    # Corte por k: se k=1, só pega o primeiro chunk, ainda cobre o doc.
+    assert doc_recall_at_k(contexts, ["ren-2021-1000"], k=1) == 1.0
+    # k=1 e doc esperado é o último chunk → recall = 0.
+    assert doc_recall_at_k(contexts, ["outro-doc"], k=1) == 0.0
+
+
 def test_article_hit_valida_documento_e_artigo():
     from src.evaluation.metrics import article_hit_at_k
 

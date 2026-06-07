@@ -334,7 +334,10 @@ def _resposta_e_pdf_valido(status: int, content: bytes) -> bool:
 def _diagnostico_http(label: str, status: int, content: bytes) -> None:
     """Log curto quando o download falha — ajuda a distinguir 403 vs 404."""
     inicio = content[:60].decode("utf-8", errors="replace").replace("\n", " ")
-    print(f"    [{label}] HTTP {status} | {len(content)} bytes | início: {inicio[:70]!r}")
+    print(
+        f"    [{label}] HTTP {status} | {len(content)} bytes | "
+        f"início: {inicio[:70]!r}"
+    )
 
 
 def _baixar_url_cedoc(url: str, label: str) -> bytes | None:
