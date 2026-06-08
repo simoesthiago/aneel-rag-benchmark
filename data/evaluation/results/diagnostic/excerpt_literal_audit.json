@@ -1,0 +1,1360 @@
+{
+  "n_questions": 50,
+  "n_source_records": 50,
+  "categorias": {
+    "TOKEN_MATCH": 27,
+    "LITERAL_MATCH": 23
+  },
+  "items": [
+    {
+      "question_id": "gt-0001",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-1000",
+      "section_label": "Art. 1º, §1º",
+      "support_excerpt_preview": "Aplica-se à concessionária e permissionária do serviço público de distribuição de energia elétrica e ao usuário, pessoa física ou jurídica, tais como o consumidor, central geradora, distribuidora, age",
+      "support_excerpt_len_chars": 235,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0002",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-1000",
+      "section_label": "Art. 2º, definição de bandeiras tarifárias",
+      "support_excerpt_preview": "bandeiras tarifárias: sistema que tem como finalidade sinalizar os custos atuais da geração de energia elétrica ao consumidor por meio da tarifa de energia.",
+      "support_excerpt_len_chars": 156,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0003",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-1000",
+      "section_label": "Art. 2º, definição de consumidor",
+      "support_excerpt_preview": "consumidor: pessoa física ou jurídica que solicite o fornecimento do serviço à distribuidora, assumindo as obrigações decorrentes desta prestação à sua unidade consumidora.",
+      "support_excerpt_len_chars": 172,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0004",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-1000",
+      "section_label": "Art. 2º, definição de autoconsumo remoto",
+      "support_excerpt_preview": "autoconsumo remoto: unidades consumidoras de titularidade de uma mesma pessoa jurídica, incluídas matriz e filial, ou pessoa física que possua unidade consumidora com microgeração ou minigeração distr",
+      "support_excerpt_len_chars": 298,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 27,
+          "tokens_total": 27,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 27,
+          "tokens_total": 27,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0005",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-1000",
+      "section_label": "Art. 2º, definição de central geradora de fonte despachável",
+      "support_excerpt_preview": "central geradora de fonte despachável: ... geração fotovoltaica de até 3 MW de potência instalada, que apresentem capacidade de modulação de geração por meio do armazenamento de energia em baterias, e",
+      "support_excerpt_len_chars": 285,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0006",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-956",
+      "section_label": "Art. 1º",
+      "support_excerpt_preview": "Estabelecer, na forma desta Resolução Normativa, os Procedimentos de Distribuição de Energia Elétrica no Sistema Elétrico Nacional - PRODIST, dispostos em módulos, conforme anexos de I a XI.",
+      "support_excerpt_len_chars": 190,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 17,
+          "tokens_total": 17,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 17,
+          "tokens_total": 17,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0007",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2020-905",
+      "section_label": "Art. 1º",
+      "support_excerpt_preview": "Ficam aprovadas as Regras dos Serviços de Transmissão de Energia Elétrica no Sistema Elétrico Nacional, na forma dos módulos anexos a esta Resolução.",
+      "support_excerpt_len_chars": 149,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.929,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.929,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0008",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2022-1003",
+      "section_label": "Ementa e Art. 1º",
+      "support_excerpt_preview": "Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de se",
+      "support_excerpt_len_chars": 275,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0009",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2022-1009",
+      "section_label": "Ementa e Art. 1º",
+      "support_excerpt_preview": "Estabelece as regras atinentes à contratação de energia pelos agentes nos ambientes de contratação regulado e livre.",
+      "support_excerpt_len_chars": 116,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0010",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2021-957",
+      "section_label": "Ementa e Art. 1º",
+      "support_excerpt_preview": "Institui a Convenção de Comercialização de Energia Elétrica.",
+      "support_excerpt_len_chars": 60,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 5,
+          "tokens_total": 5,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 5,
+          "tokens_total": 5,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0011",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2022-1031",
+      "section_label": "Ementa",
+      "support_excerpt_preview": "Consolida os atos regulatórios relativos aos procedimentos vinculados à redução das tarifas de uso dos sistemas elétricos de transmissão e de distribuição, para empreendimentos hidrelétricos e aqueles",
+      "support_excerpt_len_chars": 268,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0012",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2022-1032",
+      "section_label": "Ementa",
+      "support_excerpt_preview": "Consolida os atos regulatórios relativos à elaboração do Programa Mensal da Operação Energética – PMO, e para a formação do Custo Marginal da Operação – CMO e do Preço de Liquidação de Diferenças – PL",
+      "support_excerpt_len_chars": 202,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0013",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2024-1095",
+      "section_label": "Ementa",
+      "support_excerpt_preview": "Estabelece a padronização do número de identificação da unidade consumidora e das demais instalações dos usuários de energia elétrica.",
+      "support_excerpt_len_chars": 134,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 11,
+          "tokens_total": 11,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 11,
+          "tokens_total": 11,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0014",
+      "answerability": "corpus_supported",
+      "document_id": "ren-2019-846",
+      "section_label": "Ementa",
+      "support_excerpt_preview": "Aprova procedimentos, parâmetros e critérios para a imposição de penalidades aos agentes do setor de energia elétrica e dispõe sobre diretrizes gerais da fiscalização da Agência.",
+      "support_excerpt_len_chars": 178,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0015",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-01",
+      "section_label": "Seção 1.1 - Glossário",
+      "support_excerpt_preview": "A seção 1.1 apresenta os termos e expressões, com as respectivas definições, relevantes para o entendimento dos módulos do PRODIST.",
+      "support_excerpt_len_chars": 131,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0016",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-02",
+      "section_label": "Seção 2.1 - previsão de demanda no SDAT",
+      "support_excerpt_preview": "Para a elaboração dos estudos de previsão de demanda no SDAT, o horizonte de previsão é de 10 anos, devendo um novo estudo ser realizado a cada ano.",
+      "support_excerpt_len_chars": 148,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 13,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 13,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0017",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-03",
+      "section_label": "Módulo 3 - Conexão ao Sistema de Distribuição",
+      "support_excerpt_preview": "sistema de anti-ilhamento: sistema de controle responsável por garantir a desconexão física entre a rede de distribuição de energia elétrica e as instalações elétricas internas à unidade consumidora c",
+      "support_excerpt_len_chars": 243,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.857,
+          "literal_match": false,
+          "hits": 18,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.857,
+          "literal_match": false,
+          "hits": 18,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0018",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-05",
+      "section_label": "Módulo 5 - Sistemas de Medição e Procedimentos de Leitura",
+      "support_excerpt_preview": "Estabelecer os requisitos mínimos para medição das grandezas elétricas aplicáveis ao faturamento, à qualidade da energia elétrica, ao planejamento da expansão e à operação do sistema de distribuição.",
+      "support_excerpt_len_chars": 199,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0019",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-07",
+      "section_label": "Módulo 7 - Cálculo de Perdas na Distribuição",
+      "support_excerpt_preview": "Somente as perdas técnicas de responsabilidade da distribuidora são consideradas, incluindo o sistema de distribuição e DIT, quando aplicável, não sendo consideradas as instalações de terceiros.",
+      "support_excerpt_len_chars": 194,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.857,
+          "literal_match": false,
+          "hits": 12,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.857,
+          "literal_match": false,
+          "hits": 12,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0020",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-08",
+      "section_label": "Módulo 8 - Qualidade do Fornecimento de Energia Elétrica",
+      "support_excerpt_preview": "DIC corresponde à duração individual de interrupção; FIC corresponde à frequência individual de interrupção; DMIC corresponde à duração máxima de interrupção contínua.",
+      "support_excerpt_len_chars": 167,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0021",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-09",
+      "section_label": "Seção 9.1 - Ressarcimento de Danos Elétricos",
+      "support_excerpt_preview": "A seção 9.1 descreve como devem ser analisadas as solicitações de ressarcimento para concluir se o ressarcimento é devido.",
+      "support_excerpt_len_chars": 122,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.889,
+          "literal_match": false,
+          "hits": 8,
+          "tokens_total": 9,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.889,
+          "literal_match": false,
+          "hits": 8,
+          "tokens_total": 9,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0022",
+      "answerability": "corpus_supported",
+      "document_id": "prodist-modulo-10",
+      "section_label": "Módulo 10 - Sistema de Informação Geográfica Regulatório e BDGD",
+      "support_excerpt_preview": "O modelo BDGD é uma simplificação do sistema elétrico real para um determinado período, de forma a refletir os ativos e as informações técnicas e comerciais.",
+      "support_excerpt_len_chars": 157,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.929,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.929,
+          "literal_match": false,
+          "hits": 13,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0023",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo02-subm2-1-proret-submod-2-1-v-2-5-aren20251114",
+      "section_label": "Submódulo 2.1 - Parcela A",
+      "support_excerpt_preview": "A Parcela A é composta pela soma dos componentes abaixo: VPA=CE+CT+ES; CE: Custo de aquisição de energia elétrica e geração própria; CT: Custo com conexão e uso dos sistemas; ES: Encargos setoriais.",
+      "support_excerpt_len_chars": 198,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0024",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo02-subm2-1-proret-submod-2-1-v-2-5-aren20251114",
+      "section_label": "Submódulo 2.1 - Parcela A",
+      "support_excerpt_preview": "CE: Custo de aquisição de energia elétrica e geração própria; CT: Custo com conexão e uso dos sistemas de transmissão e/ou distribuição; e ES: Encargos setoriais definidos em legislação específica.",
+      "support_excerpt_len_chars": 197,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0025",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo02-subm2-3-proret-submod-2-3-v-2-0c-aren20221003",
+      "section_label": "Submódulo 2.3 - Ativos e imóveis",
+      "support_excerpt_preview": "Os imóveis que não possuam documentação de titularidade de propriedade definitiva em nome da concessionária podem ser incluídos na base de remuneração, desde que se enquadrem nas seguintes condições: ",
+      "support_excerpt_len_chars": 497,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 38,
+          "tokens_total": 38,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 38,
+          "tokens_total": 38,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0026",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo02-subm2-3-proret-submod-2-3-v-2-0c-aren20221003",
+      "section_label": "Submódulo 2.3 - Cálculo amostral",
+      "support_excerpt_preview": "O tamanho da amostra é calculado pela ANEEL utilizando intervalo de confiança de 95% (Z=1,96), margem de erro de 10% e proporção de 75%.",
+      "support_excerpt_len_chars": 136,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0027",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo02-subm2-4-proret-submod-2-4-v-4-1c-aren20221003",
+      "section_label": "Submódulo 2.4 - Custo de Capital",
+      "support_excerpt_preview": "Estabelecer metodologia para definição da taxa regulatória de remuneração de capital e estrutura de capital regulatória nos processos de revisão tarifária periódica das concessionárias de distribuição",
+      "support_excerpt_len_chars": 201,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0028",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo07-subm7-2-proret-submod-7-2-v-2-5-aren20231060",
+      "section_label": "Submódulo 7.2 - Tarifas de Referência",
+      "support_excerpt_preview": "Estabelecer a metodologia de cálculo das Tarifas de Referência, necessárias para a definição da Tarifa de Uso do Sistema de Distribuição – TUSD e da Tarifa de Energia – TE.",
+      "support_excerpt_len_chars": 172,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0029",
+      "answerability": "corpus_supported",
+      "document_id": "proret-modulo10-subm10-6-proret-submod-10-6-v-1-2-aren2024109",
+      "section_label": "Submódulo 10.6 - Informações periódicas da distribuição",
+      "support_excerpt_preview": "Definir a forma e periodicidade das informações a serem encaminhadas à ANEEL, no âmbito da distribuição de energia elétrica, pelas distribuidoras, pela CCEE e pelo ONS.",
+      "support_excerpt_len_chars": 168,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0030",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-01",
+      "section_label": "Glossário - Duração Equivalente da Indisponibilidade na FT-Conversora",
+      "support_excerpt_preview": "Duração Equivalente da Indisponibilidade na FT-Conversora: ponderação da Duração Real da Indisponibilidade na FT-Conversora pela redução da capacidade de transmissão de potência decorrente da Indispon",
+      "support_excerpt_len_chars": 227,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 16,
+          "tokens_total": 16,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0031",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-02",
+      "section_label": "Módulo 2, item 2.3",
+      "support_excerpt_preview": "Não integram a Rede Básica e são classificadas como DIT as instalações de transmissão que atendam aos critérios: uso de centrais geradoras ou consumidores; uso exclusivo para importação/exportação; e ",
+      "support_excerpt_len_chars": 240,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 18,
+          "tokens_total": 18,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 18,
+          "tokens_total": 18,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0032",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-03",
+      "section_label": "Seção 3.1 - Novos equipamentos e instalações",
+      "support_excerpt_preview": "Os novos equipamentos e instalações a serem integrados à Rede Básica deverão estar recomendados por estudos de planejamento; ser projetados em observância aos Procedimentos de Rede; e ser respaldados ",
+      "support_excerpt_len_chars": 250,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0033",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-04",
+      "section_label": "Módulo 4 - Prestação dos Serviços",
+      "support_excerpt_preview": "Estabelecer as Regras dos Serviços de Transmissão de Energia Elétrica ... no que diz respeito à prestação do serviço. Os dispositivos deste módulo deverão ser observados por todos os prestadores de se",
+      "support_excerpt_len_chars": 229,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0034",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-05",
+      "section_label": "Módulo 5 - Acesso ao Sistema",
+      "support_excerpt_preview": "É assegurado às centrais geradoras o livre acesso ao sistema de transmissão mediante pagamento dos encargos correspondentes ... não se confundindo o conceito de livre acesso com o conceito de acesso i",
+      "support_excerpt_len_chars": 230,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 20,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 20,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0035",
+      "answerability": "corpus_supported",
+      "document_id": "regtransm-modulo-06",
+      "section_label": "Módulo 6 - Coordenação e Controle da Operação",
+      "support_excerpt_preview": "Estabelecer as Regras dos Serviços de Transmissão de Energia Elétrica no sistema elétrico brasileiro, no que diz respeito à coordenação e ao controle da operação das instalações de transmissão.",
+      "support_excerpt_len_chars": 193,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0036",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-1-2-pr",
+      "section_label": "Submódulo 1.2-PR - Objetivo",
+      "support_excerpt_preview": "Apresentar os termos e expressões relevantes para o entendimento dos processos, requisitos e critérios que constam nos Procedimentos de Rede, com as respectivas definições.",
+      "support_excerpt_len_chars": 172,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 13,
+          "tokens_total": 13,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 13,
+          "tokens_total": 13,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0037",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-2-10-rq",
+      "section_label": "Submódulo 2.10-RQ - Objetivo",
+      "support_excerpt_preview": "Este submódulo também tem como objetivo apresentar os requisitos técnicos mínimos com impacto sistêmico para a conexão de centrais de geração às instalações sob responsabilidade de distribuidora em ní",
+      "support_excerpt_len_chars": 231,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0038",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-2-11-rq",
+      "section_label": "Submódulo 2.11-RQ - Requisitos mínimos",
+      "support_excerpt_preview": "No caso de implantação de ampliação, melhoria ou reforço em instalações de transmissão, os respectivos sistemas de proteção, registro de perturbações, teleproteção e redes de comunicação ... devem ser",
+      "support_excerpt_len_chars": 280,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0039",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-2-14-rq",
+      "section_label": "Submódulo 2.14-RQ - Objetivo",
+      "support_excerpt_preview": "Estabelecer os requisitos para o Sistema de Medição para Faturamento (SMF), inclusive para a comunicação de dados, recursos de programação, medição de retaguarda, localização dos pontos de medição e a",
+      "support_excerpt_len_chars": 225,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 17,
+          "tokens_total": 17,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 17,
+          "tokens_total": 17,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0040",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-s-bmodulo-5-1-op-2022-08",
+      "section_label": "Submódulo 5.1-OP - Operação",
+      "support_excerpt_preview": "As atividades da operação do sistema e da operação de instalações são interdependentes e complementares, uma vez que os resultados da operação do sistema são insumos para a operação das instalações e ",
+      "support_excerpt_len_chars": 211,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 15,
+          "tokens_total": 15,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0041",
+      "answerability": "corpus_supported",
+      "document_id": "proc-rede-8-3-pr",
+      "section_label": "Submódulo 8.3-PR - Apuração de encargos",
+      "support_excerpt_preview": "Para a apuração do VMEuRB são considerados: EUST relativos à Rede Básica em função do MUST contratado e da TUSTRB; EUST relativos à importação ou exportação de energia elétrica; e eventuais diferenças",
+      "support_excerpt_len_chars": 253,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 24,
+          "tokens_total": 24,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 24,
+          "tokens_total": 24,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0042",
+      "answerability": "corpus_supported",
+      "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+      "section_label": "Item 5.1 - Envio ordinário",
+      "support_excerpt_preview": "A Base de Dados de Ocorrências e Interrupções da Distribuição (BDO) deve ser enviada mensalmente, até o último dia do mês subsequente ao mês de referência dos dados.",
+      "support_excerpt_len_chars": 165,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 12,
+          "tokens_total": 12,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 12,
+          "tokens_total": 12,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0043",
+      "answerability": "corpus_supported",
+      "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-indger2-versao-2-5",
+      "section_label": "Item 5.1 - Envio ordinário",
+      "support_excerpt_preview": "A base de dados INDGER2 deve ser enviada mensalmente, até o último dia do mês subsequente ao mês de referência dos dados.",
+      "support_excerpt_len_chars": 121,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 10,
+          "tokens_total": 10,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0044",
+      "answerability": "source_only",
+      "document_id": "manual-envio-de-arquivos-manual-de-envio-de-dados-via-conectaneel",
+      "section_label": "Pré-requisitos - cadastramento de usuários",
+      "support_excerpt_preview": "Antes do envio de dados, a instituição responsável pelo envio deverá realizar o cadastramento de pelo menos um usuário responsável pelo envio da informação. Para a realização do cadastro, a instituiçã",
+      "support_excerpt_len_chars": 241,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.85,
+          "literal_match": false,
+          "hits": 17,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 0.85,
+          "literal_match": false,
+          "hits": 17,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0045",
+      "answerability": "source_only",
+      "document_id": "manual-transmissao-guia-de-solicitacoes-de-ato-autorizativo-para-acesso-a-rede-basica",
+      "section_label": "Fluxo de solicitação à ANEEL",
+      "support_excerpt_preview": "Apresentar à ANEEL: carta solicitando o acesso; cronograma de implantação das obras; Parecer de Acesso emitido pelo ONS; Portaria emitida pelo MME; projeto básico contendo planta baixa das subestações",
+      "support_excerpt_len_chars": 221,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0046",
+      "answerability": "corpus_supported",
+      "document_id": "manual-transmissao-rotina-operacional-padrao-para-autorizacao-de-reforcos-sem-receita-previa",
+      "section_label": "Procedimentos - análise SCT",
+      "support_excerpt_preview": "Publicado o POTEE, a SCT analisa os reforços indicados neste documento para determinar a autorização para sua implantação. O Despacho da SCT indicará a concessionária responsável, o escopo do reforço,",
+      "support_excerpt_len_chars": 271,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 22,
+          "tokens_total": 22,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0047",
+      "answerability": "corpus_supported",
+      "document_id": "lei-9427-1996",
+      "section_label": "Art. 2º",
+      "support_excerpt_preview": "A Agência Nacional de Energia Elétrica - Aneel tem por finalidade regular e fiscalizar a produção, transmissão, distribuição, armazenamento e comercialização de energia elétrica, em conformidade com a",
+      "support_excerpt_len_chars": 244,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 20,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 20,
+          "tokens_total": 20,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0048",
+      "answerability": "corpus_supported",
+      "document_id": "lei-8987-1995",
+      "section_label": "Art. 6º, §1º",
+      "support_excerpt_preview": "Serviço adequado é o que satisfaz as condições de regularidade, continuidade, eficiência, segurança, atualidade, generalidade, cortesia na sua prestação e modicidade das tarifas.",
+      "support_excerpt_len_chars": 178,
+      "categoria_consolidada": "LITERAL_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "LITERAL_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": true,
+          "hits": 14,
+          "tokens_total": 14,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0049",
+      "answerability": "corpus_supported",
+      "document_id": "lei-9074-1995",
+      "section_label": "Art. 4º",
+      "support_excerpt_preview": "As concessões, permissões e autorizações de exploração de serviços e instalações de energia elétrica e de aproveitamento energético dos cursos de água serão contratadas, prorrogadas ou outorgadas nos ",
+      "support_excerpt_len_chars": 245,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 19,
+          "tokens_total": 19,
+          "doc_existe_no_corpus": true
+        }
+      }
+    },
+    {
+      "question_id": "gt-0050",
+      "answerability": "corpus_supported",
+      "document_id": "lei-13848-2019",
+      "section_label": "Art. 3º",
+      "support_excerpt_preview": "A natureza especial conferida à agência reguladora é caracterizada pela ausência de tutela ou de subordinação hierárquica, pela autonomia funcional, decisória, administrativa e financeira e pela inves",
+      "support_excerpt_len_chars": 269,
+      "categoria_consolidada": "TOKEN_MATCH",
+      "por_metodo": {
+        "markdown": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        },
+        "texto": {
+          "categoria": "TOKEN_MATCH",
+          "cobertura_tokens": 1.0,
+          "literal_match": false,
+          "hits": 21,
+          "tokens_total": 21,
+          "doc_existe_no_corpus": true
+        }
+      }
+    }
+  ]
+}

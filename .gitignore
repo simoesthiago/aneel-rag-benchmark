@@ -22,18 +22,23 @@ AGENTS.md
 DECISIONS.md
 PROGRESS.md
 NOTES.md
-documentos_corpus.csv
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Dados — nunca devem entrar no repositório
+# Dados brutos e artefatos pesados — Hub-first (simoesthiago/aneel-corpus)
 *.pdf
 *.parquet
 *.faiss
 *.index
 .artifacts/
-data/
+data/documentos_corpus.csv
+data/chunks/
+data/vectorstores/
+data/raw/
+
+# Resultados de avaliação (data/evaluation/) são versionados:
+# ground_truth/, results/retrieval-50/, results/rag-50/, results/diagnostic/
 
 # macOS
 .DS_Store
