@@ -37,9 +37,6 @@ data/chunks/
 data/vectorstores/
 data/raw/
 
-# Resultados de avaliação (data/evaluation/) são versionados:
-# ground_truth/, results/retrieval-50/, results/rag-50/, results/diagnostic/
-
 # macOS
 .DS_Store
 
@@ -50,3 +47,8 @@ build/
 
 #MCPs
 .playwright-mcp
+
+#Pastas temporárias
+tmp/
+temp/
+
