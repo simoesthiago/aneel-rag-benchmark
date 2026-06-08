@@ -68,7 +68,7 @@ help:
 	@echo ""
 	@echo "  DESENVOLVIMENTO"
 	@echo "    make test               Roda testes unitários"
-	@echo "    make lint               Checa estilo (flake8)"
+	@echo "    make lint               Checa estilo (ruff)"
 	@echo "    make format             Formata código (black)"
 	@echo ""
 	@echo "  INGESTÃO POR FONTE (avançado — para re-rodar uma fonte específica)"
@@ -293,7 +293,7 @@ test:
 	$(PYTHON) -m pytest tests/ -v
 
 lint:
-	$(PYTHON) -m flake8 src/
+	$(PYTHON) -m ruff check src/
 
 format:
 	$(PYTHON) -m black src/ tests/
