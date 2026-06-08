@@ -9,6 +9,7 @@ import pandas as pd
 from src.evaluation.benchmark import (
     BenchmarkResult,
     StoreConfig,
+    build_rag_failure_analysis,
     build_rag_baseline_configs,
     evaluate_question_rag,
     run_rag_benchmark,
@@ -41,12 +42,13 @@ def _context(
     document_id: str,
     artigo: str | None = None,
     citation_label: str | None = None,
+    texto: str = "trecho de apoio",
 ) -> dict[str, Any]:
     return {
         "chunk_id": chunk_id,
         "document_id": document_id,
         "artigo": artigo,
-        "texto": "trecho de apoio",
+        "texto": texto,
         "citation_label": citation_label or chunk_id,
     }
 
@@ -82,6 +84,14 @@ def _llm_metrics(**kwargs):
     return {
         "faithfulness": 0.8,
         "answer_correctness": 0.7,
+        "llm_status": "ok",
+    }
+
+
+def _llm_metrics_usable(**kwargs):
+    return {
+        "faithfulness": 0.9,
+        "answer_correctness": 0.9,
         "llm_status": "ok",
     }
 
@@ -127,7 +137,66 @@ def test_evaluate_question_rag_calcula_metricas_e_citation_accuracy():
     assert result["citation_accuracy"] == 1.0
     assert result["faithfulness"] == 0.8
     assert result["answer_correctness"] == 0.7
+    assert result["answer_usable"] is False
+    assert result["failure_type"] == "answer_quality_failure"
     assert result["generator_status"] == "ok"
+
+
+def test_evaluate_question_rag_marca_resposta_usavel_quando_metricas_passam():
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+    rag = _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    result = evaluate_question_rag(
+        rag,
+        _question(),
+        top_k=1,
+        llm_metrics_fn=_llm_metrics_usable,
+    )
+
+    assert result["answer_usable"] is True
+    assert result["failure_type"] == "usable"
+
+
+def test_evaluate_question_rag_classifica_documento_errado_e_trecho_errado():
+    doc_errado = _FakeRAG(
+        [_context("doc-b::0", document_id="outra-norma", citation_label="Outra")],
+        citations=["Outra"],
+    )
+    trecho_errado = _FakeRAG(
+        [
+            _context(
+                "doc-a::0",
+                document_id="ren-2021-1000",
+                artigo="Art. 9º",
+                citation_label="REN 1000/2021, Art. 9º",
+                texto="conteudo de outro artigo",
+            )
+        ],
+        citations=["REN 1000/2021, Art. 9º"],
+    )
+
+    result_doc = evaluate_question_rag(
+        doc_errado,
+        _question(),
+        top_k=1,
+        llm_metrics_fn=_llm_metrics_usable,
+    )
+    result_trecho = evaluate_question_rag(
+        trecho_errado,
+        _question(),
+        top_k=1,
+        llm_metrics_fn=_llm_metrics_usable,
+    )
+
+    assert result_doc["failure_type"] == "retrieval_document_failure"
+    assert result_trecho["failure_type"] == "retrieval_passage_failure"
 
 
 def test_evaluate_question_rag_zera_citation_accuracy_sem_citacoes():
@@ -176,6 +245,8 @@ def test_run_rag_config_agrega_metricas_e_status_llm():
     assert result["faithfulness_avg"] == 0.8
     assert result["answer_correctness_avg"] == 0.7
     assert result["citation_accuracy_avg"] == 1.0
+    assert result["answer_usable_rate"] == 0.0
+    assert result["failure_type_counts"] == {"answer_quality_failure": 2}
     assert result["llm_status_counts"] == {"ok": 2}
 
 
@@ -211,3 +282,60 @@ def test_run_rag_benchmark_devolve_dataframe_e_pula_source_only():
     assert row["num_questions_evaluated"] == 1
     assert row["num_questions_skipped"] == 1
     assert result.skipped_questions[0]["question_id"] == "gt-9999"
+
+
+def test_build_rag_failure_analysis_resume_falhas_por_config():
+    rows = [
+        {
+            "model": "text-embedding-3-large",
+            "chunk_strategy": "fixed-size",
+            "metodo_extracao": "markdown",
+            "mode": "flat",
+            "rerank": False,
+            "answer_usable_rate": 0.5,
+            "failure_type_counts": {
+                "usable": 1,
+                "retrieval_document_failure": 1,
+            },
+            "per_question": [
+                {
+                    "question_id": "gt-0001",
+                    "answer_usable": True,
+                    "failure_type": "usable",
+                    "recall_at_k": 1.0,
+                    "doc_recall_at_k": 1.0,
+                    "citation_accuracy": 1.0,
+                    "answer_correctness": 0.9,
+                },
+                {
+                    "question_id": "gt-0002",
+                    "answer_usable": False,
+                    "failure_type": "retrieval_document_failure",
+                    "recall_at_k": 0.0,
+                    "doc_recall_at_k": 0.0,
+                    "citation_accuracy": 0.0,
+                    "answer_correctness": 0.9,
+                },
+            ],
+        }
+    ]
+    result = BenchmarkResult(
+        metrics=pd.DataFrame(rows),
+        skipped_questions=[],
+        cache_stats={},
+    )
+
+    analysis = build_rag_failure_analysis(result)
+
+    assert analysis["configs"][0]["label"] == (
+        "text-embedding-3-large|fixed-size|markdown|flat"
+    )
+    assert analysis["configs"][0]["answer_usable_rate"] == 0.5
+    assert analysis["configs"][0]["failure_type_counts"] == {
+        "usable": 1,
+        "retrieval_document_failure": 1,
+    }
+    assert analysis["configs"][0]["failures"][0]["question_id"] == "gt-0002"
+    assert analysis["configs"][0]["failures"][0]["next_focus"] == (
+        "query_expansion_or_retrieval"
+    )

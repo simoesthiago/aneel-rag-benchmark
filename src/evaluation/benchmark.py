@@ -46,6 +46,8 @@ METODOS_EXTRACAO = ("markdown", "texto")
 NON_HIERARCHICAL_STRATEGIES = ("fixed-size", "article-aware")
 HIERARCHICAL_STRATEGY = "hierarchical-child"
 EVALUATED_ANSWERABILITIES = frozenset({"corpus_supported"})
+ANSWER_USABLE_MIN_CITATION_ACCURACY = 0.5
+ANSWER_USABLE_MIN_ANSWER_CORRECTNESS = 0.8
 
 
 @dataclass(frozen=True)
@@ -334,6 +336,59 @@ def _citation_accuracy_from_response(
     return len(citations & relevant_labels) / len(citations)
 
 
+def _answer_usable(
+    *,
+    recall_at_k: float,
+    citation_accuracy_value: float,
+    answer_correctness: Any,
+) -> bool:
+    """Combina contexto, citação e resposta final em um gate único.
+
+    Sem `answer_correctness` do juiz LLM, a resposta não pode ser marcada como
+    usável: falta evidência sobre qualidade final, mesmo que o retrieval pareça
+    bom.
+    """
+    if answer_correctness is None:
+        return False
+    return (
+        recall_at_k > 0
+        and citation_accuracy_value >= ANSWER_USABLE_MIN_CITATION_ACCURACY
+        and float(answer_correctness) >= ANSWER_USABLE_MIN_ANSWER_CORRECTNESS
+    )
+
+
+def _rag_failure_type(
+    *,
+    answer_usable: bool,
+    recall_at_k: float,
+    doc_recall_at_k_value: float,
+    citation_accuracy_value: float,
+    answer_correctness: Any,
+    generator_status: Any,
+) -> str:
+    """Classifica a primeira área que precisa de diagnóstico humano."""
+    if answer_usable:
+        return "usable"
+    if generator_status not in (None, "ok"):
+        return "generator_failure"
+    if recall_at_k <= 0 and doc_recall_at_k_value <= 0:
+        return "retrieval_document_failure"
+    if recall_at_k <= 0 and doc_recall_at_k_value > 0:
+        return "retrieval_passage_failure"
+    if answer_correctness is None:
+        return "llm_judge_missing"
+
+    citation_bad = citation_accuracy_value < ANSWER_USABLE_MIN_CITATION_ACCURACY
+    answer_bad = float(answer_correctness) < ANSWER_USABLE_MIN_ANSWER_CORRECTNESS
+    if citation_bad and answer_bad:
+        return "citation_and_answer_failure"
+    if citation_bad:
+        return "citation_failure"
+    if answer_bad:
+        return "answer_quality_failure"
+    return "unknown_failure"
+
+
 def evaluate_question_rag(
     rag,
     question: dict[str, Any],
@@ -368,20 +423,38 @@ def evaluate_question_rag(
             or question.get("answer_reference")
         ),
     )
+    recall = source_coverage(contexts, fontes)
+    doc_recall = doc_recall_at_k(contexts, expected_doc_ids, k=top_k)
+    citation_acc = _citation_accuracy_from_response(response, relevances)
+    answer_is_usable = _answer_usable(
+        recall_at_k=recall,
+        citation_accuracy_value=citation_acc,
+        answer_correctness=llm_metrics.get("answer_correctness"),
+    )
+    failure_type = _rag_failure_type(
+        answer_usable=answer_is_usable,
+        recall_at_k=recall,
+        doc_recall_at_k_value=doc_recall,
+        citation_accuracy_value=citation_acc,
+        answer_correctness=llm_metrics.get("answer_correctness"),
+        generator_status=response.get("generator_status"),
+    )
 
     return {
         "question_id": question.get("question_id"),
         "answer": response.get("answer"),
         "citations": response.get("citations", []),
-        "recall_at_k": source_coverage(contexts, fontes),
-        "doc_recall_at_k": doc_recall_at_k(contexts, expected_doc_ids, k=top_k),
+        "recall_at_k": recall,
+        "doc_recall_at_k": doc_recall,
         "precision_at_k": precision,
         "mrr_at_k": mrr,
         "ndcg_at_k": ndcg_at_k(relevances, k=top_k),
         "latency_ms": response.get("latency_ms"),
         "num_relevant_retrieved": num_hits,
         "num_expected_sources": len(fontes),
-        "citation_accuracy": _citation_accuracy_from_response(response, relevances),
+        "citation_accuracy": citation_acc,
+        "answer_usable": answer_is_usable,
+        "failure_type": failure_type,
         "generator_status": response.get("generator_status"),
         "generator_error": response.get("generator_error"),
         **llm_metrics,
@@ -414,6 +487,96 @@ def _count_status(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
         status = str(row.get(key) or "unknown")
         counts[status] = counts.get(status, 0) + 1
     return counts
+
+
+def _count_values(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        value = str(row.get(key) or "unknown")
+        counts[value] = counts.get(value, 0) + 1
+    return counts
+
+
+def _failure_next_focus(failure_type: str) -> str:
+    mapping = {
+        "retrieval_document_failure": "query_expansion_or_retrieval",
+        "retrieval_passage_failure": "chunking_rerank_or_matching",
+        "citation_failure": "prompt_or_citation_selection",
+        "answer_quality_failure": "prompt_generator_or_ground_truth",
+        "citation_and_answer_failure": "prompt_generator_or_context_use",
+        "generator_failure": "generator_runtime",
+        "llm_judge_missing": "rerun_with_llm_judge",
+        "unknown_failure": "manual_review",
+    }
+    return mapping.get(failure_type, "manual_review")
+
+
+def build_rag_failure_analysis(result: BenchmarkResult) -> dict[str, Any]:
+    """Consolida falhas RAG em um formato pequeno para triagem pós-smoke."""
+    configs: list[dict[str, Any]] = []
+    for _, row in result.metrics.iterrows():
+        label_suffix = "+rerank" if bool(row.get("rerank")) else ""
+        label = (
+            f"{row.get('model')}|{row.get('chunk_strategy')}|"
+            f"{row.get('metodo_extracao')}|{row.get('mode')}{label_suffix}"
+        )
+        failures = []
+        for question in row.get("per_question") or []:
+            if question.get("answer_usable"):
+                continue
+            failure_type = str(question.get("failure_type") or "unknown_failure")
+            failures.append(
+                {
+                    "question_id": question.get("question_id"),
+                    "failure_type": failure_type,
+                    "next_focus": _failure_next_focus(failure_type),
+                    "recall_at_k": question.get("recall_at_k"),
+                    "doc_recall_at_k": question.get("doc_recall_at_k"),
+                    "citation_accuracy": question.get("citation_accuracy"),
+                    "answer_correctness": question.get("answer_correctness"),
+                    "faithfulness": question.get("faithfulness"),
+                    "generator_status": question.get("generator_status"),
+                    "llm_status": question.get("llm_status"),
+                }
+            )
+        configs.append(
+            {
+                "label": label,
+                "answer_usable_rate": row.get("answer_usable_rate"),
+                "failure_type_counts": row.get("failure_type_counts") or {},
+                "num_failures": len(failures),
+                "failures": failures,
+            }
+        )
+    return {
+        "metric_definition": {
+            "answer_usable": (
+                "recall_at_k > 0 and citation_accuracy >= 0.5 and "
+                "answer_correctness >= 0.8"
+            ),
+            "failure_types": {
+                "retrieval_document_failure": (
+                    "documento esperado nao aparece no top-k"
+                ),
+                "retrieval_passage_failure": (
+                    "documento aparece, mas trecho esperado nao casa"
+                ),
+                "citation_failure": (
+                    "contexto e resposta passam, mas citacao fica abaixo do piso"
+                ),
+                "answer_quality_failure": (
+                    "contexto e citacao passam, mas resposta fica abaixo do piso"
+                ),
+                "citation_and_answer_failure": (
+                    "contexto passa, mas citacao e resposta falham"
+                ),
+                "generator_failure": "gerador falhou ou usou fallback com erro",
+                "llm_judge_missing": "juiz LLM ausente; usabilidade inconclusiva",
+                "unknown_failure": "falha residual para revisao manual",
+            },
+        },
+        "configs": configs,
+    }
 
 
 def run_rag_config(
@@ -467,6 +630,8 @@ def run_rag_config(
             "faithfulness_avg": None,
             "answer_correctness_avg": None,
             "citation_accuracy_avg": 0.0,
+            "answer_usable_rate": 0.0,
+            "failure_type_counts": {},
         }
 
     return {
@@ -479,6 +644,10 @@ def run_rag_config(
         "faithfulness_avg": _mean_present(por_pergunta, "faithfulness"),
         "answer_correctness_avg": _mean_present(por_pergunta, "answer_correctness"),
         "citation_accuracy_avg": mean(row["citation_accuracy"] for row in por_pergunta),
+        "answer_usable_rate": mean(
+            1.0 if row.get("answer_usable") else 0.0 for row in por_pergunta
+        ),
+        "failure_type_counts": _count_values(por_pergunta, "failure_type"),
     }
 
 

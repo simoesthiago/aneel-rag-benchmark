@@ -27,6 +27,7 @@ import pandas as pd  # noqa: E402
 
 from src.embeddings.cache import QueryEmbeddingCache  # noqa: E402
 from src.evaluation.benchmark import (  # noqa: E402
+    build_rag_failure_analysis,
     build_rag_baseline_configs,
     build_store_configs,
     run_full_benchmark,
@@ -211,7 +212,11 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     aggregate = df.drop(columns=["per_question"])
-    for column in ("llm_status_counts", "generator_status_counts"):
+    for column in (
+        "llm_status_counts",
+        "generator_status_counts",
+        "failure_type_counts",
+    ):
         if column in aggregate.columns:
             aggregate[column] = aggregate[column].map(
                 lambda value: json.dumps(value, ensure_ascii=False)
@@ -253,10 +258,71 @@ def main() -> None:
     )
     print(f"  Detalhe por pergunta salvo: {detail_path}")
 
+    if args.mode == "rag":
+        analysis = build_rag_failure_analysis(result)
+        analysis_path = output_dir / "failure_analysis.json"
+        analysis_path.write_text(
+            json.dumps(analysis, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        markdown_path = output_dir / "failure_analysis.md"
+        markdown_path.write_text(
+            _render_rag_failure_analysis_markdown(analysis),
+            encoding="utf-8",
+        )
+        print(f"  Diagnóstico de falhas salvo: {analysis_path}")
+        print(f"  Diagnóstico legível salvo: {markdown_path}")
+
     print("\nResumo (top-5 por nDCG@k):")
     top = aggregate.sort_values("ndcg_at_k", ascending=False).head(5)
     pd.set_option("display.max_columns", None)
     print(top.to_string(index=False))
+
+
+def _render_rag_failure_analysis_markdown(analysis: dict) -> str:
+    lines = [
+        "# Diagnóstico de usabilidade RAG",
+        "",
+        "## Definição",
+        "",
+        (
+            "`answer_usable = recall_at_k > 0 and citation_accuracy >= 0.5 and "
+            "answer_correctness >= 0.8`."
+        ),
+        "",
+        "Essa métrica separa resposta fiel ao contexto errado de resposta "
+        "realmente útil para o usuário final.",
+        "",
+    ]
+    for config in analysis.get("configs", []):
+        lines.extend(
+            [
+                f"## {config.get('label')}",
+                "",
+                f"- `answer_usable_rate`: {config.get('answer_usable_rate')}",
+                f"- `num_failures`: {config.get('num_failures')}",
+                f"- `failure_type_counts`: {config.get('failure_type_counts')}",
+                "",
+            ]
+        )
+        failures = list(config.get("failures") or [])
+        if not failures:
+            lines.extend(["Nenhuma falha não-usável nesta configuração.", ""])
+            continue
+        lines.extend(
+            [
+                "| question_id | failure_type | next_focus | recall | doc_recall | citation | correctness |",
+                "|---|---|---|---:|---:|---:|---:|",
+            ]
+        )
+        for failure in failures:
+            lines.append(
+                "| {question_id} | {failure_type} | {next_focus} | "
+                "{recall_at_k} | {doc_recall_at_k} | {citation_accuracy} | "
+                "{answer_correctness} |".format(**failure)
+            )
+        lines.append("")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
