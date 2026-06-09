@@ -16,14 +16,25 @@ class NaiveRAG(BaseRAG):
         *,
         strategy: str = "dense",
         generator: Callable[[str, list[dict[str, Any]]], Any] | None = None,
+        query_expander: Any | None = None,
     ):
         self.retriever = retriever
         self.strategy = strategy
         self.generator = generator
+        self.query_expander = query_expander
 
     def query(self, pergunta: str, top_k: int = 5) -> RagResponse:
         start = perf_counter()
-        contexts = self.retriever.retrieve(pergunta, top_k=top_k)
+        if self.query_expander is not None:
+            expansion = self.query_expander.expand(pergunta)
+            retrieve_query = str(expansion.get("expanded_query") or pergunta)
+            expansion_status = str(expansion.get("status") or "disabled")
+            expansion_error = expansion.get("error")
+        else:
+            retrieve_query = pergunta
+            expansion_status = "disabled"
+            expansion_error = None
+        contexts = self.retriever.retrieve(retrieve_query, top_k=top_k)
         generated = (
             self.generator(pergunta, contexts)
             if self.generator is not None
@@ -40,6 +51,10 @@ class NaiveRAG(BaseRAG):
             "contexts": contexts,
             "latency_ms": latency_ms,
             "strategy": self.strategy,
+            "query": pergunta,
+            "expanded_query": retrieve_query,
+            "query_expansion_status": expansion_status,
+            "query_expansion_error": expansion_error,
         }
         if self.generator is not None:
             response["generator_status"] = generator_status

@@ -502,13 +502,84 @@ def test_naive_rag_usa_contrato_retrieve_top_k():
     rag = NaiveRAG(FakeRetriever(), strategy="dense")
     resposta = rag.query("pergunta", top_k=5)
 
-    assert set(resposta) == {
+    # contrato mínimo: campos sempre presentes (com ou sem expander).
+    assert {
         "answer",
         "citations",
         "contexts",
         "latency_ms",
         "strategy",
-    }
+        "query",
+        "expanded_query",
+        "query_expansion_status",
+        "query_expansion_error",
+    }.issubset(set(resposta))
     assert resposta["strategy"] == "dense"
     assert resposta["citations"] == ["Art. 1º"]
     assert resposta["latency_ms"] >= 0
+    # sem expander injetado, query_expansion_status sinaliza "disabled".
+    assert resposta["query"] == "pergunta"
+    assert resposta["expanded_query"] == "pergunta"
+    assert resposta["query_expansion_status"] == "disabled"
+
+
+def test_naive_rag_usa_query_expandida_no_retriever_e_original_no_generator():
+    """Contrato Fase 2: retriever vê query expandida, generator vê original."""
+
+    class RecordingRetriever:
+        def __init__(self):
+            self.received: list[str] = []
+
+        def retrieve(self, query, top_k=5):
+            self.received.append(query)
+            return [
+                {
+                    "chunk_id": "doc-x::0",
+                    "texto": "texto",
+                    "citation_label": "Art. 1º",
+                    "score": 1.0,
+                    "rank": 1,
+                }
+            ]
+
+    class RecordingGenerator:
+        def __init__(self):
+            self.received: list[str] = []
+
+        def __call__(self, query, contexts):
+            self.received.append(query)
+            return {
+                "answer": "resposta gerada",
+                "citations_used": [1],
+                "raw": "",
+                "llm_status": "ok",
+                "llm_error": None,
+            }
+
+    class FakeExpander:
+        def expand(self, query):
+            return {
+                "expanded_query": f"{query} [expandido]",
+                "added_terms": ["termo-A", "termo-B"],
+                "status": "ok",
+                "error": None,
+            }
+
+    retriever = RecordingRetriever()
+    generator = RecordingGenerator()
+    rag = NaiveRAG(
+        retriever,
+        strategy="dense+qe",
+        generator=generator,
+        query_expander=FakeExpander(),
+    )
+
+    resposta = rag.query("Qual é a finalidade do PRORET Submódulo 2.4?", top_k=3)
+
+    assert retriever.received == ["Qual é a finalidade do PRORET Submódulo 2.4? [expandido]"]
+    assert generator.received == ["Qual é a finalidade do PRORET Submódulo 2.4?"]
+    assert resposta["query"] == "Qual é a finalidade do PRORET Submódulo 2.4?"
+    assert resposta["expanded_query"].endswith("[expandido]")
+    assert resposta["query_expansion_status"] == "ok"
+    assert resposta["query_expansion_error"] is None
+    assert resposta["answer"] == "resposta gerada"

@@ -38,6 +38,7 @@ from src.evaluation.metrics import (
 )
 from src.rag.generator import generate_llm_answer
 from src.rag.naive import NaiveRAG
+from src.rag.query_expander import QueryExpander
 from src.rag.retriever import Retriever, RetrieverMode
 
 PROVIDER = "openai"
@@ -67,12 +68,15 @@ class StoreConfig:
     mode: RetrieverMode
     rerank: bool = False
     candidates_k_override: int | None = None
+    query_expansion: bool = False
 
     @property
     def label(self) -> str:
         suffix = "+rerank" if self.rerank else ""
         if self.rerank and self.candidates_k_override:
             suffix += f"@pool{self.candidates_k_override}"
+        if self.query_expansion:
+            suffix += "+qe"
         return (
             f"{self.model}|{self.chunk_strategy}|{self.metodo_extracao}|"
             f"{self.mode}{suffix}"
@@ -141,12 +145,15 @@ def build_store_configs(
     return configs
 
 
-def build_rag_baseline_configs() -> list[StoreConfig]:
+def build_rag_baseline_configs(*, query_expansion: bool = False) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
     A matriz completa de retrieval já foi diagnosticada. Para geração, o
     primeiro teste deve responder uma pergunta menor: o baseline escolhido
     gera respostas fiéis e o rerank muda a qualidade final?
+
+    Quando `query_expansion=True`, retorna 4 configs (cartesiano rerank × QE)
+    para medir a interação entre rerank e query expansion no mesmo run.
     """
     baseline = StoreConfig(
         provider=PROVIDER,
@@ -163,7 +170,26 @@ def build_rag_baseline_configs() -> list[StoreConfig]:
         mode=baseline.mode,
         rerank=True,
     )
-    return [baseline, rerank]
+    if not query_expansion:
+        return [baseline, rerank]
+    baseline_qe = StoreConfig(
+        provider=baseline.provider,
+        model=baseline.model,
+        chunk_strategy=baseline.chunk_strategy,
+        metodo_extracao=baseline.metodo_extracao,
+        mode=baseline.mode,
+        query_expansion=True,
+    )
+    rerank_qe = StoreConfig(
+        provider=baseline.provider,
+        model=baseline.model,
+        chunk_strategy=baseline.chunk_strategy,
+        metodo_extracao=baseline.metodo_extracao,
+        mode=baseline.mode,
+        rerank=True,
+        query_expansion=True,
+    )
+    return [baseline, rerank, baseline_qe, rerank_qe]
 
 
 def split_evaluation_questions(
@@ -287,6 +313,7 @@ def run_config(
             "metodo_extracao": config.metodo_extracao,
             "mode": config.mode,
             "rerank": config.rerank,
+            "query_expansion": config.query_expansion,
             "num_questions": 0,
             "recall_at_k": 0.0,
             "doc_recall_at_k": 0.0,
@@ -304,6 +331,7 @@ def run_config(
         "metodo_extracao": config.metodo_extracao,
         "mode": config.mode,
         "rerank": config.rerank,
+        "query_expansion": config.query_expansion,
         "num_questions": len(por_pergunta),
         "recall_at_k": mean(row["recall_at_k"] for row in por_pergunta),
         "doc_recall_at_k": mean(row["doc_recall_at_k"] for row in por_pergunta),
@@ -457,6 +485,9 @@ def evaluate_question_rag(
         "failure_type": failure_type,
         "generator_status": response.get("generator_status"),
         "generator_error": response.get("generator_error"),
+        "expanded_query": response.get("expanded_query"),
+        "query_expansion_status": response.get("query_expansion_status"),
+        "query_expansion_error": response.get("query_expansion_error"),
         **llm_metrics,
     }
 
@@ -467,10 +498,12 @@ def _default_rag_factory(
     query_cache: QueryEmbeddingCache | None = None,
 ) -> NaiveRAG:
     retriever = _default_retriever_factory(config, repo_id, query_cache)
+    expander = QueryExpander() if config.query_expansion else None
     return NaiveRAG(
         retriever,
         strategy=config.label,
         generator=generate_llm_answer,
+        query_expander=expander,
     )
 
 
@@ -892,6 +925,7 @@ def load_benchmark_result_from_per_question_json(
                 "metodo_extracao": config.get("metodo_extracao"),
                 "mode": config.get("mode"),
                 "rerank": bool(config.get("rerank")),
+                "query_expansion": bool(config.get("query_expansion") or False),
                 "per_question": per_question,
                 "failure_type_counts": failure_counts,
                 "answer_usable_rate": answer_usable_rate,
@@ -941,6 +975,7 @@ def run_rag_config(
         "metodo_extracao": config.metodo_extracao,
         "mode": config.mode,
         "rerank": config.rerank,
+        "query_expansion": config.query_expansion,
         "num_questions": len(por_pergunta),
         "latency_avg_ms": summary["latency_avg"],
         "latency_p95_ms": summary["latency_p95"],

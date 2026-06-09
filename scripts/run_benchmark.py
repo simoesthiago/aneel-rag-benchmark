@@ -153,6 +153,25 @@ def parse_args() -> argparse.Namespace:
             "Só faz sentido com --mode rag."
         ),
     )
+    parser.add_argument(
+        "--query-expansion",
+        action="store_true",
+        help=(
+            "Em --mode rag, adiciona configs com rewriter LLM antes do "
+            "retrieval. Resulta em 4 configs ao invés de 2 (cartesiano "
+            "rerank × QE), permitindo medir a interação. Exige LLM_API_KEY "
+            "ou OPENAI_API_KEY."
+        ),
+    )
+    parser.add_argument(
+        "--query-expansion-model",
+        type=str,
+        default=None,
+        help=(
+            "Modelo OpenAI usado pelo rewriter de query expansion. "
+            "Default = LLM_MODEL (settings)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -188,11 +207,18 @@ def main() -> None:
         )
 
         if args.mode == "rag":
-            configs = build_rag_baseline_configs()
+            configs = build_rag_baseline_configs(
+                query_expansion=args.query_expansion,
+            )
             if args.rerank:
                 print(
                     "  Aviso: --mode rag já inclui baseline sem rerank e com "
                     "rerank; --rerank foi ignorado."
+                )
+            if args.query_expansion_model and not args.query_expansion:
+                print(
+                    "  Aviso: --query-expansion-model só tem efeito com "
+                    "--query-expansion."
                 )
         else:
             configs = build_store_configs(
@@ -264,6 +290,7 @@ def main() -> None:
                     "metodo_extracao": row["metodo_extracao"],
                     "mode": row["mode"],
                     "rerank": bool(row["rerank"]),
+                    "query_expansion": bool(row.get("query_expansion") or False),
                     "llm_status_counts": row.get("llm_status_counts"),
                     "generator_status_counts": row.get("generator_status_counts"),
                     "per_question": row["per_question"],
@@ -310,7 +337,14 @@ def main() -> None:
         print(f"  Diagnóstico legível salvo: {markdown_path}")
 
         rerank_flags = {bool(r["rerank"]) for _, r in df.iterrows()}
-        if rerank_flags == {True, False}:
+        qe_flags = {
+            bool(r.get("query_expansion") or False) for _, r in df.iterrows()
+        }
+        # Pareamento rerank: só roda quando há exatamente 2 configs
+        # diferindo apenas em rerank. Com query_expansion ativo, são 4
+        # configs e o rerank pairing é pulado em favor do QE pairing
+        # (que considera as 4 combinações).
+        if rerank_flags == {True, False} and qe_flags == {False}:
             pairing = build_rag_rerank_pairing(result)
             pairing_json = output_dir / "rerank_pairing.json"
             pairing_json.write_text(
@@ -324,10 +358,56 @@ def main() -> None:
             )
             print(f"  Pareamento rerank salvo: {pairing_json}")
             print(f"  Pareamento legível salvo: {pairing_md}")
+        elif qe_flags == {True, False}:
+            print(
+                "  Pareamento rerank pulado (4 configs com QE); o pareamento "
+                "QE cobre rerank × query_expansion."
+            )
         else:
             print(
                 "  Pareamento rerank ignorado: precisa de ambas configs "
                 f"rerank=False/True; recebido {sorted(rerank_flags)}."
+            )
+
+        # Pareamento QE: ativado quando há configs com e sem query_expansion.
+        if qe_flags == {True, False}:
+            from scripts.analyze_query_expansion_pairing import (
+                _config_by_flags,
+                build_qe_pairing,
+                render_qe_pairing_md,
+            )
+
+            qe_payload = json.loads(detail_path.read_text(encoding="utf-8"))
+            par1 = build_qe_pairing(
+                _config_by_flags(qe_payload, rerank=False, qe=False),
+                _config_by_flags(qe_payload, rerank=False, qe=True),
+            )
+            par2 = build_qe_pairing(
+                _config_by_flags(qe_payload, rerank=True, qe=False),
+                _config_by_flags(qe_payload, rerank=True, qe=True),
+            )
+            qe_pairing_json = output_dir / "query_expansion_pairing.json"
+            qe_pairing_json.write_text(
+                json.dumps(
+                    {"par1_baseline": par1, "par2_with_rerank": par2},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            qe_pairing_md = output_dir / "query_expansion_pairing.md"
+            qe_pairing_md.write_text(
+                render_qe_pairing_md(par1, par2), encoding="utf-8"
+            )
+            print(f"  Pareamento QE salvo: {qe_pairing_json}")
+            print(f"  Pareamento QE legível: {qe_pairing_md}")
+            print(
+                f"    Par 1 (sem rerank): {par1['decision_rule']['verdict']} "
+                f"saved={par1['summary']['saved_count']} broken={par1['summary']['broken_count']}"
+            )
+            print(
+                f"    Par 2 (com rerank): {par2['decision_rule']['verdict']} "
+                f"saved={par2['summary']['saved_count']} broken={par2['summary']['broken_count']}"
             )
 
     if aggregate is not None and "ndcg_at_k" in aggregate.columns:

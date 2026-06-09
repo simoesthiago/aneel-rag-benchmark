@@ -1,0 +1,1197 @@
+{
+  "par1_baseline": {
+    "buckets": {
+      "saved_by_qe": {
+        "count": 4,
+        "questions": [
+          {
+            "question_id": "gt-0003",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Como a REN 1000/2021 caracteriza o conceito de consumidor no contexto da regulação do setor elétrico, considerando aspectos como a classificação de unidades consumidoras e os direitos e deveres associados?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0013",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual obrigação cadastral padronizada pela REN 1095/2024 deve ser cumprida por consumidores e demais usuários, considerando aspectos como a atualização de dados cadastrais e a regularização de informações junto à distribuidora de energia?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0023",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No PRORET Submódulo 2.1, qual é a metodologia utilizada para o cálculo do Valor da Parcela A, considerando os critérios de remuneração regulatória e os parâmetros de custo de capital?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0034",
+            "before_failure_type": "retrieval_passage_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 implica em acesso irrestrito ou em acesso em qualquer momento, considerando as condições de disponibilidade e as regras de conexão estabelecidas pela ANEEL?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "broken_by_qe": {
+        "count": 6,
+        "questions": [
+          {
+            "question_id": "gt-0004",
+            "before_failure_type": "usable",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os requisitos e critérios que definem o autoconsumo remoto conforme estabelecido na REN 1000/2021, incluindo aspectos como a medição de energia, a conexão à rede elétrica e a compensação de energia gerada?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0010",
+            "before_failure_type": "usable",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual instrumento de governança do mercado de energia elétrica, que estabelece diretrizes para a operação e a gestão do sistema elétrico, é instituído pela REN 957/2021?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0018",
+            "before_failure_type": "usable",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as finalidades regulatórias específicas para as quais o PRODIST Módulo 5 estabelece requisitos de medição de energia elétrica, considerando aspectos como a qualidade do fornecimento, a eficiência energética e a gestão das perdas técnicas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0037",
+            "before_failure_type": "usable",
+            "after_failure_type": "answer_quality_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Além da conexão às instalações de transmissão, quais tipos de conexão de geração, incluindo a conexão de usinas de geração distribuída e a conexão de usinas de grande porte, são abrangidos pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0039",
+            "before_failure_type": "usable",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais elementos do Sistema de Medição para Faturamento, incluindo dispositivos de medição, critérios de acuracidade e responsabilidades de instalação, são abrangidos pelo Submódulo 2.14-RQ?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0048",
+            "before_failure_type": "usable",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os requisitos e critérios que definem o conceito de serviço adequado conforme estabelecido na Lei 8.987/1995, considerando aspectos como qualidade, continuidade e segurança da prestação do serviço público de energia elétrica?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_pass": {
+        "count": 20,
+        "questions": [
+          {
+            "question_id": "gt-0001",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Além das distribuidoras, quais outros agentes do setor elétrico estão sujeitos às Regras de Prestação do Serviço Público de Distribuição estabelecidas na REN 1000/2021, considerando aspectos como a concessão, a autorização e a regulação da prestação do serviço?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0006",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as diretrizes e disposições que a REN 956/2021 estabelece em relação ao PRODIST, especialmente no que tange à conexão de unidades geradoras e à gestão de perdas técnicas na rede elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0008",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os processos regulatórios consolidados pela REN 1003/2022 ao aprovar a estrutura do PRORET, considerando aspectos como a metodologia de cálculo de tarifas, a definição de critérios de qualidade do serviço e a análise de investimentos em infraestrutura?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0009",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os ambientes de contratação regulados pela REN 1009/2022 que estabelecem as diretrizes para a contratação de energia elétrica, incluindo aspectos como leilões de energia, contratos de compra e venda e mecanismos de ajuste de oferta?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0011",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais tipos de empreendimentos são abordados pela REN 1031/2022 no contexto da redução da Tarifa de Uso do Sistema de Transmissão (TUST) e da Tarifa de Uso do Sistema de Distribuição (TUSD), considerando aspectos como a viabilidade econômica e a adequação técnica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0014",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a dimensão sancionatória e fiscalizatória que a REN 846/2019 estabelece para os agentes do setor elétrico, considerando aspectos como penalidades, supervisão regulatória e conformidade normativa?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0016",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No planejamento da expansão do Sistema de Distribuição de Alta Tensão (SDAT) conforme o PRODIST Módulo 2, qual é o horizonte temporal recomendado para a realização dos estudos de previsão de demanda elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0020",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Como o PRODIST Módulo 8 diferencia entre DIC (Documento de Instrução de Conexão), FIC (Ficha de Informação de Conexão) e DMIC (Documento de Manifestação de Interesse de Conexão) no contexto das normas de conexão de unidades consumidoras e geração distribuída?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0021",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no contexto do PRODIST Módulo 9, considerando os critérios de elegibilidade, a responsabilidade civil e os procedimentos de indenização?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0031",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "De acordo com o Módulo 2 das Regras de Transmissão, quais são as instalações de transmissão que não fazem parte da Rede Básica e são classificadas como DIT, considerando os critérios de classificação e as especificações normativas pertinentes?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0032",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No Módulo 3 das Regras de Transmissão, quais critérios técnicos e regulatórios devem orientar a integração de novos equipamentos à Rede Básica, considerando aspectos como capacidade de transmissão, segurança da operação e conformidade com os Procedimentos de Rede?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0033",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais agentes do setor elétrico devem observar as diretrizes estabelecidas no Módulo 4 das Regras de Transmissão em relação à prestação do serviço de transmissão de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0035",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o escopo do Módulo 6 das Regras de Transmissão, incluindo aspectos relacionados à operação do sistema elétrico, requisitos de conectividade, e normas de segurança e confiabilidade?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0036",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade do Submódulo 1.2-PR nos Procedimentos de Rede em relação à interpretação de termos técnicos, considerando aspectos como a definição de responsabilidades, a padronização de procedimentos e a conformidade regulatória?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0038",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as diretrizes e requisitos regulatórios para sistemas de proteção, registro de perturbações e teleproteção em situações de ampliação, melhoria ou reforço de instalações de transmissão, conforme estabelecido nas normas da ANEEL?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0042",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o prazo ordinário para o envio da BDO (Base de Dados de Ocorrências) conforme estabelecido no manual de interrupções e ocorrências emergenciais, considerando as diretrizes de comunicação e reporte de eventos relevantes?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0043",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o prazo estabelecido para a submissão da base INDGER2 em relação ao mês de referência dos dados, considerando as diretrizes da ANEEL sobre a periodicidade de entrega de informações e a conformidade com os requisitos de prestação de contas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0047",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade institucional da ANEEL conforme estabelecido na Lei 9.427/1996, considerando aspectos como regulação econômica, supervisão do setor elétrico e promoção da concorrência?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0049",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Nos serviços de energia elétrica, como a Lei 9.074/1995 classifica as modalidades de concessões, permissões e autorizações, considerando aspectos como outorga, regime de prestação de serviços e obrigações regulatórias?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0050",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais atributos caracterizam a natureza especial de uma agência reguladora, considerando os princípios de autonomia, accountability e regulação setorial, segundo a Lei 13.848/2019?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_fail_same_type": {
+        "count": 13,
+        "questions": [
+          {
+            "question_id": "gt-0002",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Para fins da REN 1000/2021, como são definidas e aplicadas as bandeiras tarifárias no contexto da estrutura tarifária e da modulação de tarifas no setor elétrico brasileiro?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0005",
+            "before_failure_type": "retrieval_passage_failure",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Em geração distribuída, quais são os critérios estabelecidos pela REN 1000/2021 para que uma usina fotovoltaica com sistema de armazenamento seja classificada como central geradora de fonte despachável, considerando aspectos como capacidade instalada, regime de operação e requisitos de conexão à rede elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0007",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é o objeto regulatório central da REN 905/2020 em relação à estrutura tarifária e à remuneração dos serviços de distribuição de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0012",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Quais são os componentes de formação de preço que são consolidados pela REN 1032/2022, incluindo aspectos como custos de operação, remuneração do capital e tarifas de uso do sistema?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0015",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "answer_quality_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade da Seção 1.1 do Módulo 1 do PRODIST para a interpretação de definições e terminologias aplicáveis ao planejamento e operação do sistema elétrico?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0017",
+            "before_failure_type": "retrieval_passage_failure",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Em relação à conexão de geração distribuída, quais são os requisitos de anti-ilhamento que devem ser observados conforme as diretrizes estabelecidas no PRODIST, considerando aspectos como segurança da operação, proteção de sistemas e normas técnicas aplicáveis?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0022",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a definição e a função da BDGD no contexto do PRODIST Módulo 10, considerando aspectos como a gestão de dados, a integração de sistemas e a conformidade regulatória?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0025",
+            "before_failure_type": "retrieval_passage_failure",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No PRORET Submódulo 2.3, em quais condições imóveis sem título definitivo podem ser incluídos na base de ativos regulatórios para fins de remuneração de ativos e avaliação de investimentos?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0026",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Quais são os parâmetros estatísticos utilizados pelo PRORET Submódulo 2.3 para o cálculo do tamanho da amostra em estudos de confiabilidade e representatividade estatística?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0027",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é a finalidade metodológica do PRORET Submódulo 2.4 na revisão tarifária das distribuidoras de energia elétrica, considerando aspectos como a estrutura de custos, a metodologia de cálculo da tarifa e a análise de eficiência operacional?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0029",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é a obrigação informacional estabelecida no PRORET Submódulo 10.6 em relação à prestação de contas e à transparência das informações regulatórias?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0030",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Como o Módulo 1 das Regras de Transmissão define a Duração Equivalente da Indisponibilidade na FT-Conversora em relação à disponibilidade de ativos e à metodologia de cálculo de perdas de energia?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0041",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "answer_quality_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Na apuração mensal do Submódulo 8.3-PR, quais componentes financeiros e operacionais são considerados na determinação do Valor Mensal de Energia de Uso da Rede Básica (VMEuRB)?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_fail_changed_type": {
+        "count": 5,
+        "questions": [
+          {
+            "question_id": "gt-0019",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas, conforme definido nas diretrizes de perdas de energia, são consideradas no cálculo sob responsabilidade da distribuidora, levando em conta a distinção entre perdas técnicas e perdas não técnicas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0024",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os elementos de custo que integram a Parcela A no PRORET Submódulo 2.1, considerando a remuneração regulatória, os custos de operação e manutenção, e as despesas de capital?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0028",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade das Tarifas de Referência estabelecidas no PRORET Submódulo 7.2 em relação à remuneração dos serviços de distribuição e à alocação de custos operacionais?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0040",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "De acordo com o Submódulo 5.1-OP, qual é a interdependência entre a operação do sistema elétrico e a operação das instalações de geração e transmissão?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0046",
+            "before_failure_type": "citation_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Após a publicação do POTEE, quais são as atribuições da SCT no processo de autorização de reforços sem receita prévia, considerando aspectos como viabilidade técnica, análise de impacto e conformidade regulatória?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      }
+    },
+    "summary": {
+      "saved_count": 4,
+      "broken_count": 6,
+      "net_delta": -2,
+      "before_answer_usable_rate": 0.5416666666666666,
+      "after_answer_usable_rate": 0.5,
+      "before_failure_type_counts": {
+        "usable": 26,
+        "retrieval_document_failure": 7,
+        "citation_and_answer_failure": 5,
+        "retrieval_passage_failure": 4,
+        "answer_quality_failure": 5,
+        "citation_failure": 1
+      },
+      "after_failure_type_counts": {
+        "usable": 24,
+        "retrieval_document_failure": 8,
+        "retrieval_passage_failure": 5,
+        "answer_quality_failure": 3,
+        "citation_failure": 5,
+        "citation_and_answer_failure": 3
+      },
+      "delta_retrieval_failures": 2,
+      "delta_doc_failure": 1,
+      "qe_status_counts": {
+        "ok": 48
+      }
+    },
+    "decision_rule": {
+      "rule": "promover QE SE saved >= 2*broken E delta_retrieval_failures <= 0 E delta_doc_failure <= 0",
+      "saved": 4,
+      "broken": 6,
+      "delta_retrieval_failures": 2,
+      "delta_doc_failure": 1,
+      "verdict": "keep_baseline",
+      "reasons": [
+        "saved=4 < 2*broken=12",
+        "delta_retrieval_failures=+2 (piorou)",
+        "delta_doc_failure=+1 (piorou)"
+      ]
+    }
+  },
+  "par2_with_rerank": {
+    "buckets": {
+      "saved_by_qe": {
+        "count": 3,
+        "questions": [
+          {
+            "question_id": "gt-0001",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Além das distribuidoras, quais são os outros agentes regulados que estão sujeitos às Regras de Prestação do Serviço Público de Distribuição estabelecidas na REN 1000/2021, considerando aspectos como a concessão, autorização e obrigações de prestação de serviços?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0013",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual obrigação cadastral foi padronizada pela REN 1095/2024 para consumidores e demais usuários, considerando os requisitos de informação, a atualização cadastral e a regularidade fiscal?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0039",
+            "before_failure_type": "citation_failure",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais elementos do Sistema de Medição para Faturamento, conforme definido na regulamentação da ANEEL, são abrangidos pelo Submódulo 2.14-RQ, incluindo aspectos como precisão, confiabilidade e requisitos técnicos de medição?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "broken_by_qe": {
+        "count": 5,
+        "questions": [
+          {
+            "question_id": "gt-0004",
+            "before_failure_type": "usable",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os requisitos e condições que definem o autoconsumo remoto conforme estabelecido na REN 1000/2021, incluindo aspectos como a conexão à rede de distribuição e a compensação de energia?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0012",
+            "before_failure_type": "usable",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Quais são os componentes de formação de preço que são consolidados pela REN 1032/2022, incluindo aspectos como custos de operação, remuneração do capital e tarifas de uso do sistema?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0018",
+            "before_failure_type": "usable",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as finalidades regulatórias específicas para as quais o PRODIST Módulo 5 estabelece requisitos de medição de energia elétrica, considerando aspectos como qualidade do fornecimento, confiabilidade do sistema e eficiência energética?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0036",
+            "before_failure_type": "usable",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade do Submódulo 1.2-PR nos Procedimentos de Rede em relação à interpretação de termos técnicos, considerando aspectos como a definição de responsabilidades, a padronização de procedimentos e a conformidade regulatória?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0040",
+            "before_failure_type": "usable",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "De acordo com o Submódulo 5.1-OP, qual é a interdependência entre a operação do sistema elétrico e a operação das instalações de geração e transmissão?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_pass": {
+        "count": 22,
+        "questions": [
+          {
+            "question_id": "gt-0003",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Como a REN 1000/2021 caracteriza o conceito de consumidor no contexto da regulação do setor elétrico, considerando aspectos como a classificação de unidades consumidoras e os direitos e deveres associados?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0006",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as diretrizes e disposições que a REN 956/2021 estabelece em relação ao PRODIST, especialmente no que tange à conexão de unidades geradoras e à gestão de perdas técnicas na rede elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0008",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os processos regulatórios consolidados pela REN 1003/2022 ao aprovar a estrutura do PRORET, considerando aspectos como a metodologia de cálculo de tarifas, a definição de critérios de qualidade do serviço e a análise de viabilidade econômica dos empreendimentos?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0009",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os ambientes de contratação regulados pela REN 1009/2022 que estabelecem as diretrizes para a contratação de energia elétrica, incluindo aspectos como leilões de energia, contratos de compra e venda e mecanismos de ajuste de oferta?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0010",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o instrumento de governança do mercado de energia elétrica que é instituído pela REN 957/2021 e que estabelece diretrizes para a gestão e operação do sistema elétrico nacional, incluindo aspectos de transparência e accountability?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0011",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais tipos de empreendimentos são abordados pela REN 1031/2022 no contexto da redução da Tarifa de Uso do Sistema de Transmissão (TUST) e da Tarifa de Uso do Sistema de Distribuição (TUSD), considerando aspectos como a viabilidade econômica e a adequação técnica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0014",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a dimensão sancionatória e de fiscalização que a REN 846/2019 estabelece para os agentes regulados do setor elétrico, considerando aspectos como penalidades, supervisão regulatória e conformidade normativa?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0016",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No planejamento da expansão do Sistema de Distribuição de Alta Tensão (SDAT) conforme estabelecido no PRODIST Módulo 2, qual é o horizonte temporal recomendado para a realização dos estudos de previsão de demanda elétrica, considerando aspectos como carga máxima, crescimento da demanda e fatores de sazonalidade?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0020",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Como o PRODIST Módulo 8 diferencia entre DIC (Documento de Instrução de Conexão), FIC (Ficha de Informação de Conexão) e DMIC (Documento de Manifestação de Interesse de Conexão) em relação aos procedimentos de conexão e às responsabilidades dos agentes de distribuição?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0021",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no contexto do PRODIST Módulo 9, considerando os critérios de elegibilidade, a responsabilidade civil da concessionária e os procedimentos de apuração de danos?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0031",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "De acordo com o Módulo 2 das Regras de Transmissão, quais são as instalações de transmissão que não fazem parte da Rede Básica e são classificadas como DIT, considerando os critérios de classificação e as especificações normativas pertinentes?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0032",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No Módulo 3 das Regras de Transmissão, quais critérios técnicos e regulatórios devem orientar a integração de novos equipamentos à Rede Básica, considerando aspectos como capacidade de transmissão, segurança da operação e conformidade com os Procedimentos de Rede?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0033",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais agentes regulados devem observar as diretrizes estabelecidas no Módulo 4 das Regras de Transmissão em relação à prestação do serviço de transmissão de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0034",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 implica em acesso irrestrito ou em acesso em qualquer momento, considerando as condições de disponibilidade e as regras de conexão estabelecidas pela ANEEL?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0035",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o escopo do Módulo 6 das Regras de Transmissão, considerando os aspectos de operação, planejamento e gestão da infraestrutura de transmissão de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0038",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são as diretrizes e requisitos regulatórios para sistemas de proteção, registro de perturbações e teleproteção em casos de ampliação, melhoria ou reforço de instalações de transmissão, conforme estabelecido nas normas da ANEEL?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0042",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o prazo ordinário para o envio da BDO (Base de Dados de Ocorrências) conforme estabelecido no manual de interrupções e ocorrências emergenciais, considerando as diretrizes de comunicação de eventos e a regulamentação sobre gestão de interrupções?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0043",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é o prazo estabelecido para a submissão da base INDGER2 em relação ao mês de referência dos dados, considerando as diretrizes da ANEEL sobre a periodicidade de entrega de informações e a conformidade com os requisitos de prestação de contas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0046",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Após a publicação do POTEE, quais são as atribuições da SCT no processo de autorização de reforços sem a previsão de receita tarifária prévia?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0047",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade institucional da ANEEL conforme estabelecido na Lei 9.427/1996, considerando aspectos como regulação econômica, supervisão do setor elétrico e promoção da concorrência?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0048",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os requisitos e critérios que definem o conceito de serviço adequado conforme estabelecido na Lei 8.987/1995, considerando aspectos como qualidade, continuidade e segurança da prestação do serviço?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0050",
+            "before_failure_type": "usable",
+            "after_failure_type": "usable",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais atributos caracterizam a natureza especial de uma agência reguladora, considerando os princípios de autonomia, accountability e regulação setorial, segundo a Lei 13.848/2019?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_fail_same_type": {
+        "count": 14,
+        "questions": [
+          {
+            "question_id": "gt-0002",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Para fins da REN 1000/2021, como são definidas e aplicadas as bandeiras tarifárias no contexto da metodologia de cálculo da tarifa de energia elétrica e da gestão de custos de geração?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0005",
+            "before_failure_type": "retrieval_passage_failure",
+            "after_failure_type": "retrieval_passage_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Em geração distribuída, quais são os critérios estabelecidos pela REN 1000/2021 para que uma usina fotovoltaica com sistema de armazenamento seja classificada como central geradora de fonte despachável, considerando aspectos como capacidade instalada, regime de operação e requisitos de conexão à rede?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0007",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é o objeto regulatório central da REN 905/2020 em relação à estrutura tarifária e à remuneração dos serviços de distribuição de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0015",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "answer_quality_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a finalidade da Seção 1.1 do Módulo 1 do PRODIST para a interpretação de definições e terminologias aplicáveis ao planejamento e operação do sistema elétrico?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0017",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Em conexão de geração distribuída, qual é o requisito de anti-ilhamento que deve ser observado conforme as diretrizes estabelecidas no PRODIST, considerando aspectos como segurança da operação, proteção de sistemas elétricos e conformidade com normas técnicas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0019",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas, conforme definidas na regulamentação, são consideradas no cálculo sob a responsabilidade da distribuidora de energia elétrica?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0025",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "No PRORET Submódulo 2.3, em quais condições imóveis sem título definitivo podem ser incluídos na base de ativos regulatórios para fins de remuneração de investimentos?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0027",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é a finalidade metodológica do PRORET Submódulo 2.4 na revisão tarifária das distribuidoras de energia elétrica, considerando aspectos como a estrutura de custos, a metodologia de cálculo da tarifa e a análise de eficiência operacional?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0028",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é a finalidade das Tarifas de Referência estabelecidas no PRORET Submódulo 7.2 em relação à remuneração dos serviços de distribuição e à alocação de custos operacionais?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0029",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Qual é a obrigação informacional estabelecida no PRORET Submódulo 10.6 em relação à prestação de contas e à transparência das informações regulatórias?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0030",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Como o Módulo 1 das Regras de Transmissão define a Duração Equivalente da Indisponibilidade na FT-Conversora em relação à disponibilidade técnica e à capacidade de transmissão?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0037",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Além da conexão às instalações de transmissão, quais tipos de conexão de geração, incluindo a conexão de usinas de geração distribuída e a conexão de empreendimentos de geração centralizada, são abrangidos pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0041",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "answer_quality_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Na apuração mensal do Submódulo 8.3-PR, quais componentes financeiros e operacionais são considerados na determinação do Valor Mensal de Energia de Uso da Rede Básica (VMEuRB)?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0049",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "retrieval_document_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 0.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 0.0,
+            "expanded_query": "Nos serviços de energia elétrica, como a Lei 9.074/1995 classifica e regula as modalidades de concessões, permissões e autorizações, considerando aspectos como outorga, obrigações contratuais e regime de prestação de serviços?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      },
+      "stable_fail_changed_type": {
+        "count": 4,
+        "questions": [
+          {
+            "question_id": "gt-0022",
+            "before_failure_type": "answer_quality_failure",
+            "after_failure_type": "citation_and_answer_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Qual é a definição e a função da BDGD no contexto do PRODIST Módulo 10, considerando aspectos como a gestão de dados, a integração de sistemas e a conformidade regulatória?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0023",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "No PRORET Submódulo 2.1, qual é a metodologia utilizada para o cálculo do Valor da Parcela A, considerando os aspectos de remuneração regulatória e custo de capital?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0024",
+            "before_failure_type": "citation_and_answer_failure",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 1.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 1.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os elementos de custo que integram a Parcela A no PRORET Submódulo 2.1, considerando a remuneração regulatória, os custos de operação e manutenção, e as despesas administrativas?",
+            "query_expansion_status": "ok"
+          },
+          {
+            "question_id": "gt-0026",
+            "before_failure_type": "retrieval_document_failure",
+            "after_failure_type": "citation_failure",
+            "before_recall_at_k": 0.0,
+            "after_recall_at_k": 1.0,
+            "before_doc_recall_at_k": 0.0,
+            "after_doc_recall_at_k": 1.0,
+            "expanded_query": "Quais são os parâmetros estatísticos utilizados pelo PRORET Submódulo 2.3 para o cálculo do tamanho da amostra, considerando a margem de erro, o nível de confiança e a variabilidade da população?",
+            "query_expansion_status": "ok"
+          }
+        ]
+      }
+    },
+    "summary": {
+      "saved_count": 3,
+      "broken_count": 5,
+      "net_delta": -2,
+      "before_answer_usable_rate": 0.5625,
+      "after_answer_usable_rate": 0.5208333333333334,
+      "before_failure_type_counts": {
+        "answer_quality_failure": 5,
+        "retrieval_document_failure": 10,
+        "usable": 27,
+        "retrieval_passage_failure": 1,
+        "citation_and_answer_failure": 4,
+        "citation_failure": 1
+      },
+      "after_failure_type_counts": {
+        "usable": 25,
+        "retrieval_document_failure": 10,
+        "citation_failure": 5,
+        "retrieval_passage_failure": 3,
+        "answer_quality_failure": 2,
+        "citation_and_answer_failure": 3
+      },
+      "delta_retrieval_failures": 2,
+      "delta_doc_failure": 0,
+      "qe_status_counts": {
+        "ok": 48
+      }
+    },
+    "decision_rule": {
+      "rule": "promover QE SE saved >= 2*broken E delta_retrieval_failures <= 0 E delta_doc_failure <= 0",
+      "saved": 3,
+      "broken": 5,
+      "delta_retrieval_failures": 2,
+      "delta_doc_failure": 0,
+      "verdict": "keep_baseline",
+      "reasons": [
+        "saved=3 < 2*broken=10",
+        "delta_retrieval_failures=+2 (piorou)"
+      ]
+    }
+  }
+}
