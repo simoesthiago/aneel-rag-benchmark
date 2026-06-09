@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 
 from src.evaluation.benchmark import (
     BenchmarkResult,
     StoreConfig,
     build_rag_failure_analysis,
     build_rag_baseline_configs,
+    build_rag_rerank_pairing,
     evaluate_question_rag,
+    load_benchmark_result_from_per_question_json,
+    render_rag_rerank_pairing_md,
     run_rag_benchmark,
     run_rag_config,
 )
@@ -339,3 +345,413 @@ def test_build_rag_failure_analysis_resume_falhas_por_config():
     assert analysis["configs"][0]["failures"][0]["next_focus"] == (
         "query_expansion_or_retrieval"
     )
+
+
+# -----------------------------------------------------------------------------
+# Pareamento baseline vs baseline+rerank
+# -----------------------------------------------------------------------------
+
+
+def _pairing_question(
+    question_id: str,
+    *,
+    answer_usable: bool,
+    failure_type: str,
+    recall_at_k: float = 0.0,
+    doc_recall_at_k: float = 0.0,
+) -> dict[str, Any]:
+    return {
+        "question_id": question_id,
+        "answer_usable": answer_usable,
+        "failure_type": failure_type,
+        "recall_at_k": recall_at_k,
+        "doc_recall_at_k": doc_recall_at_k,
+    }
+
+
+def _count_failure_types(per_question: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for q in per_question:
+        key = str(q.get("failure_type") or "unknown")
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _pairing_result(
+    *,
+    baseline_per_question: list[dict[str, Any]],
+    rerank_per_question: list[dict[str, Any]] | None,
+) -> BenchmarkResult:
+    rows: list[dict[str, Any]] = []
+    rows.append(
+        {
+            "model": "text-embedding-3-large",
+            "chunk_strategy": "fixed-size",
+            "metodo_extracao": "markdown",
+            "mode": "flat",
+            "rerank": False,
+            "answer_usable_rate": (
+                sum(1 for q in baseline_per_question if q["answer_usable"])
+                / len(baseline_per_question)
+            ),
+            "failure_type_counts": _count_failure_types(baseline_per_question),
+            "per_question": baseline_per_question,
+        }
+    )
+    if rerank_per_question is not None:
+        rows.append(
+            {
+                "model": "text-embedding-3-large",
+                "chunk_strategy": "fixed-size",
+                "metodo_extracao": "markdown",
+                "mode": "flat",
+                "rerank": True,
+                "answer_usable_rate": (
+                    sum(1 for q in rerank_per_question if q["answer_usable"])
+                    / len(rerank_per_question)
+                ),
+                "failure_type_counts": _count_failure_types(rerank_per_question),
+                "per_question": rerank_per_question,
+            }
+        )
+    return BenchmarkResult(
+        metrics=pd.DataFrame(rows),
+        skipped_questions=[],
+        cache_stats={},
+    )
+
+
+def test_build_rag_rerank_pairing_classifica_buckets():
+    baseline = [
+        _pairing_question(
+            "gt-0001", answer_usable=False, failure_type="retrieval_document_failure"
+        ),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+        _pairing_question("gt-0003", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0004", answer_usable=False, failure_type="citation_failure"
+        ),
+        _pairing_question(
+            "gt-0005", answer_usable=False, failure_type="answer_quality_failure"
+        ),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0002", answer_usable=False, failure_type="retrieval_document_failure"
+        ),
+        _pairing_question("gt-0003", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0004", answer_usable=False, failure_type="citation_failure"
+        ),
+        _pairing_question(
+            "gt-0005",
+            answer_usable=False,
+            failure_type="retrieval_passage_failure",
+        ),
+    ]
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+        )
+    )
+
+    def _ids(name: str) -> list[str]:
+        return [q["question_id"] for q in pairing["buckets"][name]["questions"]]
+
+    assert _ids("saved_by_rerank") == ["gt-0001"]
+    assert _ids("broken_by_rerank") == ["gt-0002"]
+    assert _ids("stable_pass") == ["gt-0003"]
+    assert _ids("stable_fail_same_type") == ["gt-0004"]
+    assert _ids("stable_fail_changed_type") == ["gt-0005"]
+    assert pairing["summary"]["saved_count"] == 1
+    assert pairing["summary"]["broken_count"] == 1
+    assert pairing["summary"]["net_delta"] == 0
+    # delta_doc_failure: baseline tem 1 retrieval_document_failure, rerank tem 1.
+    assert pairing["summary"]["delta_doc_failure"] == 0
+
+
+def test_build_rag_rerank_pairing_erra_sem_config_rerank():
+    baseline = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+    ]
+    result = _pairing_result(
+        baseline_per_question=baseline,
+        rerank_per_question=None,
+    )
+
+    with pytest.raises(ValueError, match="rerank pairing requer"):
+        build_rag_rerank_pairing(result)
+
+
+def test_build_rag_rerank_pairing_erra_question_id_assimetrico():
+    baseline = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0003", answer_usable=False, failure_type="citation_failure"
+        ),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0002", answer_usable=False, failure_type="citation_failure"
+        ),
+    ]
+    result = _pairing_result(
+        baseline_per_question=baseline,
+        rerank_per_question=rerank,
+    )
+
+    with pytest.raises(ValueError, match="mesmo conjunto de question_id"):
+        build_rag_rerank_pairing(result)
+
+
+def test_build_rag_rerank_pairing_decision_promote():
+    # 4 saved, 1 broken, delta_doc_failure baixo -> promote.
+    # Baseline: 5 não-usáveis (4 doc_failure, 1 usable). Rerank: 4 saved, 1 broken.
+    baseline = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+        _pairing_question(
+            "gt-0002",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+        _pairing_question(
+            "gt-0003",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+        _pairing_question(
+            "gt-0004",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+        _pairing_question("gt-0005", answer_usable=True, failure_type="usable"),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+        _pairing_question("gt-0003", answer_usable=True, failure_type="usable"),
+        _pairing_question("gt-0004", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0005",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+    ]
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+        )
+    )
+
+    assert pairing["decision_rule"]["verdict"] == "promote"
+    assert pairing["decision_rule"]["reasons"] == []
+
+
+def test_build_rag_rerank_pairing_decision_keep_optional_por_broken():
+    baseline = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="citation_failure",
+        ),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0002",
+            answer_usable=False,
+            failure_type="citation_failure",
+        ),
+    ]
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+        )
+    )
+
+    assert pairing["decision_rule"]["verdict"] == "keep_optional"
+    assert any("saved" in r for r in pairing["decision_rule"]["reasons"])
+
+
+def test_build_rag_rerank_pairing_decision_keep_optional_por_doc_failure():
+    # 10 salvos vs 1 quebrado, mas delta_doc_failure=+2 -> keep_optional.
+    baseline = []
+    rerank = []
+    for i in range(1, 11):
+        qid = f"gt-{i:04d}"
+        baseline.append(
+            _pairing_question(
+                qid,
+                answer_usable=False,
+                failure_type="citation_failure",
+            )
+        )
+        rerank.append(_pairing_question(qid, answer_usable=True, failure_type="usable"))
+    # 1 broken: baseline true -> rerank doc_failure
+    baseline.append(
+        _pairing_question("gt-0011", answer_usable=True, failure_type="usable")
+    )
+    rerank.append(
+        _pairing_question(
+            "gt-0011",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        )
+    )
+    # 2 perguntas que ficam doc_failure só no rerank, sem afetar saved/broken
+    # (ambos não-usáveis com tipos diferentes).
+    baseline.append(
+        _pairing_question(
+            "gt-0012",
+            answer_usable=False,
+            failure_type="answer_quality_failure",
+        )
+    )
+    rerank.append(
+        _pairing_question(
+            "gt-0012",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        )
+    )
+
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+        )
+    )
+
+    assert pairing["summary"]["saved_count"] == 10
+    assert pairing["summary"]["broken_count"] == 1
+    assert pairing["summary"]["delta_doc_failure"] == 2
+    assert pairing["decision_rule"]["verdict"] == "keep_optional"
+    assert any(
+        "delta_doc_failure" in reason
+        for reason in pairing["decision_rule"]["reasons"]
+    )
+
+
+def test_render_rag_rerank_pairing_md_inclui_veredito():
+    baseline = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+        ),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+    ]
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+        )
+    )
+
+    markdown = render_rag_rerank_pairing_md(pairing)
+    assert "# Pareamento rerank vs baseline" in markdown
+    assert "## Veredito" in markdown
+    assert "**promote**" in markdown
+    assert "gt-0001" in markdown
+
+
+def test_build_rag_rerank_pairing_idempotente():
+    baseline = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="citation_failure",
+        ),
+        _pairing_question("gt-0002", answer_usable=True, failure_type="usable"),
+    ]
+    rerank = [
+        _pairing_question("gt-0001", answer_usable=True, failure_type="usable"),
+        _pairing_question(
+            "gt-0002",
+            answer_usable=False,
+            failure_type="citation_failure",
+        ),
+    ]
+    result = _pairing_result(
+        baseline_per_question=baseline,
+        rerank_per_question=rerank,
+    )
+    first = build_rag_rerank_pairing(result)
+    second = build_rag_rerank_pairing(result)
+    assert first == second
+
+
+def test_load_benchmark_result_from_per_question_json_reconstroi_metrics(
+    tmp_path: Path,
+) -> None:
+    payload = {
+        "generated_at": "2026-01-01T00:00:00Z",
+        "top_k": 10,
+        "skipped_questions": [],
+        "cache_stats": {},
+        "results": [
+            {
+                "model": "text-embedding-3-large",
+                "chunk_strategy": "fixed-size",
+                "metodo_extracao": "markdown",
+                "mode": "flat",
+                "rerank": False,
+                "per_question": [
+                    _pairing_question(
+                        "gt-0001", answer_usable=True, failure_type="usable"
+                    ),
+                    _pairing_question(
+                        "gt-0002",
+                        answer_usable=False,
+                        failure_type="retrieval_document_failure",
+                    ),
+                ],
+            },
+            {
+                "model": "text-embedding-3-large",
+                "chunk_strategy": "fixed-size",
+                "metodo_extracao": "markdown",
+                "mode": "flat",
+                "rerank": True,
+                "per_question": [
+                    _pairing_question(
+                        "gt-0001", answer_usable=True, failure_type="usable"
+                    ),
+                    _pairing_question(
+                        "gt-0002", answer_usable=True, failure_type="usable"
+                    ),
+                ],
+            },
+        ],
+    }
+    path = tmp_path / "per_question.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = load_benchmark_result_from_per_question_json(path)
+
+    assert len(result.metrics) == 2
+    baseline_row = result.metrics[result.metrics["rerank"] == False].iloc[0]  # noqa: E712
+    assert baseline_row["answer_usable_rate"] == 0.5
+    assert baseline_row["failure_type_counts"] == {
+        "usable": 1,
+        "retrieval_document_failure": 1,
+    }
+
+    # Permite passar direto para análises sem rerodar LLM.
+    pairing = build_rag_rerank_pairing(result)
+    assert pairing["summary"]["saved_count"] == 1
+    assert pairing["summary"]["broken_count"] == 0

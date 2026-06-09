@@ -579,6 +579,335 @@ def build_rag_failure_analysis(result: BenchmarkResult) -> dict[str, Any]:
     }
 
 
+# -----------------------------------------------------------------------------
+# Pareamento baseline vs baseline+rerank
+# -----------------------------------------------------------------------------
+
+
+RERANK_PAIRING_BUCKETS = (
+    "saved_by_rerank",
+    "broken_by_rerank",
+    "stable_pass",
+    "stable_fail_same_type",
+    "stable_fail_changed_type",
+)
+RERANK_PROMOTE_SAVED_BROKEN_RATIO = 2
+RERANK_PROMOTE_MAX_DELTA_DOC_FAILURE = 1
+
+
+def _row_per_question_dict(row: Any) -> dict[str, dict[str, Any]]:
+    """Indexa per_question por question_id em dict. Erra se houver duplicata."""
+    indexed: dict[str, dict[str, Any]] = {}
+    for question in row.get("per_question") or []:
+        qid = str(question.get("question_id"))
+        if qid in indexed:
+            raise ValueError(
+                f"question_id duplicado dentro de uma config: {qid!r}"
+            )
+        indexed[qid] = question
+    return indexed
+
+
+def _pairing_question_entry(
+    qid: str,
+    baseline_q: dict[str, Any],
+    rerank_q: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "question_id": qid,
+        "baseline_failure_type": str(
+            baseline_q.get("failure_type") or "unknown_failure"
+        ),
+        "rerank_failure_type": str(rerank_q.get("failure_type") or "unknown_failure"),
+        "recall_baseline": baseline_q.get("recall_at_k"),
+        "recall_rerank": rerank_q.get("recall_at_k"),
+        "doc_recall_baseline": baseline_q.get("doc_recall_at_k"),
+        "doc_recall_rerank": rerank_q.get("doc_recall_at_k"),
+    }
+
+
+def build_rag_rerank_pairing(result: BenchmarkResult) -> dict[str, Any]:
+    """Pareia `per_question` entre `rerank=False` e `rerank=True` por
+    `question_id` e classifica cada pergunta em um bucket.
+
+    Buckets:
+      - `saved_by_rerank`: baseline não-usável, rerank usável.
+      - `broken_by_rerank`: baseline usável, rerank não-usável.
+      - `stable_pass`: ambos usáveis.
+      - `stable_fail_same_type`: ambos não-usáveis com mesmo `failure_type`.
+      - `stable_fail_changed_type`: ambos não-usáveis com `failure_type`
+        diferente (mudança diagnóstica do que travou a pergunta).
+
+    Levanta `ValueError` se faltar uma das duas configs (`rerank` False/True)
+    ou se o conjunto de `question_id` for assimétrico entre as duas.
+    """
+    baseline_row = None
+    rerank_row = None
+    for _, row in result.metrics.iterrows():
+        if bool(row.get("rerank")):
+            if rerank_row is not None:
+                raise ValueError(
+                    "rerank pairing exige exatamente uma config rerank=True; "
+                    "encontrei mais de uma."
+                )
+            rerank_row = row
+        else:
+            if baseline_row is not None:
+                raise ValueError(
+                    "rerank pairing exige exatamente uma config rerank=False; "
+                    "encontrei mais de uma."
+                )
+            baseline_row = row
+    if baseline_row is None or rerank_row is None:
+        raise ValueError(
+            "rerank pairing requer ambos configs rerank=False e rerank=True "
+            "no mesmo BenchmarkResult."
+        )
+
+    baseline_by_qid = _row_per_question_dict(baseline_row)
+    rerank_by_qid = _row_per_question_dict(rerank_row)
+
+    only_baseline = sorted(set(baseline_by_qid) - set(rerank_by_qid))
+    only_rerank = sorted(set(rerank_by_qid) - set(baseline_by_qid))
+    if only_baseline or only_rerank:
+        raise ValueError(
+            "rerank pairing requer mesmo conjunto de question_id em ambos "
+            f"configs. Faltam no rerank: {only_baseline}; faltam no baseline: "
+            f"{only_rerank}."
+        )
+
+    buckets: dict[str, list[dict[str, Any]]] = {b: [] for b in RERANK_PAIRING_BUCKETS}
+    for qid in sorted(baseline_by_qid):
+        baseline_q = baseline_by_qid[qid]
+        rerank_q = rerank_by_qid[qid]
+        baseline_ok = bool(baseline_q.get("answer_usable"))
+        rerank_ok = bool(rerank_q.get("answer_usable"))
+        entry = _pairing_question_entry(qid, baseline_q, rerank_q)
+
+        if baseline_ok and rerank_ok:
+            buckets["stable_pass"].append(entry)
+        elif not baseline_ok and rerank_ok:
+            buckets["saved_by_rerank"].append(entry)
+        elif baseline_ok and not rerank_ok:
+            buckets["broken_by_rerank"].append(entry)
+        else:
+            if entry["baseline_failure_type"] == entry["rerank_failure_type"]:
+                buckets["stable_fail_same_type"].append(entry)
+            else:
+                buckets["stable_fail_changed_type"].append(entry)
+
+    baseline_counts = dict(baseline_row.get("failure_type_counts") or {})
+    rerank_counts = dict(rerank_row.get("failure_type_counts") or {})
+    delta_doc_failure = rerank_counts.get(
+        "retrieval_document_failure", 0
+    ) - baseline_counts.get("retrieval_document_failure", 0)
+
+    saved_count = len(buckets["saved_by_rerank"])
+    broken_count = len(buckets["broken_by_rerank"])
+    threshold = RERANK_PROMOTE_SAVED_BROKEN_RATIO * broken_count
+
+    reasons: list[str] = []
+    if saved_count < threshold:
+        reasons.append(
+            f"saved={saved_count} < {RERANK_PROMOTE_SAVED_BROKEN_RATIO}*broken="
+            f"{threshold}"
+        )
+    if delta_doc_failure > RERANK_PROMOTE_MAX_DELTA_DOC_FAILURE:
+        reasons.append(
+            f"delta_doc_failure=+{delta_doc_failure} > "
+            f"+{RERANK_PROMOTE_MAX_DELTA_DOC_FAILURE}"
+        )
+    verdict = "promote" if not reasons else "keep_optional"
+
+    return {
+        "buckets": {
+            name: {"count": len(items), "questions": items}
+            for name, items in buckets.items()
+        },
+        "summary": {
+            "saved_count": saved_count,
+            "broken_count": broken_count,
+            "net_delta": saved_count - broken_count,
+            "delta_doc_failure": delta_doc_failure,
+            "baseline_answer_usable_rate": (
+                None
+                if baseline_row.get("answer_usable_rate") is None
+                else float(baseline_row.get("answer_usable_rate"))
+            ),
+            "rerank_answer_usable_rate": (
+                None
+                if rerank_row.get("answer_usable_rate") is None
+                else float(rerank_row.get("answer_usable_rate"))
+            ),
+            "baseline_failure_type_counts": baseline_counts,
+            "rerank_failure_type_counts": rerank_counts,
+        },
+        "decision_rule": {
+            "rule": (
+                "promover rerank a default SE saved_by_rerank >= "
+                f"{RERANK_PROMOTE_SAVED_BROKEN_RATIO} * broken_by_rerank "
+                f"E delta_doc_failure <= +{RERANK_PROMOTE_MAX_DELTA_DOC_FAILURE}"
+            ),
+            "saved": saved_count,
+            "broken": broken_count,
+            "threshold_broken_x_ratio": threshold,
+            "delta_doc_failure": delta_doc_failure,
+            "max_delta_doc_failure": RERANK_PROMOTE_MAX_DELTA_DOC_FAILURE,
+            "verdict": verdict,
+            "reasons": reasons,
+        },
+    }
+
+
+def render_rag_rerank_pairing_md(pairing: dict[str, Any]) -> str:
+    """Renderiza pairing em markdown legível com tabela, listas e veredito."""
+    buckets = pairing.get("buckets") or {}
+    summary = pairing.get("summary") or {}
+    decision = pairing.get("decision_rule") or {}
+
+    def _rate(key: str) -> str:
+        value = summary.get(key)
+        return "n/d" if value is None else f"{float(value):.3f}"
+
+    lines = [
+        "# Pareamento rerank vs baseline",
+        "",
+        "## Resumo",
+        "",
+        "| Bucket | Count |",
+        "|---|---:|",
+    ]
+    for name in RERANK_PAIRING_BUCKETS:
+        count = (buckets.get(name) or {}).get("count", 0)
+        lines.append(f"| `{name}` | {count} |")
+    lines.extend(
+        [
+            "",
+            (
+                f"`answer_usable_rate`: baseline {_rate('baseline_answer_usable_rate')}"
+                f" -> rerank {_rate('rerank_answer_usable_rate')} "
+                f"(net_delta={summary.get('net_delta', 0):+d})"
+            ),
+            (
+                "`retrieval_document_failure`: baseline "
+                f"{(summary.get('baseline_failure_type_counts') or {}).get('retrieval_document_failure', 0)}"
+                " -> rerank "
+                f"{(summary.get('rerank_failure_type_counts') or {}).get('retrieval_document_failure', 0)}"
+                f" (delta={summary.get('delta_doc_failure', 0):+d})"
+            ),
+            "",
+        ]
+    )
+
+    def _section(title: str, name: str, arrow_left: str, arrow_right: str) -> None:
+        items = (buckets.get(name) or {}).get("questions") or []
+        lines.append(f"## {title} ({len(items)})")
+        lines.append("")
+        if not items:
+            lines.append("_Nenhuma pergunta neste bucket._")
+            lines.append("")
+            return
+        for item in items:
+            left = item.get(arrow_left)
+            right = item.get(arrow_right)
+            lines.append(f"- `{item['question_id']}`: {left} -> {right}")
+        lines.append("")
+
+    _section(
+        "Salvas pelo rerank",
+        "saved_by_rerank",
+        "baseline_failure_type",
+        "rerank_failure_type",
+    )
+    _section(
+        "Quebradas pelo rerank",
+        "broken_by_rerank",
+        "baseline_failure_type",
+        "rerank_failure_type",
+    )
+    _section(
+        "Falhas estáveis com tipo diferente",
+        "stable_fail_changed_type",
+        "baseline_failure_type",
+        "rerank_failure_type",
+    )
+
+    lines.extend(
+        [
+            "## Veredito",
+            "",
+            f"Regra: {decision.get('rule')}",
+            "",
+            f"- `saved`: {decision.get('saved')}",
+            f"- `broken`: {decision.get('broken')}",
+            (
+                f"- `threshold` ({RERANK_PROMOTE_SAVED_BROKEN_RATIO}*broken): "
+                f"{decision.get('threshold_broken_x_ratio')}"
+            ),
+            f"- `delta_doc_failure`: {decision.get('delta_doc_failure'):+d}",
+            f"- `veredito`: **{decision.get('verdict')}**",
+        ]
+    )
+    reasons = decision.get("reasons") or []
+    if reasons:
+        lines.append("- `razões`:")
+        for reason in reasons:
+            lines.append(f"  - {reason}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def load_benchmark_result_from_per_question_json(
+    path: str | Path,
+) -> BenchmarkResult:
+    """Reconstrói um `BenchmarkResult` a partir de um `per_question.json`
+    já gerado, sem rodar LLM. Reagrega `failure_type_counts` e
+    `answer_usable_rate` a partir do `per_question` para não depender de
+    campos que possam não estar no JSON antigo.
+
+    Útil para regenerar artefatos derivados (failure_analysis, rerank_pairing)
+    quando a lógica muda, sem custo de chamada LLM.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    results = data.get("results") or []
+    if not results:
+        raise ValueError(
+            f"per_question.json em {path} não tem chave `results` com dados."
+        )
+
+    linhas: list[dict[str, Any]] = []
+    for config in results:
+        per_question = list(config.get("per_question") or [])
+        failure_counts = _count_values(per_question, "failure_type")
+        answer_usable_rate = (
+            mean(1.0 if q.get("answer_usable") else 0.0 for q in per_question)
+            if per_question
+            else 0.0
+        )
+        linhas.append(
+            {
+                "provider": config.get("provider", PROVIDER),
+                "model": config.get("model"),
+                "chunk_strategy": config.get("chunk_strategy"),
+                "metodo_extracao": config.get("metodo_extracao"),
+                "mode": config.get("mode"),
+                "rerank": bool(config.get("rerank")),
+                "per_question": per_question,
+                "failure_type_counts": failure_counts,
+                "answer_usable_rate": answer_usable_rate,
+                "llm_status_counts": config.get("llm_status_counts") or {},
+                "generator_status_counts": config.get("generator_status_counts") or {},
+                "num_questions": len(per_question),
+            }
+        )
+
+    return BenchmarkResult(
+        metrics=pd.DataFrame(linhas),
+        skipped_questions=list(data.get("skipped_questions") or []),
+        cache_stats=dict(data.get("cache_stats") or {}),
+    )
+
+
 def run_rag_config(
     config: StoreConfig,
     questions: list[dict[str, Any]],
