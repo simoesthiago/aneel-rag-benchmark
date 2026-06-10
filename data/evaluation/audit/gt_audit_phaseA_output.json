@@ -1,0 +1,218 @@
+[
+  {
+    "question_id": "gt-0002",
+    "verdict": "gt_incomplete_alternative_source",
+    "confidence": "high",
+    "justification": "O GT da REN 1000/2021 está substantivamente correto para a definição legal de bandeiras tarifárias, mas o PRORET Submódulo 6.8 vigente também disciplina o sistema de bandeiras, faixas e adicionais à TE. A resposta do sistema extrapola a definição curta, porém usa fonte regulatória legítima para o mesmo instituto.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20211000.pdf", "https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo06/subm6.8/Proret_Submod_6.8_V_1.10C_aren20241084.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "add_alternative_source", "details": "Adicionar o PRORET Submódulo 6.8, versão 1.10C, como fonte alternativa para bandeiras tarifárias, mantendo a REN 1000/2021 como fonte de definição conceitual."},
+    "system_assessment": "A resposta é factualmente correta segundo a regulação vigente e responde de forma mais ampla que o GT; as citações ao PRORET 6.8 são defensáveis como fonte alternativa."
+  },
+  {
+    "question_id": "gt-0003",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "O GT reproduz a definição de consumidor do art. 2º da REN 1000/2021. O sistema citou e usou redação associada às antigas Condições Gerais de Fornecimento/REN 414, norma revogada pela própria REN 1000, e não respondeu nos termos da norma perguntada.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20211000.pdf", "https://www2.aneel.gov.br/cedoc/bren2010414.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é incorreta para a pergunta, pois usa definição de fonte revogada/diferente e não a redação específica da REN 1000/2021."
+  },
+  {
+    "question_id": "gt-0005",
+    "verdict": "gt_incomplete_alternative_source",
+    "confidence": "high",
+    "justification": "A condição de fonte despachável para fotovoltaica com baterias foi incorporada ao regime da REN 1000/2021 por ato alterador sobre micro e minigeração distribuída. A fonte citada pelo sistema é legítima para a mesma regra, embora o GT liste apenas a REN 1000 como fonte primária.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20211000.pdf", "https://www2.aneel.gov.br/cedoc/bren20231059.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "add_alternative_source", "details": "Adicionar a REN 1.059/2023 como fonte alternativa/ato alterador da REN 1000/2021 para a definição de central geradora de fonte despachável, incluindo a redação atual sobre armazenamento de pelo menos 20% da capacidade de geração mensal das unidades fotovoltaicas."},
+    "system_assessment": "A resposta é factualmente correta e completa; a citação ao ato alterador é aceitável como fonte normativa alternativa."
+  },
+  {
+    "question_id": "gt-0007",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "A REN 905/2020 tem como objeto aprovar as Regras dos Serviços de Transmissão de Energia Elétrica no Sistema Elétrico Nacional. O sistema confundiu o ato com norma de PRORET/Conta-Covid, que é tema regulatório distinto.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren2020905.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta está errada: cita e descreve outro ato normativo, sem relação com o objeto central da REN 905/2020."
+  },
+  {
+    "question_id": "gt-0012",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "A ementa da REN 1032/2022 consolida atos relativos à elaboração do PMO e à formação do CMO e do PLD. O sistema não recuperou a fonte e respondeu que não havia base suficiente, apesar de a resposta estar diretamente na ementa.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20221032.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta está errada por omissão: havia fonte normativa direta para PMO, CMO e PLD."
+  },
+  {
+    "question_id": "gt-0013",
+    "verdict": "gt_question_ambiguous",
+    "confidence": "high",
+    "justification": "A REN 1095/2024 trata tanto da padronização do número de identificação da unidade consumidora e demais instalações quanto de regras relacionadas ao CPF/CNPJ como identificação do consumidor e demais usuários. O GT cobre a ementa e a Seção I; o sistema incorporou a dimensão da Seção II, o que é plausível pela formulação da pergunta.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20241095.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "clarify_question", "details": "Especificar se a pergunta busca a padronização do número da unidade consumidora/demais instalações ou a padronização do identificador do consumidor/demais usuários por CPF/CNPJ."},
+    "system_assessment": "A resposta é parcialmente correta: menciona a padronização da UC/instalações, mas mistura esse tema com a regra de CPF/CNPJ, que é correlata, porém distinta."
+  },
+  {
+    "question_id": "gt-0015",
+    "verdict": "gt_outdated",
+    "confidence": "high",
+    "justification": "O conteúdo do GT permanece válido, mas a URL do GT aponta para versão antiga do PRODIST Módulo 1; em 2026 a versão vigente é a associada à REN 956/2021. A fonte vigente confirma que a Seção 1.1 é o glossário de termos técnicos relevantes para o entendimento dos módulos do PRODIST.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo01/aren2021956_Prodist_modulo_1_v11.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "replace_outdated", "details": "Substituir a fonte v0 do PRODIST Módulo 1 pela versão vigente no portal da ANEEL/GitLab; manter o conteúdo da resposta, ajustando a citação para a Seção 1.1 - Glossário de termos técnicos."},
+    "system_assessment": "Apesar do problema de vigência do GT, a resposta do sistema é factualmente incorreta: confundiu o glossário com fundamentos legais, responsabilidades e sanções."
+  },
+  {
+    "question_id": "gt-0017",
+    "verdict": "gt_outdated",
+    "confidence": "high",
+    "justification": "O GT aponta para versão antiga do PRODIST Módulo 3; a versão vigente em 2026 é o Módulo 3 da REN 956/2021, que contém a redação atual sobre anti-ilhamento e desconexão física. A resposta do sistema corresponde à redação vigente, inclusive sobre parcela de carga e geração e vedação de conexão durante interrupção do fornecimento.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo03/aren2021956_Prodist_modulo_3_v9.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "replace_outdated", "details": "Substituir a fonte v0 pelo PRODIST Módulo 3 vigente, versão 9, e atualizar o support_excerpt para a redação sobre proteção/elemento de anti-ilhamento que garante desconexão física entre rede e instalações internas, incluindo carga e geração."},
+    "system_assessment": "A resposta do sistema é factualmente correta segundo a versão vigente; a falha é sobretudo a comparação contra uma fonte antiga do GT."
+  },
+  {
+    "question_id": "gt-0019",
+    "verdict": "gt_outdated",
+    "confidence": "high",
+    "justification": "O GT usa URL de versão antiga do PRODIST Módulo 7, substituída pela versão vigente vinculada à REN 956/2021. A tese regulatória do GT continua correta na versão atual, mas a fonte deve ser atualizada para o Módulo 7 vigente.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo07/aren2021956_Prodist_modulo_7_v6.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "replace_outdated", "details": "Substituir a fonte v0 pelo PRODIST Módulo 7 vigente, versão 6, preservando a nuance sobre perdas técnicas sob responsabilidade da distribuidora, DIT quando aplicável e exclusão de instalações de terceiros."},
+    "system_assessment": "A resposta do sistema é apenas parcial: define perdas técnicas de modo genérico, mas não preserva a nuance sobre responsabilidade da distribuidora, DIT e exclusão de instalações de terceiros."
+  },
+  {
+    "question_id": "gt-0022",
+    "verdict": "gt_outdated",
+    "confidence": "high",
+    "justification": "O GT aponta para versão antiga do PRODIST Módulo 10, enquanto a versão vigente em 2026 é a vinculada à REN 956/2021. A versão atual confirma a BDGD como simplificação/modelo geográfico do sistema elétrico real, refletindo ativos e informações técnicas e comerciais.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo10/aren2021956_Prodist_modulo_10_v4.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "replace_outdated", "details": "Substituir a fonte v0 pelo PRODIST Módulo 10 vigente, versão 4, e manter o trecho sobre BDGD como simplificação/modelo do sistema elétrico real para refletir ativos e informações técnicas e comerciais."},
+    "system_assessment": "A resposta do sistema é parcialmente correta: descreve a BDGD como base/conjunto de informações do SIG-R, mas não explicita a noção central de modelagem simplificada do sistema elétrico real."
+  },
+  {
+    "question_id": "gt-0023",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "No PRORET Submódulo 2.1 vigente, o Valor da Parcela A é VPA = CE + CT + ES. O sistema acrescentou RI, componente associado ao Submódulo 2.1A/escopo específico, não ao cálculo geral perguntado no Submódulo 2.1.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo02/subm2.1/Proret_Submod_2.1_V_2.5_aren20251114.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta está errada para o Submódulo 2.1: adiciona RI indevidamente e mistura fonte de outro submódulo."
+  },
+  {
+    "question_id": "gt-0024",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "O GT está correto: a Parcela A no PRORET Submódulo 2.1 é composta por CE, CT e ES. O sistema citou o Submódulo 2.1A e acrescentou RI, confundindo componentes de outro escopo regulatório com a Parcela A perguntada.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo02/subm2.1/Proret_Submod_2.1_V_2.5_aren20251114.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é incorreta para a pergunta, embora CE, CT e ES tenham sido mencionados; o erro material é incluir RI."
+  },
+  {
+    "question_id": "gt-0025",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto e vigente no PRORET Submódulo 2.3 V2.0C. O sistema recuperou corretamente os critérios substantivos, mas citou versões antigas e trocou o sujeito setorial para transmissora, quando o submódulo trata de concessionárias de distribuição.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo02/subm2.3/Proret_Submod_2.3_V_2.0C_aren20221003.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é materialmente correta quanto aos requisitos, mas parcialmente falha por citar versões superadas e por usar 'transmissora' em vez do agente regulado correto."
+  },
+  {
+    "question_id": "gt-0026",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto e vigente: intervalo de confiança de 95%, Z=1,96, margem de erro de 10% e proporção de 75%. O sistema acertou esses parâmetros, mas citou versões antigas e apresentou fórmula de forma pouco confiável/possivelmente corrompida.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo02/subm2.3/Proret_Submod_2.3_V_2.0C_aren20221003.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcialmente correta: acerta os parâmetros estatísticos centrais, mas a fundamentação/citação vigente e a fórmula não são confiáveis."
+  },
+  {
+    "question_id": "gt-0027",
+    "verdict": "gt_correct_system_failed",
+    "confidence": "high",
+    "justification": "O PRORET Submódulo 2.4 tem por objetivo estabelecer metodologia para taxa regulatória de remuneração de capital e estrutura de capital regulatória nas revisões tarifárias periódicas de distribuidoras. O sistema respondeu com o objetivo do Submódulo 2.1, relativo à Receita Requerida, que é outro tema.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo02/subm2.4/Proret_Submod_2.4_V_4.1C_aren20221003.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta está errada: citou submódulo e finalidade metodológica incompatíveis com a pergunta."
+  },
+  {
+    "question_id": "gt-0028",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto: o Submódulo 7.2 estabelece metodologia de cálculo das Tarifas de Referência necessárias à definição da TUSD e da TE. O sistema capturou parte da lógica tarifária, mas citou o PRORET 8.3, de permissionárias de distribuição, não o Submódulo 7.2 perguntado.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo07/subm7.2/Proret_Submod_7.2_V_2.5_aren20231060.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcialmente correta no conteúdo, mas a citação normativa é inadequada para uma pergunta explicitamente sobre o PRORET 7.2."
+  },
+  {
+    "question_id": "gt-0029",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto e vigente para o Submódulo 10.6 V1.2: definir forma e periodicidade das informações encaminhadas à ANEEL por distribuidoras, CCEE e ONS. O sistema acertou a obrigação geral, mas citou versões antigas do submódulo e adicionou detalhamento que deveria estar ancorado na versão vigente.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/proret/modulo10/subm10.6/Proret_Submod_10.6_V_1.2_aren2024109.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é factualmente correta no núcleo, mas parcialmente falha por usar citações superadas em vez da versão vigente V1.2."
+  },
+  {
+    "question_id": "gt-0030",
+    "verdict": "system_partially_right",
+    "confidence": "medium",
+    "justification": "O GT está correto ao usar o glossário do Módulo 1: a definição é a ponderação da duração real da indisponibilidade pela redução da capacidade de transmissão de potência. O sistema citou o Módulo 4 e trouxe uma fórmula operacional, mas não reproduziu com precisão a definição glossarial perguntada.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/regtransm/Modulo%2001_Glossario_aren2020905_2.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcialmente defensável como explicação de cálculo, mas não é a resposta completa e direta exigida pela definição do Módulo 1."
+  },
+  {
+    "question_id": "gt-0034",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto: o Módulo 5 afirma que livre acesso não se confunde com acesso irrestrito ou a qualquer tempo, e condiciona o acesso ao pagamento dos encargos e às condições gerais da ANEEL. O sistema acertou o 'não', mas omitiu as condições de pagamento/encargos e citou fonte diversa não verificada como substituto normativo equivalente.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/regtransm/Modulo%2005_Acesso_Sistema_aren2020905_2_4.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcialmente correta: acerta a conclusão principal, mas não responde com todos os condicionantes normativos do Módulo 5."
+  },
+  {
+    "question_id": "gt-0037",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto: o item 1.2 do Submódulo 2.10-RQ vigente cobre centrais de geração conectadas a instalações sob responsabilidade de distribuidora em tensão superior a 69 kV. O sistema citou o documento correto, mas respondeu com tipos de centrais geradoras e perdeu o ponto jurídico-técnico central da pergunta.",
+    "evidence_urls": ["https://proxyportais.ons.org.br/sites/soumaisons/portalgar/ecmpdf/Submodulo_2.10-RQ_2025.02.pdf"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcial: identifica que se trata de centrais geradoras, mas não especifica a conexão a instalações de distribuidora em tensão superior a 69 kV."
+  },
+  {
+    "question_id": "gt-0039",
+    "verdict": "gt_incomplete_alternative_source",
+    "confidence": "high",
+    "justification": "O GT usa corretamente o objetivo do Submódulo 2.14-RQ, mas o próprio documento contém itens subsequentes que detalham medidores, transformadores para instrumentos, canais de comunicação e demais componentes do SMF. As citações adicionais do sistema são trechos complementares legítimos do mesmo submódulo, não erro regulatório material.",
+    "evidence_urls": ["https://proxyportais.ons.org.br/sites/soumaisons/portalgar/ecmpdf/Submodulo_2.14-RQ_2022.11.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "add_alternative_source", "details": "Adicionar como trechos de suporte alternativos/complementares os itens 2.1 e seguintes do Submódulo 2.14-RQ, além do item 1.1 de objetivo."},
+    "system_assessment": "A resposta é factualmente correta e completa; a falha métrica parece decorrer de granularidade de chunks/citações, não de erro jurídico."
+  },
+  {
+    "question_id": "gt-0041",
+    "verdict": "gt_excerpt_problematic",
+    "confidence": "high",
+    "justification": "A versão 2025.06 do Submódulo 8.3-PR lista onze parcelas no VMEuRB, de (a) a (k). O GT traz apenas as três primeiras parcelas, tornando o expected_answer e o support_excerpt incompletos para a fonte vigente.",
+    "evidence_urls": ["https://proxyportais.ons.org.br/sites/soumaisons/portalgar/ecmpdf/Submodulo_8.3-PR_2025.06.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "fix_excerpt", "details": "Atualizar o expected_answer e o support_excerpt para incluir todas as parcelas (a) a (k) do item 1.2.1.1, ou restringir explicitamente a pergunta às três primeiras parcelas."},
+    "system_assessment": "A resposta do sistema é factualmente correta segundo a versão vigente e mais completa que o GT."
+  },
+  {
+    "question_id": "gt-0046",
+    "verdict": "gt_incomplete_alternative_source",
+    "confidence": "high",
+    "justification": "O GT está correto no trecho central, mas o mesmo manual contém trechos complementares sobre avaliação de prazos e posterior rotina de RAP que explicam os acréscimos do sistema. Como todas as citações do sistema vêm do manual correto, a falha é de cobertura limitada do GT/chunks aceitos, não de fonte errada.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/manuaisminstrucoes/transmissao/2021_Rotina_op_padrao_autoriza_reforcos_sem_receita_previa.pdf"],
+    "gt_correction_suggestion": {"applicable": true, "type": "add_alternative_source", "details": "Aceitar como suporte complementar os demais chunks do mesmo manual que tratam da razoabilidade dos prazos e do fluxo posterior de RAP, mantendo o trecho principal sobre a análise da SCT após o POTEE."},
+    "system_assessment": "A resposta é correta no núcleo e completa; há apenas excesso explicativo e uma redação imprecisa em 'RAP para ANEEL', sem afetar o mérito."
+  },
+  {
+    "question_id": "gt-0049",
+    "verdict": "system_partially_right",
+    "confidence": "high",
+    "justification": "O GT está correto no art. 4º da Lei 9.074/1995: concessões, permissões e autorizações de energia elétrica são contratadas, prorrogadas ou outorgadas nos termos da Lei 9.074, da Lei 8.987 e demais normas. O sistema acertou esse núcleo, mas adicionou prazos e prorrogações de forma ampla demais, sem delimitar corretamente os casos e regimes legais.",
+    "evidence_urls": ["https://www.planalto.gov.br/ccivil_03/leis/l9074cons.htm"],
+    "gt_correction_suggestion": {"applicable": false, "type": null, "details": ""},
+    "system_assessment": "A resposta é parcialmente correta: responde o enquadramento do art. 4º, mas os detalhes adicionais sobre prazos podem induzir generalização indevida."
+  }
+]
