@@ -269,8 +269,8 @@ Após A+B, todas as 11 têm causa confirmada e fix conhecido (mais ou menos viá
 | gt-0025 | excerpt enumerado, sem fix universal | documentar como limitação OU matching alternativo | issue #11 |
 | gt-0026 | balde 3, rank 15 | rerank pool 100 salva | já testado |
 | gt-0027 | H6 puro — vocabulário discriminante | query expansion competente | média (issue #10) |
-| gt-0029 | balde 3, rank 67 | pool 200+ (custa mais Cohere) | baixa, mas API quota |
-| gt-0030 | balde 3, rank 82 | pool 200+ | baixa, mas API quota |
+| gt-0029 | rank denso ~30 no pipeline atual (já no pool 100); reranker não sobe ao top-10 | **pool 200+ REJEITADO** (2026-06-10): doc já é candidato, gargalo é o reranker, não o pool → residual de retrieval/reranker | revisitar c/ F5 ou melhoria de reranker |
+| gt-0030 | balde 3, rank 82 | **✅ RESOLVIDA**: salva no pool 100 (F1/F2) | concluída |
 | gt-0034 | rank 14, concept-dense parcial | rerank pool 100 salva | já testado |
 
 **11/11 explicadas.** Nada inexplicável. Pendência: cada fix tem custo distinto.
