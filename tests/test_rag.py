@@ -23,6 +23,7 @@ def _chunk_row(
     document_id: str | None = None,
     citation_label: str | None = None,
     parent_chunk_id: str | None = None,
+    situacao: str | None = "vigente",
 ) -> dict:
     """Linha minimamente compatível com o schema do metadata.parquet."""
     return {
@@ -47,7 +48,7 @@ def _chunk_row(
         "ano": None,
         "titulo": None,
         "assunto": None,
-        "situacao": "vigente",
+        "situacao": situacao,
         "fonte": None,
         "formato_original": None,
         "url_original": None,
@@ -161,6 +162,60 @@ def test_retriever_carrega_bundle_e_devolve_top_k_ordenado():
     assert resultados[0]["score"] > resultados[1]["score"]
     assert resultados[0]["citation_label"] == "Art. 2º"
     assert "texto" in resultados[0]
+
+
+def test_retriever_filtra_situacoes_excluidas():
+    """exclude_situacoes descarta revogadas, mantém vigentes e None."""
+    chunks = [
+        _chunk_row("doc-a::0", "vigente", situacao="vigente"),
+        _chunk_row("doc-b::0", "revogada", situacao="revogada"),
+        _chunk_row("doc-c::0", "sem situacao", situacao=None),
+    ]
+    vectors = [
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.9, 0.0, 0.0],
+    ]
+    bundle = _build_bundle(chunks, vectors)
+    embedder = _FakeEmbedder(
+        "text-embedding-3-small",
+        dimension=4,
+        vectors={"q": [0.0, 1.0, 0.0, 0.0]},
+    )
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=bundle,
+        embedder=embedder,
+        exclude_situacoes=frozenset({"revogada"}),
+    )
+
+    resultados = retriever.retrieve("q", top_k=3)
+    ids = {r["chunk_id"] for r in resultados}
+    assert "doc-b::0" not in ids  # revogada descartada
+    assert ids == {"doc-a::0", "doc-c::0"}  # vigente + None mantidos
+
+
+def test_retriever_filtro_eleva_piso_de_candidatos():
+    """Com filtro ativo e sem rerank, busca >= DEFAULT_MIN_CANDIDATES."""
+    from src.rag.retriever import DEFAULT_MIN_CANDIDATES
+
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=_build_bundle(
+            [_chunk_row("doc-a::0", "t")], [[1.0, 0.0, 0.0, 0.0]]
+        ),
+        embedder=_FakeEmbedder("text-embedding-3-small", 4, {}),
+        exclude_situacoes=frozenset({"revogada"}),
+    )
+
+    # Sem filtro o piso seria top_k (10); com filtro sobe para >= 50.
+    assert retriever._candidatos_a_buscar(10) >= DEFAULT_MIN_CANDIDATES
 
 
 def test_retriever_rejeita_query_vazia():

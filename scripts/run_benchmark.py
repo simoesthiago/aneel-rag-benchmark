@@ -183,6 +183,16 @@ def parse_args() -> argparse.Namespace:
             "--query-expansion."
         ),
     )
+    parser.add_argument(
+        "--exclude-revogadas-comparison",
+        action="store_true",
+        help=(
+            "Em --mode rag, gera 2 configs rerank@100 diferindo apenas no "
+            "filtro de normas revogadas (Fase 1 do roadmap). Emite "
+            "revogadas_pairing.{json,md}. Incompatível com --query-expansion "
+            "e --rerank-pool-comparison."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -218,13 +228,23 @@ def main() -> None:
         )
 
         if args.mode == "rag":
-            if args.rerank_pool_comparison and args.query_expansion:
+            _modos_exp = [
+                args.query_expansion,
+                args.rerank_pool_comparison,
+                args.exclude_revogadas_comparison,
+            ]
+            if sum(bool(m) for m in _modos_exp) > 1:
                 raise SystemExit(
-                    "--rerank-pool-comparison e --query-expansion são "
-                    "incompatíveis (escopos experimentais distintos)."
+                    "--query-expansion, --rerank-pool-comparison e "
+                    "--exclude-revogadas-comparison são mutuamente "
+                    "exclusivos (escopos experimentais distintos)."
                 )
             if args.rerank_pool_comparison:
                 configs = build_rag_baseline_configs(rerank_pools=(50, 100))
+            elif args.exclude_revogadas_comparison:
+                configs = build_rag_baseline_configs(
+                    exclude_revogadas_comparison=True,
+                )
             else:
                 configs = build_rag_baseline_configs(
                     query_expansion=args.query_expansion,
@@ -316,6 +336,9 @@ def main() -> None:
                         else None
                     ),
                     "query_expansion": bool(row.get("query_expansion") or False),
+                    "exclude_revogadas": bool(
+                        row.get("exclude_revogadas") or False
+                    ),
                     "llm_status_counts": row.get("llm_status_counts"),
                     "generator_status_counts": row.get("generator_status_counts"),
                     "per_question": row["per_question"],
@@ -365,16 +388,59 @@ def main() -> None:
         qe_flags = {
             bool(r.get("query_expansion") or False) for _, r in df.iterrows()
         }
+        revogadas_flags = {
+            bool(r.get("exclude_revogadas") or False) for _, r in df.iterrows()
+        }
         rerank_rows = [r for _, r in df.iterrows() if bool(r["rerank"])]
         rerank_pools = {r.get("candidates_k") for r in rerank_rows}
         # Modo pool-comparison: >= 2 configs rerank com pools distintos.
         # Detectado pela forma das configs (funciona também com --from-cache).
         pool_comparison = len(rerank_rows) >= 2 and len(rerank_pools) >= 2
+        # Modo revogadas-comparison: 2 configs diferindo APENAS em
+        # exclude_revogadas (mesmo rerank, mesmo pool). Após a Fase 1, o
+        # rerank default já liga o filtro, então um run comum
+        # [baseline, rerank+filtro] difere também em rerank — esse NÃO é o
+        # pareamento de revogadas (vai para o rerank pairing), senão o
+        # delta do filtro fica contaminado pelo efeito do rerank.
+        revogadas_comparison = (
+            revogadas_flags == {True, False}
+            and len(rerank_flags) == 1
+            and len(rerank_pools) <= 1
+        )
         # Pareamento rerank: só roda quando há exatamente 2 configs
         # diferindo apenas em rerank. Com query_expansion ativo, são 4
         # configs e o rerank pairing é pulado em favor do QE pairing
         # (que considera as 4 combinações).
-        if pool_comparison:
+        if revogadas_comparison:
+            from scripts.analyze_revogadas_pairing import (
+                _config_by_filter,
+                build_revogadas_pairing,
+                render_revogadas_pairing_md,
+            )
+
+            revog_payload = json.loads(detail_path.read_text(encoding="utf-8"))
+            revog_pairing = build_revogadas_pairing(
+                _config_by_filter(revog_payload, exclude_revogadas=False),
+                _config_by_filter(revog_payload, exclude_revogadas=True),
+            )
+            revog_json = output_dir / "revogadas_pairing.json"
+            revog_json.write_text(
+                json.dumps(revog_pairing, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            revog_md = output_dir / "revogadas_pairing.md"
+            revog_md.write_text(
+                render_revogadas_pairing_md(revog_pairing), encoding="utf-8"
+            )
+            print(f"  Pareamento de revogadas salvo: {revog_json}")
+            print(f"  Pareamento de revogadas legível: {revog_md}")
+            print(
+                f"    Filtro de revogadas: "
+                f"{revog_pairing['decision_rule']['verdict']} "
+                f"saved={revog_pairing['summary']['saved_count']} "
+                f"broken={revog_pairing['summary']['broken_count']}"
+            )
+        elif pool_comparison:
             from scripts.analyze_rerank_pool_pairing import (
                 _config_by_pool,
                 build_pool_pairing,

@@ -57,6 +57,7 @@ class Retriever:
         query_cache: QueryEmbeddingCache | None = None,
         reranker: Any | None = None,
         candidates_k: int | None = None,
+        exclude_situacoes: frozenset[str] | None = None,
     ):
         self.provider = provider
         self.model = model
@@ -66,6 +67,11 @@ class Retriever:
         self.query_cache = query_cache
         self.reranker = reranker
         self.candidates_k = candidates_k
+        # Situações de documento a descartar pós-retrieval (ex.: "revogada").
+        # Normalizado para lower; o metadata herda `situacao` do documento.
+        self.exclude_situacoes: frozenset[str] = frozenset(
+            s.strip().lower() for s in (exclude_situacoes or frozenset())
+        )
 
         if bundle is None:
             bundle = carregar_vectorstore(
@@ -166,6 +172,14 @@ class Retriever:
             row["score"] = float(score)
             candidatos.append(row)
 
+        if self.exclude_situacoes:
+            candidatos = [
+                row
+                for row in candidatos
+                if str(row.get("situacao") or "").strip().lower()
+                not in self.exclude_situacoes
+            ]
+
         if self.mode == "hierarchical":
             candidatos = self._substituir_por_pais(candidatos)
 
@@ -181,9 +195,14 @@ class Retriever:
         """Quantos candidatos pegar no FAISS antes de rerank/hierarchical."""
         if self.candidates_k is not None:
             return max(self.candidates_k, top_k)
-        if self.reranker is not None or self.mode == "hierarchical":
+        if (
+            self.reranker is not None
+            or self.mode == "hierarchical"
+            or self.exclude_situacoes
+        ):
             # 50 candidatos é um default comum em rerankers como Cohere.
             # No hierarchical, esse piso compensa a deduplicação por pai.
+            # Com filtro de situação, o piso compensa os chunks descartados.
             return max(
                 top_k * DEFAULT_CANDIDATE_MULTIPLIER,
                 DEFAULT_MIN_CANDIDATES,

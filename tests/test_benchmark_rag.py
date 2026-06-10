@@ -114,6 +114,10 @@ def test_build_rag_baseline_configs_limita_escopo_a_baseline_e_rerank():
     # Fase 2: pool 100 é o default do rerank (promovido pelo pareamento).
     assert configs[0].candidates_k_override is None
     assert configs[1].candidates_k_override == 100
+    # Fase 1: filtro de revogadas é o default do rerank (promovido pelo
+    # pareamento: delta_doc_recall +0.021, hard_broken=0, higiene factual).
+    assert configs[0].exclude_revogadas is False
+    assert configs[1].exclude_revogadas is True
 
 
 def test_evaluate_question_rag_calcula_metricas_e_citation_accuracy():
@@ -963,3 +967,165 @@ def test_render_pool_pairing_md_inclui_veredito():
     assert "Par 1 — DECISÃO" in md
     assert "veredito" in md
     assert "delta_doc_recall" in md
+
+
+# -----------------------------------------------------------------------------
+# Fase 1 — filtro de normas revogadas
+# -----------------------------------------------------------------------------
+
+
+def test_build_rag_baseline_configs_exclude_revogadas_comparison():
+    configs = build_rag_baseline_configs(exclude_revogadas_comparison=True)
+
+    assert len(configs) == 2
+    assert [c.rerank for c in configs] == [True, True]
+    assert [c.candidates_k_override for c in configs] == [100, 100]
+    assert [c.exclude_revogadas for c in configs] == [False, True]
+    assert configs[1].label.endswith("+sem_revogadas")
+
+
+def test_build_rag_baseline_configs_revogadas_incompativel():
+    with pytest.raises(ValueError, match="mutuamente exclusiv"):
+        build_rag_baseline_configs(
+            query_expansion=True, exclude_revogadas_comparison=True
+        )
+    with pytest.raises(ValueError, match="mutuamente exclusiv"):
+        build_rag_baseline_configs(
+            rerank_pools=(50, 100), exclude_revogadas_comparison=True
+        )
+
+
+def test_run_rag_config_emite_exclude_revogadas():
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+
+    def rag_factory(config, repo_id, query_cache=None):
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    config = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="fixed-size",
+        metodo_extracao="markdown",
+        mode="flat",
+        rerank=True,
+        candidates_k_override=100,
+        exclude_revogadas=True,
+    )
+    result = run_rag_config(
+        config,
+        [_question("gt-0001")],
+        top_k=1,
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+    )
+
+    assert result["exclude_revogadas"] is True
+
+
+def _filter_config(
+    per_question: list[dict[str, Any]], *, exclude_revogadas: bool
+) -> dict[str, Any]:
+    return {
+        "rerank": True,
+        "candidates_k": 100,
+        "exclude_revogadas": exclude_revogadas,
+        "per_question": per_question,
+    }
+
+
+def test_build_revogadas_pairing_promote():
+    from scripts.analyze_revogadas_pairing import build_revogadas_pairing
+
+    # filtro salva 1, não quebra nenhuma, doc_recall estável -> promote.
+    sem = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="citation_failure",
+            doc_recall_at_k=1.0,
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    com = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    pairing = build_revogadas_pairing(
+        _filter_config(sem, exclude_revogadas=False),
+        _filter_config(com, exclude_revogadas=True),
+    )
+
+    assert pairing["summary"]["saved_count"] == 1
+    assert pairing["summary"]["broken_count"] == 0
+    assert pairing["decision_rule"]["verdict"] == "promote"
+
+
+def test_build_revogadas_pairing_soft_break_nao_bloqueia():
+    from scripts.analyze_revogadas_pairing import build_revogadas_pairing
+
+    # Soft break: regride mas mantém doc_recall (ruído de citação do gerador,
+    # não falha do filtro) -> não bloqueia, promove.
+    sem = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    com = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="citation_failure",
+            doc_recall_at_k=1.0,
+        ),
+    ]
+    pairing = build_revogadas_pairing(
+        _filter_config(sem, exclude_revogadas=False),
+        _filter_config(com, exclude_revogadas=True),
+    )
+
+    assert pairing["summary"]["broken_count"] == 1
+    assert pairing["summary"]["hard_broken_count"] == 0
+    assert pairing["summary"]["soft_broken_count"] == 1
+    assert pairing["decision_rule"]["verdict"] == "promote"
+
+
+def test_build_revogadas_pairing_hard_break_bloqueia():
+    from scripts.analyze_revogadas_pairing import build_revogadas_pairing
+
+    # Hard break: regride E perde doc_recall (o filtro removeu um doc do GT)
+    # -> bloqueia, keep_baseline.
+    sem = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    com = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+            doc_recall_at_k=0.0,
+        ),
+    ]
+    pairing = build_revogadas_pairing(
+        _filter_config(sem, exclude_revogadas=False),
+        _filter_config(com, exclude_revogadas=True),
+    )
+
+    assert pairing["summary"]["broken_count"] == 1
+    assert pairing["summary"]["hard_broken_count"] == 1
+    assert pairing["decision_rule"]["verdict"] == "keep_baseline"
+    assert any("hard_broken=1" in r for r in pairing["decision_rule"]["reasons"])
