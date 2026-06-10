@@ -4,44 +4,45 @@
 
 | Bucket | Count |
 |---|---:|
-| `saved_by_rerank` | 4 |
-| `broken_by_rerank` | 0 |
-| `stable_pass` | 24 |
-| `stable_fail_same_type` | 13 |
-| `stable_fail_changed_type` | 7 |
+| `saved_by_rerank` | 6 |
+| `broken_by_rerank` | 3 |
+| `stable_pass` | 23 |
+| `stable_fail_same_type` | 10 |
+| `stable_fail_changed_type` | 6 |
 
-`answer_usable_rate`: baseline 0.500 -> rerank 0.583 (net_delta=+4)
-`retrieval_document_failure`: baseline 7 -> rerank 10 (delta=+3)
+`answer_usable_rate`: baseline 0.542 -> rerank 0.604 (net_delta=+3)
+`retrieval_document_failure`: baseline 7 -> rerank 7 (delta=+0)
 
-## Salvas pelo rerank (4)
+## Salvas pelo rerank (6)
 
-- `gt-0003`: citation_and_answer_failure -> usable
+- `gt-0003`: citation_failure -> usable
+- `gt-0007`: retrieval_document_failure -> usable
 - `gt-0012`: retrieval_document_failure -> usable
+- `gt-0030`: retrieval_document_failure -> usable
 - `gt-0034`: retrieval_passage_failure -> usable
 - `gt-0046`: citation_failure -> usable
 
-## Quebradas pelo rerank (0)
+## Quebradas pelo rerank (3)
 
-_Nenhuma pergunta neste bucket._
+- `gt-0001`: usable -> answer_quality_failure
+- `gt-0004`: usable -> citation_failure
+- `gt-0037`: usable -> citation_and_answer_failure
 
-## Falhas estáveis com tipo diferente (7)
+## Falhas estáveis com tipo diferente (6)
 
 - `gt-0013`: citation_and_answer_failure -> answer_quality_failure
-- `gt-0017`: retrieval_passage_failure -> retrieval_document_failure
-- `gt-0019`: citation_failure -> citation_and_answer_failure
-- `gt-0022`: citation_and_answer_failure -> answer_quality_failure
+- `gt-0023`: citation_and_answer_failure -> citation_failure
+- `gt-0024`: citation_and_answer_failure -> citation_failure
 - `gt-0025`: retrieval_passage_failure -> retrieval_document_failure
-- `gt-0028`: citation_and_answer_failure -> retrieval_document_failure
+- `gt-0028`: citation_failure -> retrieval_document_failure
 - `gt-0049`: answer_quality_failure -> retrieval_document_failure
 
 ## Veredito
 
 Regra: promover rerank a default SE saved_by_rerank >= 2 * broken_by_rerank E delta_doc_failure <= +1
 
-- `saved`: 4
-- `broken`: 0
-- `threshold` (2*broken): 0
-- `delta_doc_failure`: +3
-- `veredito`: **keep_optional**
-- `razões`:
-  - delta_doc_failure=+3 > +1
+- `saved`: 6
+- `broken`: 3
+- `threshold` (2*broken): 6
+- `delta_doc_failure`: +0
+- `veredito`: **promote**

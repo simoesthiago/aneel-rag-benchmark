@@ -137,7 +137,9 @@ gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
 | Código-fonte | GitHub |
 | Chatbot | HuggingFace Spaces |
 
-O repositório Git contém apenas código, configuração e documentação. Dados, PDFs, Parquet e índices ficam fora do Git.
+O repositório Git contém código, configuração e documentação. Dados pesados — PDFs, Parquet e índices FAISS — ficam **fora do Git** (HuggingFace Hub).
+
+**Exceção deliberada:** os artefatos de avaliação em `data/evaluation/` (`results*.csv`, `per_question*.json`, pareamentos, diagnósticos e auditorias) **são versionados**. São leves e funcionam como o registro reprodutível e auditável das decisões de promoção (cada fase do roadmap tem critério pré-comprometido e pareamento preservado).
 
 ---
 

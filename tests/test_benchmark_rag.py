@@ -786,6 +786,18 @@ def test_build_rag_baseline_configs_rerank_pools_incompativel_com_qe():
         build_rag_baseline_configs(query_expansion=True, rerank_pools=(50, 100))
 
 
+def test_build_rag_baseline_configs_qe_herda_pipeline_promovido():
+    # rerank_qe deve herdar os defaults promovidos (pool 100 + filtro de
+    # revogadas), senão o run de QE compara contra um rerank antigo.
+    configs = build_rag_baseline_configs(query_expansion=True)
+
+    assert len(configs) == 4
+    by_key = {(c.rerank, c.query_expansion): c for c in configs}
+    rerank_qe = by_key[(True, True)]
+    assert rerank_qe.candidates_k_override == 100
+    assert rerank_qe.exclude_revogadas is True
+
+
 def test_run_rag_config_emite_candidates_k():
     contexts = [
         _context(
@@ -1129,3 +1141,25 @@ def test_build_revogadas_pairing_hard_break_bloqueia():
     assert pairing["summary"]["hard_broken_count"] == 1
     assert pairing["decision_rule"]["verdict"] == "keep_baseline"
     assert any("hard_broken=1" in r for r in pairing["decision_rule"]["reasons"])
+
+
+def test_build_revogadas_pairing_rejeita_pareamento_contaminado():
+    from scripts.analyze_revogadas_pairing import build_revogadas_pairing
+
+    # before sem rerank vs after com rerank: o delta misturaria o efeito do
+    # rerank com o do filtro. O analyzer deve recusar.
+    q = [_pairing_question("gt-0001", answer_usable=True, failure_type="usable")]
+    before = {
+        "rerank": False,
+        "candidates_k": None,
+        "exclude_revogadas": False,
+        "per_question": q,
+    }
+    after = {
+        "rerank": True,
+        "candidates_k": 100,
+        "exclude_revogadas": True,
+        "per_question": q,
+    }
+    with pytest.raises(ValueError, match="contaminado"):
+        build_revogadas_pairing(before, after)

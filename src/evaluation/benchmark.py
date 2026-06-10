@@ -246,15 +246,10 @@ def build_rag_baseline_configs(
         mode=baseline.mode,
         query_expansion=True,
     )
-    rerank_qe = StoreConfig(
-        provider=baseline.provider,
-        model=baseline.model,
-        chunk_strategy=baseline.chunk_strategy,
-        metodo_extracao=baseline.metodo_extracao,
-        mode=baseline.mode,
-        rerank=True,
-        query_expansion=True,
-    )
+    # rerank_qe deve herdar os defaults promovidos do rerank (pool 100 da F2 e
+    # exclude_revogadas da F1), senão o run de QE compara contra um rerank
+    # antigo, não contra o pipeline vigente.
+    rerank_qe = replace(rerank, query_expansion=True)
     return [baseline, rerank, baseline_qe, rerank_qe]
 
 
