@@ -463,6 +463,8 @@
     "broken_count": 3,
     "net_delta": 3,
     "delta_doc_failure": 0,
+    "rerank_candidates_k": 100,
+    "rerank_exclude_revogadas": true,
     "baseline_answer_usable_rate": 0.5416666666666666,
     "rerank_answer_usable_rate": 0.6041666666666666,
     "baseline_failure_type_counts": {

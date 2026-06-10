@@ -827,6 +827,15 @@ def build_rag_rerank_pairing(result: BenchmarkResult) -> dict[str, Any]:
             "broken_count": broken_count,
             "net_delta": saved_count - broken_count,
             "delta_doc_failure": delta_doc_failure,
+            "rerank_candidates_k": (
+                None
+                if rerank_row.get("candidates_k") is None
+                or pd.isna(rerank_row.get("candidates_k"))
+                else int(rerank_row.get("candidates_k"))
+            ),
+            "rerank_exclude_revogadas": bool(
+                rerank_row.get("exclude_revogadas") or False
+            ),
             "baseline_answer_usable_rate": (
                 None
                 if baseline_row.get("answer_usable_rate") is None
@@ -870,11 +879,39 @@ def render_rag_rerank_pairing_md(pairing: dict[str, Any]) -> str:
     lines = [
         "# Pareamento rerank vs baseline",
         "",
-        "## Resumo",
-        "",
-        "| Bucket | Count |",
-        "|---|---:|",
     ]
+
+    # Nota dinâmica: após F1/F2, a config "rerank" carrega os defaults
+    # promovidos (pool 100 + filtro de revogadas), então "rerank" aqui é o
+    # pipeline completo — não rerank isolado. Só emite quando há default
+    # promovido (filtro ON e/ou pool != 50), preservando o sentido literal
+    # para runs antigos/puros.
+    pool = summary.get("rerank_candidates_k")
+    filtro_on = bool(summary.get("rerank_exclude_revogadas"))
+    pool_promovido = pool is not None and pool != 50
+    if filtro_on or pool_promovido:
+        partes = []
+        if pool_promovido:
+            partes.append(f"pool {pool} (F2)")
+        if filtro_on:
+            partes.append("filtro de revogadas (F1)")
+        lines.extend(
+            [
+                f"> **Nota:** a config \"rerank\" reflete os defaults promovidos "
+                f"— {' + '.join(partes)}. Este pareamento mede **baseline cru "
+                "vs pipeline completo**, não rerank isolado.",
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
+            "## Resumo",
+            "",
+            "| Bucket | Count |",
+            "|---|---:|",
+        ]
+    )
     for name in RERANK_PAIRING_BUCKETS:
         count = (buckets.get(name) or {}).get("count", 0)
         lines.append(f"| `{name}` | {count} |")

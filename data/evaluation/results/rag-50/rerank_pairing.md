@@ -1,5 +1,7 @@
 # Pareamento rerank vs baseline
 
+> **Nota:** a config "rerank" reflete os defaults promovidos — pool 100 (F2) + filtro de revogadas (F1). Este pareamento mede **baseline cru vs pipeline completo**, não rerank isolado.
+
 ## Resumo
 
 | Bucket | Count |

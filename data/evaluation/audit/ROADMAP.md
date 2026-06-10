@@ -46,8 +46,8 @@ Não chutamos. Cada decisão passou por um protocolo:
 | gt-0012 | retrieval_document | doc-alvo em rank 32 | **F2** |
 | gt-0026 | retrieval_document | doc-alvo em rank 15 | **F2** |
 | gt-0034 | retrieval_passage | doc-alvo em rank 14 | **F2** |
-| gt-0030 | retrieval_document | doc-alvo em rank 82 (pool 200+) | F2† |
-| gt-0029 | retrieval_document | doc-alvo em rank 67 (pool 200+) | F2† |
+| gt-0030 | retrieval_document | doc-alvo rank 82; **salva no pool 100** | ✅ F1/F2 |
+| gt-0029 | retrieval_document | doc-alvo rank ~30 (já no pool); reranker não sobe | F2† → resid. |
 | gt-0002 | retrieval_document | GT incompleto: PRORET 6.8 também responde | **F3** |
 | gt-0005 | retrieval_passage | GT incompleto: REN 1059 + concept-dense | **F3/F8** |
 | gt-0039 | citation | GT incompleto: chunks do mesmo doc | **F3** |
@@ -66,7 +66,17 @@ Não chutamos. Cada decisão passou por um protocolo:
 | gt-0015 | answer_quality | erro de conteúdo do gerador (glossário) | **F7** |
 | gt-0049 | answer_quality | parcial: generalização sobre prazos | **F7** |
 
-† pool 200+ custa mais quota Cohere; avaliar após F2.
+† **F2† avaliada e REJEITADA** (2026-06-10, sem gasto de quota). A hipótese
+"pool 200+ salvaria gt-0029/0030" não se sustenta:
+- **gt-0030** (rank 82) **já está `usable`** no pipeline atual — pool 100 a
+  alcança (foi salva pela F1). A anotação "pool 200+" era pessimista.
+- **gt-0029**: verificação Cohere-free do rank denso no pipeline atual dá
+  **rank ~30-32** (não 67), ou seja, o doc-alvo **já é candidato no pool 100**;
+  o reranker é que não o sobe ao top-10. Aumentar o pool para 200 só adiciona
+  distratores — não pode ajudar um doc já presente no pool. O gargalo é o
+  **reranker/sinal de retrieval**, não o tamanho do pool.
+- **Desfecho:** gt-0029 passa a **falha residual de retrieval/reranker** (sem
+  fase nova; revisitar junto da F5 ou de uma eventual melhoria de reranker).
 
 **24/24 falhas têm fase de correção dedicada.** Nenhuma é tratada como
 limitação aceita — as duas mais duras (gt-0015, gt-0025) ganharam fases

@@ -388,6 +388,8 @@ def _pairing_result(
     *,
     baseline_per_question: list[dict[str, Any]],
     rerank_per_question: list[dict[str, Any]] | None,
+    rerank_candidates_k: int | None = None,
+    rerank_exclude_revogadas: bool = False,
 ) -> BenchmarkResult:
     rows: list[dict[str, Any]] = []
     rows.append(
@@ -413,6 +415,8 @@ def _pairing_result(
                 "metodo_extracao": "markdown",
                 "mode": "flat",
                 "rerank": True,
+                "candidates_k": rerank_candidates_k,
+                "exclude_revogadas": rerank_exclude_revogadas,
                 "answer_usable_rate": (
                     sum(1 for q in rerank_per_question if q["answer_usable"])
                     / len(rerank_per_question)
@@ -560,6 +564,56 @@ def test_build_rag_rerank_pairing_decision_promote():
 
     assert pairing["decision_rule"]["verdict"] == "promote"
     assert pairing["decision_rule"]["reasons"] == []
+
+
+def test_rerank_pairing_expoe_metadados_da_config_rerank():
+    # O summary deve carregar pool e filtro da config rerank, para o renderer
+    # poder anotar que "rerank" reflete o pipeline promovido (F1/F2).
+    baseline = [_pairing_question("gt-0001", answer_usable=False, failure_type="x")]
+    rerank = [_pairing_question("gt-0001", answer_usable=True, failure_type="usable")]
+    pairing = build_rag_rerank_pairing(
+        _pairing_result(
+            baseline_per_question=baseline,
+            rerank_per_question=rerank,
+            rerank_candidates_k=100,
+            rerank_exclude_revogadas=True,
+        )
+    )
+    assert pairing["summary"]["rerank_candidates_k"] == 100
+    assert pairing["summary"]["rerank_exclude_revogadas"] is True
+
+
+def test_render_rerank_pairing_nota_pipeline_quando_promovido():
+    baseline = [_pairing_question("gt-0001", answer_usable=False, failure_type="x")]
+    rerank = [_pairing_question("gt-0001", answer_usable=True, failure_type="usable")]
+
+    # Pipeline promovido (pool 100 + filtro) -> nota presente.
+    md_promovido = render_rag_rerank_pairing_md(
+        build_rag_rerank_pairing(
+            _pairing_result(
+                baseline_per_question=baseline,
+                rerank_per_question=rerank,
+                rerank_candidates_k=100,
+                rerank_exclude_revogadas=True,
+            )
+        )
+    )
+    assert "pipeline completo" in md_promovido
+    assert "filtro de revogadas (F1)" in md_promovido
+    assert "pool 100 (F2)" in md_promovido
+
+    # Rerank puro (sem filtro, pool default) -> nota ausente.
+    md_puro = render_rag_rerank_pairing_md(
+        build_rag_rerank_pairing(
+            _pairing_result(
+                baseline_per_question=baseline,
+                rerank_per_question=rerank,
+                rerank_candidates_k=50,
+                rerank_exclude_revogadas=False,
+            )
+        )
+    )
+    assert "pipeline completo" not in md_puro
 
 
 def test_build_rag_rerank_pairing_decision_keep_optional_por_broken():
