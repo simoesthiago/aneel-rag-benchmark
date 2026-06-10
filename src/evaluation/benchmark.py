@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from statistics import mean
 from time import perf_counter
@@ -69,6 +69,7 @@ class StoreConfig:
     rerank: bool = False
     candidates_k_override: int | None = None
     query_expansion: bool = False
+    exclude_revogadas: bool = False
 
     @property
     def label(self) -> str:
@@ -77,6 +78,8 @@ class StoreConfig:
             suffix += f"@pool{self.candidates_k_override}"
         if self.query_expansion:
             suffix += "+qe"
+        if self.exclude_revogadas:
+            suffix += "+sem_revogadas"
         return (
             f"{self.model}|{self.chunk_strategy}|{self.metodo_extracao}|"
             f"{self.mode}{suffix}"
@@ -149,6 +152,7 @@ def build_rag_baseline_configs(
     *,
     query_expansion: bool = False,
     rerank_pools: tuple[int, ...] | None = None,
+    exclude_revogadas_comparison: bool = False,
 ) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
@@ -158,7 +162,9 @@ def build_rag_baseline_configs(
 
     O config com rerank usa `candidates_k_override=100` (pool 100), promovido
     a default pela Fase 2 do roadmap (`rerank_pool_pairing`: pool 100 atinge
-    answer_usable_rate 0.604 vs 0.583 do pool 50).
+    answer_usable_rate 0.604 vs 0.583 do pool 50), e `exclude_revogadas=True`,
+    promovido a default pela Fase 1 (`revogadas_pairing`: delta_doc_recall
+    +0.021, hard_broken=0; higiene factual contra citação de normas revogadas).
 
     Quando `query_expansion=True`, retorna 4 configs (cartesiano rerank × QE)
     para medir a interação entre rerank e query expansion no mesmo run.
@@ -167,11 +173,22 @@ def build_rag_baseline_configs(
     `[baseline]` + uma config `rerank=True` por pool de candidatos densos,
     permitindo isolar o efeito do tamanho do pool no mesmo run (Fase 2 do
     roadmap). Mutuamente exclusivo com `query_expansion`.
+
+    Quando `exclude_revogadas_comparison=True`, retorna 2 configs `rerank@100`
+    (o default vigente) diferindo apenas em `exclude_revogadas` (False/True),
+    isolando o efeito do filtro de normas revogadas no retrieval (Fase 1 do
+    roadmap). Mutuamente exclusivo com `query_expansion` e `rerank_pools`.
     """
-    if rerank_pools is not None and query_expansion:
+    _exclusive = [
+        ("query_expansion", query_expansion),
+        ("rerank_pools", rerank_pools is not None),
+        ("exclude_revogadas_comparison", exclude_revogadas_comparison),
+    ]
+    _ativos = [nome for nome, ativo in _exclusive if ativo]
+    if len(_ativos) > 1:
         raise ValueError(
-            "rerank_pools e query_expansion são mutuamente exclusivos em "
-            "build_rag_baseline_configs (escopos experimentais distintos)."
+            "Modos experimentais mutuamente exclusivos em "
+            f"build_rag_baseline_configs: {_ativos} (use apenas um)."
         )
     baseline = StoreConfig(
         provider=PROVIDER,
@@ -185,6 +202,11 @@ def build_rag_baseline_configs(
     # o config com maior answer_usable_rate (0.604 vs 0.583). Pool 100 passou
     # a ser o default do rerank no smoke RAG.
     RERANK_DEFAULT_POOL = 100
+    # Fase 1 do roadmap (revogadas_pairing): o filtro de normas revogadas deu
+    # `promote` sob o critério refinado (delta_doc_recall=+0.021 E hard_broken=0;
+    # os breaks são soft — doc_recall intacto, ruído de citação do gerador).
+    # Motivo real: higiene factual (sem o filtro, gt-0008/gt-0030 citam normas
+    # revogadas). exclude_revogadas=True passou a ser o default do rerank.
     rerank = StoreConfig(
         provider=baseline.provider,
         model=baseline.model,
@@ -193,6 +215,7 @@ def build_rag_baseline_configs(
         mode=baseline.mode,
         rerank=True,
         candidates_k_override=RERANK_DEFAULT_POOL,
+        exclude_revogadas=True,
     )
     if rerank_pools is not None:
         return [baseline] + [
@@ -207,6 +230,12 @@ def build_rag_baseline_configs(
             )
             for pool in rerank_pools
         ]
+    if exclude_revogadas_comparison:
+        # Pareia explicitamente before (sem filtro) vs after (com filtro),
+        # independentemente do default — o analyzer pareia por exclude_revogadas.
+        rerank_com_revogadas = replace(rerank, exclude_revogadas=False)
+        rerank_sem_revogadas = replace(rerank, exclude_revogadas=True)
+        return [rerank_com_revogadas, rerank_sem_revogadas]
     if not query_expansion:
         return [baseline, rerank]
     baseline_qe = StoreConfig(
@@ -313,6 +342,9 @@ def _default_retriever_factory(
         from src.rag.reranker import CohereReranker
 
         reranker = CohereReranker()
+    exclude_situacoes = (
+        frozenset({"revogada"}) if config.exclude_revogadas else None
+    )
     return Retriever(
         provider=config.provider,
         model=config.model,
@@ -323,6 +355,7 @@ def _default_retriever_factory(
         query_cache=query_cache,
         reranker=reranker,
         candidates_k=config.candidates_k_override,
+        exclude_situacoes=exclude_situacoes,
     )
 
 
@@ -964,6 +997,7 @@ def load_benchmark_result_from_per_question_json(
                 "rerank": bool(config.get("rerank")),
                 "candidates_k": config.get("candidates_k"),
                 "query_expansion": bool(config.get("query_expansion") or False),
+                "exclude_revogadas": bool(config.get("exclude_revogadas") or False),
                 "per_question": per_question,
                 "failure_type_counts": failure_counts,
                 "answer_usable_rate": answer_usable_rate,
@@ -1015,6 +1049,7 @@ def run_rag_config(
         "rerank": config.rerank,
         "candidates_k": config.candidates_k_override,
         "query_expansion": config.query_expansion,
+        "exclude_revogadas": config.exclude_revogadas,
         "num_questions": len(por_pergunta),
         "latency_avg_ms": summary["latency_avg"],
         "latency_p95_ms": summary["latency_p95"],

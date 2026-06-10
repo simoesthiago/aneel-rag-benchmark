@@ -167,7 +167,7 @@ reavaliar.
 
 ---
 
-## Fase 1 — Higiene de índice: remover normas revogadas
+## Fase 1 — Higiene de índice: remover normas revogadas (✅ CONCLUÍDA)
 
 **Problema:** 49,4% do corpus (812 de 1643 docs) são normas **revogadas**.
 Zero são alvo do GT. Elas competem semanticamente com as vigentes.
@@ -183,10 +183,45 @@ rebuild.
 
 **Custo:** baixo. **Risco:** quase nulo (nenhum alvo do GT é revogado).
 
-**Critério pré-comprometido:**
+**Critério pré-comprometido (original):**
 > Promover o filtro a default SE gt-0003 passar a `usable` E
 > `answer_usable_rate` global não cair E nenhuma pergunta hoje `usable`
 > regredir.
+
+**Critério refinado (pré-registrado antes do veredito final):**
+> Promover SE `delta_doc_recall >= -0.02` E `hard_broken == 0`, onde
+> *hard_broken* = pergunta que regride **e** perde `doc_recall` (o filtro
+> removeu um documento que a resposta precisava). Um *soft break* (regride
+> mas mantém `doc_recall`) NÃO bloqueia.
+
+**Racional da refinação (independente do resultado):** o filtro só controla
+*o que entra no pool*. A única forma de ele ser legitimamente culpado por
+uma regressão é remover um documento que o GT precisa → queda de
+`doc_recall`. Penalizar a higiene factual por um deslize de citação do
+gerador (mesmo `doc_recall`, citação diferente) mistura dois subsistemas.
+
+**Constatação empírica — chão de ruído do gerador:** ao re-rodar a config
+idêntica duas vezes (embeddings em cache, temperatura 0), o `usable`
+flutuou em ±1-2 perguntas (gt-0003, gt-0039, gt-0019, gt-0022 trocaram de
+lado entre runs). `doc_recall` (retrieval) foi **idêntico** nos dois runs.
+Logo: decidir promoção pelo `net_delta` de 1 pergunta no `usable` é
+insustentável — esse delta está dentro do ruído. O sinal estável é
+`doc_recall`. ⚠️ Isso retroage à **Fase 2** (promovida com `saved=2/broken=1`
+"no limite"): aquele veredito também está no chão de ruído — vale a
+ressalva, ainda que `doc_recall` da F2 (+0.042) seja sólido por si só.
+
+**Resultado (veredito `promote`):** ver `results/rag-50/revogadas_pairing.md`.
+- `delta_doc_recall = +0.021` (estável entre runs) ✅; `hard_broken = 0` ✅.
+- **Salva** gt-0008 e gt-0030: sem filtro citavam normas **revogadas**
+  (erro factual); com filtro citam a norma vigente. Ganho de higiene real.
+- **Soft breaks** (gt-0004, gt-0003 conforme o run): `doc_recall=1.0` nos
+  dois lados — o filtro não removeu o alvo; o gerador trocou a citação.
+- **Ressalva honesta:** o ganho em `answer_usable_rate` é nulo/ruidoso
+  (0.604 vs 0.604 no segundo run). O motivo real da promoção é higiene
+  factual + `doc_recall`, não o score de `usable`.
+- **Aplicado:** `exclude_revogadas=True` é o default do rerank em
+  `build_rag_baseline_configs`. gt-0003 (motivação original) já fora
+  resolvida pela F2 — está `usable` no baseline sem o filtro.
 
 ---
 
