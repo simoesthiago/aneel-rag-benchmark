@@ -1,0 +1,248 @@
+[
+  {
+    "question_id": "gt-0008",
+    "question": "Que processos regulatórios são consolidados pela REN 1003/2022 ao aprovar a estrutura do PRORET?",
+    "ground_truth": {
+      "expected_answer": "A REN 1003/2022 aprova a estrutura e os submódulos do PRORET e consolida a regulamentação dos processos tarifários aplicáveis a concessionárias e permissionárias de distribuição, transmissão e geração de energia elétrica.",
+      "document_id": "ren-2022-1003",
+      "document_title": "Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica, revoga as Resoluções Normativas nº 435, de 24 de maio de 2011; nº 457, de 8 de novembro de 2011; nº 478, de 3 de abril de 2012 e dá outras providências",
+      "section_label": "Ementa e Art. 1º",
+      "citation_label": "REN 1003/2022, ementa/Art. 1º",
+      "official_url": "https://www2.aneel.gov.br/cedoc/bren20221003.pdf",
+      "support_excerpt": "Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "A REN 1003/2022 aprova a estrutura e os submódulos dos Procedimentos de Regulação Tarifária – PRORET, consolidando a regulamentação acerca dos processos tarifários aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica. Além disso, revoga as Resoluções Normativas nº 435, nº 457 e nº 478, de 2011 e 2012, que anteriormente regulamentavam esses processos [1][2].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica, revoga as Resoluções Normativas nº 435, de 24 de maio de 2011; nº 457, de 8 de novembro de 2011; nº 478, de 3 de abril de 2012 e dá outras providências, chunk 2 | ren-2022-1003 |\n| [2] | Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica, revoga as Resoluções Normativas nº 435, de 24 de maio de 2011; nº 457, de 8 de novembro de 2011; nº 478, de 3 de abril de 2012 e dá outras providências, chunk 0 | ren-2022-1003 |",
+      "citations": [
+        "Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica, revoga as Resoluções Normativas nº 435, de 24 de maio de 2011; nº 457, de 8 de novembro de 2011; nº 478, de 3 de abril de 2012 e dá outras providências, chunk 2",
+        "Aprova a estrutura e os Submódulos dos Procedimentos de Regulação Tarifária – PRORET, e consolida a regulamentação acerca dos processos tarifários, aplicáveis a concessionárias e permissionários de serviços públicos de distribuição, transmissão e geração de energia elétrica, revoga as Resoluções Normativas nº 435, de 24 de maio de 2011; nº 457, de 8 de novembro de 2011; nº 478, de 3 de abril de 2012 e dá outras providências, chunk 0"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 0.5,
+      "answer_correctness_llm_judge": 1.0,
+      "faithfulness_llm_judge": 1.0
+    }
+  },
+  {
+    "question_id": "gt-0016",
+    "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+    "ground_truth": {
+      "expected_answer": "O horizonte de previsão do SDAT é de 10 anos, e um novo estudo deve ser realizado a cada ano.",
+      "document_id": "prodist-modulo-02",
+      "document_title": "PRODIST — Módulo 2",
+      "section_label": "Seção 2.1 - previsão de demanda no SDAT",
+      "citation_label": "PRODIST Módulo 2, Seção 2.1",
+      "official_url": "https://git.aneel.gov.br/publico/centralconteudo/-/blob/master/procreg/prodist/modulo02/aren2008345_Prodist_modulo_2_v0.pdf",
+      "support_excerpt": "Para a elaboração dos estudos de previsão de demanda no SDAT, o horizonte de previsão é de 10 anos, devendo um novo estudo ser realizado a cada ano.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, o horizonte a ser utilizado nos estudos de previsão de demanda é de dez anos, com periodicidade anual, devendo um novo estudo ser realizado a cada ano [1][2][6].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | PRODIST — Módulo 2, chunk 1 | prodist-modulo-02 |\n| [2] | PRODIST — Módulo 2, chunk 2 | prodist-modulo-02 |\n| [6] | PRODIST — Módulo 2, chunk 3 | prodist-modulo-02 |",
+      "citations": [
+        "PRODIST — Módulo 2, chunk 1",
+        "PRODIST — Módulo 2, chunk 2",
+        "PRODIST — Módulo 2, chunk 3"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 1.0,
+      "answer_correctness_llm_judge": 1.0,
+      "faithfulness_llm_judge": 1.0
+    }
+  },
+  {
+    "question_id": "gt-0018",
+    "question": "Para quais finalidades regulatórias o PRODIST Módulo 5 estabelece requisitos de medição?",
+    "ground_truth": {
+      "expected_answer": "O Módulo 5 estabelece requisitos mínimos para medição de grandezas elétricas aplicáveis ao faturamento, à qualidade da energia elétrica, ao planejamento da expansão e à operação do sistema de distribuição.",
+      "document_id": "prodist-modulo-05",
+      "document_title": "PRODIST — Módulo 5",
+      "section_label": "Módulo 5 - Sistemas de Medição e Procedimentos de Leitura",
+      "citation_label": "PRODIST Módulo 5",
+      "official_url": "https://git.aneel.gov.br/publico/centralconteudo/-/blob/master/procreg/prodist/modulo05/aren2008345_Prodist_modulo_5_v0.pdf",
+      "support_excerpt": "Estabelecer os requisitos mínimos para medição das grandezas elétricas aplicáveis ao faturamento, à qualidade da energia elétrica, ao planejamento da expansão e à operação do sistema de distribuição.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "O PRODIST Módulo 5 estabelece requisitos de medição para as seguintes finalidades regulatórias: faturamento de energia elétrica, qualidade da energia elétrica, planejamento da expansão do sistema e operação do sistema de distribuição [1]. Além disso, as medições devem incluir dados referentes ao faturamento, à qualidade da energia elétrica, às cargas do sistema de distribuição, aos estudos de previsão de demanda e às curvas de carga [5].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | PRODIST — Módulo 1, chunk 5 | prodist-modulo-01 |\n| [5] | PRODIST — Módulo 5, chunk 2 | prodist-modulo-05 |",
+      "citations": [
+        "PRODIST — Módulo 1, chunk 5",
+        "PRODIST — Módulo 5, chunk 2"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 0.5,
+      "answer_correctness_llm_judge": 0.97,
+      "faithfulness_llm_judge": 0.98
+    }
+  },
+  {
+    "question_id": "gt-0021",
+    "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+    "ground_truth": {
+      "expected_answer": "A seção 9.1 descreve como devem ser analisadas as solicitações de ressarcimento para concluir se o ressarcimento é devido.",
+      "document_id": "prodist-modulo-09",
+      "document_title": "PRODIST — Módulo 9",
+      "section_label": "Seção 9.1 - Ressarcimento de Danos Elétricos",
+      "citation_label": "PRODIST Módulo 9, Seção 9.1",
+      "official_url": "https://git.aneel.gov.br/publico/centralconteudo/-/blob/master/procreg/prodist/modulo09/aren2012499_Prodist_modulo_9_v0.pdf",
+      "support_excerpt": "A seção 9.1 descreve como devem ser analisadas as solicitações de ressarcimento para concluir se o ressarcimento é devido.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "A finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9 é verificar a tempestividade da solicitação, a existência do dano reclamado e as possíveis causas deste, com o intuito de determinar se a distribuidora é obrigada a ressarcir o consumidor pelos danos elétricos reclamados. A análise deve concluir se o ressarcimento é devido e pode ser indeferido apenas se forem comprovadas situações excludentes específicas [1][4].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | PRODIST — Módulo 9, chunk 2 | prodist-modulo-09 |\n| [4] | PRODIST — Módulo 9, chunk 3 | prodist-modulo-09 |",
+      "citations": [
+        "PRODIST — Módulo 9, chunk 2",
+        "PRODIST — Módulo 9, chunk 3"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 0.5,
+      "answer_correctness_llm_judge": 0.95,
+      "faithfulness_llm_judge": 0.98
+    }
+  },
+  {
+    "question_id": "gt-0032",
+    "question": "No Módulo 3 das Regras de Transmissão, quais critérios devem orientar a integração de novos equipamentos à Rede Básica?",
+    "ground_truth": {
+      "expected_answer": "Os novos equipamentos e instalações devem estar recomendados por estudos de planejamento, ser projetados conforme Procedimentos de Rede e ter respaldo de estudos técnicos e econômicos da EPE e do ONS.",
+      "document_id": "regtransm-modulo-03",
+      "document_title": "Regras de Transmissão — Módulo 3 — Instalações e Equipamentos",
+      "section_label": "Seção 3.1 - Novos equipamentos e instalações",
+      "citation_label": "Regras de Transmissão, Módulo 3, Seção 3.1",
+      "official_url": "https://git.aneel.gov.br/publico/centralconteudo/-/blob/main/procreg/regtransm/Modulo 03_Instalacoes_Equipamentos_aren2020905_2_2.pdf",
+      "support_excerpt": "Os novos equipamentos e instalações a serem integrados à Rede Básica deverão estar recomendados por estudos de planejamento; ser projetados em observância aos Procedimentos de Rede; e ser respaldados por estudos técnicos e econômicos da EPE e do ONS.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "No Módulo 3 das Regras de Transmissão, a integração de novos equipamentos à Rede Básica deve atender aos seguintes critérios: (a) estar recomendados por estudos de planejamento; (b) ser projetados em observância aos Procedimentos de Rede; e (c) ser respaldados pelos respectivos estudos técnicos e econômicos da Empresa de Pesquisa Energética (EPE) e do Operador Nacional do Sistema Elétrico (ONS), visando subsidiar o correspondente processo de licitação de concessão ou de autorização [1].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | Regras de Transmissão — Módulo 3 — Instalações e Equipamentos, chunk 1 | regtransm-modulo-03 |",
+      "citations": [
+        "Regras de Transmissão — Módulo 3 — Instalações e Equipamentos, chunk 1"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 1.0,
+      "answer_correctness_llm_judge": 0.97,
+      "faithfulness_llm_judge": 0.98
+    }
+  },
+  {
+    "question_id": "gt-0036",
+    "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+    "ground_truth": {
+      "expected_answer": "O Submódulo 1.2-PR apresenta termos e expressões relevantes para o entendimento dos processos, requisitos e critérios dos Procedimentos de Rede, com suas definições.",
+      "document_id": "proc-rede-1-2-pr",
+      "document_title": "Procedimentos de Rede — Glossário dos Procedimentos de Rede",
+      "section_label": "Submódulo 1.2-PR - Objetivo",
+      "citation_label": "Procedimentos de Rede, Submódulo 1.2-PR, item 1.1",
+      "official_url": "https://proxyportais.ons.org.br/ons.portalempregado.proxy/garapi/api/processo/retornarpdf?url=/sites/soumaisons/portalgar/ecmpdf/Subm%C3%B3dulo%201.2-PR_2025.02.pdf",
+      "support_excerpt": "Apresentar os termos e expressões relevantes para o entendimento dos processos, requisitos e critérios que constam nos Procedimentos de Rede, com as respectivas definições.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "A finalidade do Submódulo 1.2-PR, que é o Glossário dos Procedimentos de Rede, é apresentar os termos e expressões relevantes para o entendimento dos processos, requisitos e critérios que constam nos Procedimentos de Rede, com as respectivas definições [1].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | Procedimentos de Rede — Glossário dos Procedimentos de Rede, chunk 0 | proc-rede-1-2-pr |",
+      "citations": [
+        "Procedimentos de Rede — Glossário dos Procedimentos de Rede, chunk 0"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 1.0,
+      "answer_correctness_llm_judge": 1.0,
+      "faithfulness_llm_judge": 1.0
+    }
+  },
+  {
+    "question_id": "gt-0040",
+    "question": "Segundo o Submódulo 5.1-OP, qual é a relação entre operação do sistema e operação das instalações?",
+    "ground_truth": {
+      "expected_answer": "As atividades são interdependentes e complementares, pois os resultados da operação do sistema servem de insumo para a operação das instalações e vice-versa.",
+      "document_id": "proc-rede-s-bmodulo-5-1-op-2022-08",
+      "document_title": "Procedimentos de Rede — Operação do Sistema e das instalações da Rede de Operação",
+      "section_label": "Submódulo 5.1-OP - Operação",
+      "citation_label": "Procedimentos de Rede, Submódulo 5.1-OP, item 1.1",
+      "official_url": "https://proxyportais.ons.org.br/ons.portalempregado.proxy/garapi/api/processo/retornarpdf?url=/sites/soumaisons/portalgar/ecmpdf/S%C3%BAbmodulo%205.1-OP_2022.08.pdf",
+      "support_excerpt": "As atividades da operação do sistema e da operação de instalações são interdependentes e complementares, uma vez que os resultados da operação do sistema são insumos para a operação das instalações e vice-versa.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "A operação do sistema e a operação das instalações são interdependentes e complementares, pois os resultados da operação do sistema servem como insumos para a operação das instalações e vice-versa [2]. Além disso, os centros de operação do ONS elaboram instruções de operação que definem os procedimentos para a operação das instalações, garantindo que as atividades sejam realizadas de forma coordenada e segura [3].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [2] | Procedimentos de Rede — Operação do Sistema e das instalações da Rede de Operação, chunk 0 | proc-rede-s-bmodulo-5-1-op-2022-08 |\n| [3] | Procedimentos de Rede — Operação do Sistema e das instalações da Rede de Operação, chunk 4 | proc-rede-s-bmodulo-5-1-op-2022-08 |",
+      "citations": [
+        "Procedimentos de Rede — Operação do Sistema e das instalações da Rede de Operação, chunk 0",
+        "Procedimentos de Rede — Operação do Sistema e das instalações da Rede de Operação, chunk 4"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 0.5,
+      "answer_correctness_llm_judge": 0.92,
+      "faithfulness_llm_judge": 0.98
+    }
+  },
+  {
+    "question_id": "gt-0047",
+    "question": "Qual é a finalidade institucional da ANEEL segundo a Lei 9.427/1996?",
+    "ground_truth": {
+      "expected_answer": "A ANEEL tem por finalidade regular e fiscalizar a produção, transmissão, distribuição, armazenamento e comercialização de energia elétrica, conforme políticas e diretrizes do governo federal.",
+      "document_id": "lei-9427-1996",
+      "document_title": "Lei 9.427/1996 — Criação da ANEEL",
+      "section_label": "Art. 2º",
+      "citation_label": "Lei 9.427/1996, Art. 2º",
+      "official_url": "https://www.planalto.gov.br/ccivil_03/leis/l9427cons.htm",
+      "support_excerpt": "A Agência Nacional de Energia Elétrica - Aneel tem por finalidade regular e fiscalizar a produção, transmissão, distribuição, armazenamento e comercialização de energia elétrica, em conformidade com as políticas e diretrizes do governo federal.",
+      "relevance": 3,
+      "n_sources": 1
+    },
+    "system_output": {
+      "generated_answer": "A finalidade institucional da ANEEL, segundo a Lei 9.427/1996, é regular e fiscalizar a produção, transmissão, distribuição, armazenamento e comercialização de energia elétrica, em conformidade com as políticas e diretrizes do governo federal [1].\n\n**Fontes citadas**\n\n| # | Citação | Documento |\n|---|---------|-----------|\n| [1] | Lei 9.427/1996 — Criação da ANEEL, chunk 0 | lei-9427-1996 |",
+      "citations": [
+        "Lei 9.427/1996 — Criação da ANEEL, chunk 0"
+      ]
+    },
+    "metrics": {
+      "failure_type": "usable",
+      "answer_usable": true,
+      "recall_at_k": 1.0,
+      "doc_recall_at_k": 1.0,
+      "citation_accuracy": 1.0,
+      "answer_correctness_llm_judge": 1.0,
+      "faithfulness_llm_judge": 1.0
+    }
+  }
+]

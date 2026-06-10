@@ -1,0 +1,82 @@
+[
+  {
+    "question_id": "gt-0008",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta reproduz corretamente o núcleo da REN 1003/2022: aprovação da estrutura e dos submódulos do PRORET e consolidação dos processos tarifários aplicáveis a distribuição, transmissão e geração. As citações apontam para a própria REN 1003/2022, fonte normativa legítima para a pergunta.",
+    "evidence_urls": ["https://www2.aneel.gov.br/cedoc/bren20221003.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha relevante identificada; a aprovação parece legítima."
+  },
+  {
+    "question_id": "gt-0016",
+    "verdict": "system_correctly_passed",
+    "confidence": "medium",
+    "justification": "A resposta informa corretamente o horizonte de 10 anos e a periodicidade anual para estudos de previsão de demanda no SDAT. A ANEEL mantém o PRODIST Módulo 2 como módulo vigente sob a REN 956/2021; embora o GT traga URL antiga, a saída do sistema cita genericamente o PRODIST Módulo 2 e não há evidência clara, no payload, de citação a versão revogada.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo02/aren2021956_Prodist_modulo_2_v8.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha clara identificada; recomenda-se apenas versionar explicitamente a fonte em avaliações futuras, mas isso não basta para classificar a aprovação como falso positivo."
+  },
+  {
+    "question_id": "gt-0018",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta cobre as finalidades centrais do Módulo 5: faturamento, qualidade da energia elétrica, planejamento/estudos de demanda e operação/coleta de dados do sistema de distribuição. O Módulo 5 vigente da ANEEL confirma requisitos mínimos para sistemas de medição usados no faturamento, na apuração de parâmetros de qualidade e na coleta de dados para cargas, previsão de demanda, curvas de carga e perdas técnicas.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo05/aren2021956_Prodist_modulo_5_v7.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha relevante identificada; citation_accuracy parcial não compromete o mérito porque há citação ao Módulo 5 e a resposta é substantivamente correta."
+  },
+  {
+    "question_id": "gt-0021",
+    "verdict": "system_correctly_passed",
+    "confidence": "medium",
+    "justification": "A resposta descreve corretamente a etapa de análise: verificar tempestividade, existência do dano, causas/nexo e concluir se há obrigação de ressarcimento, admitindo indeferimento apenas em hipóteses excludentes. A ANEEL mantém o PRODIST Módulo 9 como módulo vigente para ressarcimento de danos elétricos; não há evidência clara de conflito factual na resposta.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/prodist/modulo09/aren2021956_Prodist_modulo_9_v2.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha clara identificada; a aprovação é defensável, embora a avaliação futura deva exigir versão explícita do PRODIST citado."
+  },
+  {
+    "question_id": "gt-0032",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta lista corretamente os três critérios normativos: recomendação por estudos de planejamento, observância aos Procedimentos de Rede e respaldo por estudos técnicos e econômicos da EPE e do ONS. A citação aponta para o Módulo 3 das Regras de Transmissão, que é a fonte apropriada e vigente para integração de novos equipamentos e instalações.",
+    "evidence_urls": ["https://git.aneel.gov.br/publico/centralconteudo/-/raw/main/procreg/regtransm/Modulo%2003_Instalacoes_Equipamentos_aren2020905_2_2.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha relevante identificada; recall, citação e correção da resposta estão alinhados."
+  },
+  {
+    "question_id": "gt-0036",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta replica o objetivo do Submódulo 1.2-PR vigente: apresentar termos e expressões relevantes para entendimento dos processos, requisitos e critérios dos Procedimentos de Rede, com definições. A fonte citada é o próprio glossário dos Procedimentos de Rede.",
+    "evidence_urls": ["https://proxyportais.ons.org.br/sites/soumaisons/portalgar/ecmpdf/Submodulo_1.2-PR_2025.02.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha identificada; este é um passe legítimo da métrica."
+  },
+  {
+    "question_id": "gt-0040",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta acerta a relação normativa central: operação do sistema e operação das instalações são interdependentes e complementares, com resultados de uma servindo de insumo para a outra. O acréscimo sobre instruções de operação é coerente com o mesmo submódulo e não altera a resposta principal.",
+    "evidence_urls": ["https://proxyportais.ons.org.br/sites/soumaisons/portalgar/ecmpdf/Submodulo_5.1-OP_2022.08.pdf"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha relevante identificada; citation_accuracy parcial decorre de granularidade de chunks, não de erro factual."
+  },
+  {
+    "question_id": "gt-0047",
+    "verdict": "system_correctly_passed",
+    "confidence": "high",
+    "justification": "A resposta está aderente ao art. 2º vigente da Lei 9.427/1996, que inclui regular e fiscalizar produção, transmissão, distribuição, armazenamento e comercialização de energia elétrica conforme políticas e diretrizes federais. A inclusão de armazenamento está compatível com a redação consolidada vigente após alteração legal de 2025.",
+    "evidence_urls": ["https://www.planalto.gov.br/ccivil_03/leis/l9427compilada.htm", "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15269.htm"],
+    "is_false_positive": false,
+    "false_positive_severity": null,
+    "metric_implications": "Nenhuma falha identificada; a aprovação é legítima e está alinhada à redação vigente."
+  }
+]
