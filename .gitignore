@@ -36,6 +36,7 @@ data/documentos_corpus.csv
 data/chunks/
 data/vectorstores/
 data/raw/
+data/evaluation/cache/
 
 # macOS
 .DS_Store

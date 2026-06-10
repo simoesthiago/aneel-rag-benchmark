@@ -111,6 +111,9 @@ def test_build_rag_baseline_configs_limita_escopo_a_baseline_e_rerank():
     assert {config.chunk_strategy for config in configs} == {"fixed-size"}
     assert {config.metodo_extracao for config in configs} == {"markdown"}
     assert {config.mode for config in configs} == {"flat"}
+    # Fase 2: pool 100 é o default do rerank (promovido pelo pareamento).
+    assert configs[0].candidates_k_override is None
+    assert configs[1].candidates_k_override == 100
 
 
 def test_evaluate_question_rag_calcula_metricas_e_citation_accuracy():
@@ -755,3 +758,208 @@ def test_load_benchmark_result_from_per_question_json_reconstroi_metrics(
     pairing = build_rag_rerank_pairing(result)
     assert pairing["summary"]["saved_count"] == 1
     assert pairing["summary"]["broken_count"] == 0
+
+
+# -----------------------------------------------------------------------------
+# Fase 2 — rerank pool comparison
+# -----------------------------------------------------------------------------
+
+
+def test_build_rag_baseline_configs_rerank_pools_gera_tres_configs():
+    configs = build_rag_baseline_configs(rerank_pools=(50, 100))
+
+    assert len(configs) == 3
+    assert [c.rerank for c in configs] == [False, True, True]
+    assert [c.candidates_k_override for c in configs] == [None, 50, 100]
+    # labels distinguem os pools para serialização/inspeção
+    labels = [c.label for c in configs]
+    assert any(label.endswith("+rerank@pool50") for label in labels)
+    assert any(label.endswith("+rerank@pool100") for label in labels)
+
+
+def test_build_rag_baseline_configs_rerank_pools_incompativel_com_qe():
+    with pytest.raises(ValueError, match="mutuamente exclusiv"):
+        build_rag_baseline_configs(query_expansion=True, rerank_pools=(50, 100))
+
+
+def test_run_rag_config_emite_candidates_k():
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+
+    def rag_factory(config, repo_id, query_cache=None):
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    config = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="fixed-size",
+        metodo_extracao="markdown",
+        mode="flat",
+        rerank=True,
+        candidates_k_override=100,
+    )
+    result = run_rag_config(
+        config,
+        [_question("gt-0001")],
+        top_k=1,
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+    )
+
+    assert result["candidates_k"] == 100
+
+
+def _pool_config(
+    per_question: list[dict[str, Any]],
+    *,
+    rerank: bool,
+    candidates_k: int | None,
+) -> dict[str, Any]:
+    return {
+        "rerank": rerank,
+        "candidates_k": candidates_k,
+        "per_question": per_question,
+    }
+
+
+def test_build_pool_pairing_promote():
+    from scripts.analyze_rerank_pool_pairing import build_pool_pairing
+
+    # pool50: 2 falhas; pool100 salva as 2, quebra 0; doc_recall não cai.
+    pool50 = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+            doc_recall_at_k=0.0,
+        ),
+        _pairing_question(
+            "gt-0002",
+            answer_usable=False,
+            failure_type="retrieval_document_failure",
+            doc_recall_at_k=0.0,
+        ),
+        _pairing_question(
+            "gt-0003", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    pool100 = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+        _pairing_question(
+            "gt-0003", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    pairing = build_pool_pairing(
+        _pool_config(pool50, rerank=True, candidates_k=50),
+        _pool_config(pool100, rerank=True, candidates_k=100),
+    )
+
+    assert pairing["summary"]["saved_count"] == 2
+    assert pairing["summary"]["broken_count"] == 0
+    assert pairing["decision_rule"]["verdict"] == "promote"
+    assert pairing["decision_rule"]["reasons"] == []
+
+
+def test_build_pool_pairing_keep_pool50_por_broken():
+    from scripts.analyze_rerank_pool_pairing import build_pool_pairing
+
+    # 1 saved, 1 broken -> saved < 2*broken -> keep_pool50.
+    pool50 = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="citation_failure",
+            doc_recall_at_k=1.0,
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    pool100 = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+        _pairing_question(
+            "gt-0002",
+            answer_usable=False,
+            failure_type="citation_failure",
+            doc_recall_at_k=1.0,
+        ),
+    ]
+    pairing = build_pool_pairing(
+        _pool_config(pool50, rerank=True, candidates_k=50),
+        _pool_config(pool100, rerank=True, candidates_k=100),
+    )
+
+    assert pairing["summary"]["saved_count"] == 1
+    assert pairing["summary"]["broken_count"] == 1
+    assert pairing["decision_rule"]["verdict"] == "keep_pool50"
+    assert any("saved=1 < 2*broken=2" in r for r in pairing["decision_rule"]["reasons"])
+
+
+def test_build_pool_pairing_keep_pool50_por_doc_recall():
+    from scripts.analyze_rerank_pool_pairing import build_pool_pairing
+
+    # saved>=2*broken, mas doc_recall cai além de -0.02 -> keep_pool50.
+    pool50 = [
+        _pairing_question(
+            "gt-0001",
+            answer_usable=False,
+            failure_type="retrieval_passage_failure",
+            doc_recall_at_k=1.0,
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    pool100 = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=0.0
+        ),
+        _pairing_question(
+            "gt-0002", answer_usable=True, failure_type="usable", doc_recall_at_k=0.0
+        ),
+    ]
+    pairing = build_pool_pairing(
+        _pool_config(pool50, rerank=True, candidates_k=50),
+        _pool_config(pool100, rerank=True, candidates_k=100),
+    )
+
+    assert pairing["summary"]["saved_count"] == 1
+    assert pairing["summary"]["broken_count"] == 0
+    assert pairing["summary"]["delta_doc_recall"] == pytest.approx(-1.0)
+    assert pairing["decision_rule"]["verdict"] == "keep_pool50"
+    assert any("delta_doc_recall" in r for r in pairing["decision_rule"]["reasons"])
+
+
+def test_render_pool_pairing_md_inclui_veredito():
+    from scripts.analyze_rerank_pool_pairing import (
+        build_pool_pairing,
+        render_pool_pairing_md,
+    )
+
+    cfg = [
+        _pairing_question(
+            "gt-0001", answer_usable=True, failure_type="usable", doc_recall_at_k=1.0
+        ),
+    ]
+    par = build_pool_pairing(
+        _pool_config(cfg, rerank=True, candidates_k=50),
+        _pool_config(cfg, rerank=True, candidates_k=100),
+    )
+    md = render_pool_pairing_md(par, par)
+
+    assert "Par 1 — DECISÃO" in md
+    assert "veredito" in md
+    assert "delta_doc_recall" in md
