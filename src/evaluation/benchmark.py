@@ -145,16 +145,34 @@ def build_store_configs(
     return configs
 
 
-def build_rag_baseline_configs(*, query_expansion: bool = False) -> list[StoreConfig]:
+def build_rag_baseline_configs(
+    *,
+    query_expansion: bool = False,
+    rerank_pools: tuple[int, ...] | None = None,
+) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
     A matriz completa de retrieval já foi diagnosticada. Para geração, o
     primeiro teste deve responder uma pergunta menor: o baseline escolhido
     gera respostas fiéis e o rerank muda a qualidade final?
 
+    O config com rerank usa `candidates_k_override=100` (pool 100), promovido
+    a default pela Fase 2 do roadmap (`rerank_pool_pairing`: pool 100 atinge
+    answer_usable_rate 0.604 vs 0.583 do pool 50).
+
     Quando `query_expansion=True`, retorna 4 configs (cartesiano rerank × QE)
     para medir a interação entre rerank e query expansion no mesmo run.
+
+    Quando `rerank_pools` é fornecido (ex.: `(50, 100)`), retorna
+    `[baseline]` + uma config `rerank=True` por pool de candidatos densos,
+    permitindo isolar o efeito do tamanho do pool no mesmo run (Fase 2 do
+    roadmap). Mutuamente exclusivo com `query_expansion`.
     """
+    if rerank_pools is not None and query_expansion:
+        raise ValueError(
+            "rerank_pools e query_expansion são mutuamente exclusivos em "
+            "build_rag_baseline_configs (escopos experimentais distintos)."
+        )
     baseline = StoreConfig(
         provider=PROVIDER,
         model="text-embedding-3-large",
@@ -162,6 +180,11 @@ def build_rag_baseline_configs(*, query_expansion: bool = False) -> list[StoreCo
         metodo_extracao="markdown",
         mode="flat",
     )
+    # Fase 2 do roadmap (rerank_pool_pairing): o pareamento pool50 vs pool100
+    # deu `promote` (saved=2, broken=1, delta_doc_recall=+0.042) e pool 100 é
+    # o config com maior answer_usable_rate (0.604 vs 0.583). Pool 100 passou
+    # a ser o default do rerank no smoke RAG.
+    RERANK_DEFAULT_POOL = 100
     rerank = StoreConfig(
         provider=baseline.provider,
         model=baseline.model,
@@ -169,7 +192,21 @@ def build_rag_baseline_configs(*, query_expansion: bool = False) -> list[StoreCo
         metodo_extracao=baseline.metodo_extracao,
         mode=baseline.mode,
         rerank=True,
+        candidates_k_override=RERANK_DEFAULT_POOL,
     )
+    if rerank_pools is not None:
+        return [baseline] + [
+            StoreConfig(
+                provider=baseline.provider,
+                model=baseline.model,
+                chunk_strategy=baseline.chunk_strategy,
+                metodo_extracao=baseline.metodo_extracao,
+                mode=baseline.mode,
+                rerank=True,
+                candidates_k_override=pool,
+            )
+            for pool in rerank_pools
+        ]
     if not query_expansion:
         return [baseline, rerank]
     baseline_qe = StoreConfig(
@@ -925,6 +962,7 @@ def load_benchmark_result_from_per_question_json(
                 "metodo_extracao": config.get("metodo_extracao"),
                 "mode": config.get("mode"),
                 "rerank": bool(config.get("rerank")),
+                "candidates_k": config.get("candidates_k"),
                 "query_expansion": bool(config.get("query_expansion") or False),
                 "per_question": per_question,
                 "failure_type_counts": failure_counts,
@@ -975,6 +1013,7 @@ def run_rag_config(
         "metodo_extracao": config.metodo_extracao,
         "mode": config.mode,
         "rerank": config.rerank,
+        "candidates_k": config.candidates_k_override,
         "query_expansion": config.query_expansion,
         "num_questions": len(por_pergunta),
         "latency_avg_ms": summary["latency_avg"],

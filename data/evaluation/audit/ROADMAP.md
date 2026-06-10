@@ -190,25 +190,30 @@ rebuild.
 
 ---
 
-## Fase 2 — Calibração de retrieval: rerank pool 100 no RAG
+## Fase 2 — Calibração de retrieval: rerank pool 100 no RAG (✅ CONCLUÍDA)
 
 **Problema:** o SUMMARY (Achado 5) provou que rerank com `candidates_k=100`
 salva gt-0007/0012/0030/0034 em retrieval (+4pp passage_recall, +7pp MRR).
-Mas o benchmark RAG instancia rerank com **pool 50** (default). O ganho
-nunca foi medido no `answer_usable`.
+Mas o benchmark RAG instanciava rerank com **pool 50** (default). O ganho
+nunca fora medido no `answer_usable`.
 
-**Intervenção:** passar `candidates_k_override=100` nas configs rerank de
-`build_rag_baseline_configs` e re-rodar o benchmark RAG.
-
-**Ataca:** gt-0007 (rank 30), gt-0012 (rank 32), gt-0026 (rank 15),
-gt-0034 (rank 14).
-
-**Custo:** ~US$0,30 + quota Cohere. **Risco:** trade-off — pool 100 quebra
-gt-0028/0049 em retrieval (ambas parciais); medir no answer_usable.
+**Intervenção:** parâmetro `rerank_pools` em `build_rag_baseline_configs` +
+flag `--rerank-pool-comparison` + analyzer `analyze_rerank_pool_pairing.py`.
+Run de 3 configs (baseline, rerank@50, rerank@100) com pareamento isolado.
 
 **Critério pré-comprometido:**
-> Promover pool 100 a default do rerank SE `saved >= 2 * broken` no
-> pareamento por pergunta E `delta_doc_recall >= -0.02`.
+> Promover pool 100 a default do rerank SE, no Par 1 (pool50 vs pool100):
+> `saved >= 2 * broken` E `delta_doc_recall >= -0.02`.
+
+**Resultado (veredito `promote`):** ver `results/rag-50/f2_rerank_pool.md`.
+- Par 1: saved=2 (gt-0001, **gt-0007**), broken=1 (gt-0047),
+  delta_doc_recall=+0.042 → **promote** (no limite: 2 >= 2×1).
+- answer_usable: baseline 0.521 → rerank@50 0.583 → **rerank@100 0.604**.
+- **3 das 7 falhas reais caíram** (gt-0003, gt-0007, gt-0012);
+  gt-0023/0024 melhoraram parcialmente.
+- **Aplicado:** pool 100 é o default do rerank em
+  `build_rag_baseline_configs`. Ressalva honesta: ganho sobre pool 50 é
+  marginal (+1); gt-0026 (alvo) não foi salva.
 
 ---
 

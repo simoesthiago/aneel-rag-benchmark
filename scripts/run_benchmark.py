@@ -172,6 +172,17 @@ def parse_args() -> argparse.Namespace:
             "Default = LLM_MODEL (settings)."
         ),
     )
+    parser.add_argument(
+        "--rerank-pool-comparison",
+        action="store_true",
+        help=(
+            "Em --mode rag, gera 3 configs (baseline + rerank@50 + "
+            "rerank@100) para isolar o efeito do pool de candidatos densos "
+            "do rerank (Fase 2 do roadmap). Exige COHERE_API_KEY. Emite "
+            "rerank_pool_pairing.{json,md}. Incompatível com "
+            "--query-expansion."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -207,9 +218,17 @@ def main() -> None:
         )
 
         if args.mode == "rag":
-            configs = build_rag_baseline_configs(
-                query_expansion=args.query_expansion,
-            )
+            if args.rerank_pool_comparison and args.query_expansion:
+                raise SystemExit(
+                    "--rerank-pool-comparison e --query-expansion são "
+                    "incompatíveis (escopos experimentais distintos)."
+                )
+            if args.rerank_pool_comparison:
+                configs = build_rag_baseline_configs(rerank_pools=(50, 100))
+            else:
+                configs = build_rag_baseline_configs(
+                    query_expansion=args.query_expansion,
+                )
             if args.rerank:
                 print(
                     "  Aviso: --mode rag já inclui baseline sem rerank e com "
@@ -290,6 +309,12 @@ def main() -> None:
                     "metodo_extracao": row["metodo_extracao"],
                     "mode": row["mode"],
                     "rerank": bool(row["rerank"]),
+                    "candidates_k": (
+                        int(row["candidates_k"])
+                        if row.get("candidates_k") is not None
+                        and not pd.isna(row.get("candidates_k"))
+                        else None
+                    ),
                     "query_expansion": bool(row.get("query_expansion") or False),
                     "llm_status_counts": row.get("llm_status_counts"),
                     "generator_status_counts": row.get("generator_status_counts"),
@@ -340,11 +365,53 @@ def main() -> None:
         qe_flags = {
             bool(r.get("query_expansion") or False) for _, r in df.iterrows()
         }
+        rerank_rows = [r for _, r in df.iterrows() if bool(r["rerank"])]
+        rerank_pools = {r.get("candidates_k") for r in rerank_rows}
+        # Modo pool-comparison: >= 2 configs rerank com pools distintos.
+        # Detectado pela forma das configs (funciona também com --from-cache).
+        pool_comparison = len(rerank_rows) >= 2 and len(rerank_pools) >= 2
         # Pareamento rerank: só roda quando há exatamente 2 configs
         # diferindo apenas em rerank. Com query_expansion ativo, são 4
         # configs e o rerank pairing é pulado em favor do QE pairing
         # (que considera as 4 combinações).
-        if rerank_flags == {True, False} and qe_flags == {False}:
+        if pool_comparison:
+            from scripts.analyze_rerank_pool_pairing import (
+                _config_by_pool,
+                build_pool_pairing,
+                render_pool_pairing_md,
+            )
+
+            pool_payload = json.loads(detail_path.read_text(encoding="utf-8"))
+            par1 = build_pool_pairing(
+                _config_by_pool(pool_payload, rerank=True, pool=50),
+                _config_by_pool(pool_payload, rerank=True, pool=100),
+            )
+            par2 = build_pool_pairing(
+                _config_by_pool(pool_payload, rerank=False, pool=None),
+                _config_by_pool(pool_payload, rerank=True, pool=100),
+            )
+            pool_pairing_json = output_dir / "rerank_pool_pairing.json"
+            pool_pairing_json.write_text(
+                json.dumps(
+                    {"par1_pool_isolated": par1, "par2_vs_baseline": par2},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            pool_pairing_md = output_dir / "rerank_pool_pairing.md"
+            pool_pairing_md.write_text(
+                render_pool_pairing_md(par1, par2), encoding="utf-8"
+            )
+            print(f"  Pareamento de pool salvo: {pool_pairing_json}")
+            print(f"  Pareamento de pool legível: {pool_pairing_md}")
+            print(
+                f"    Par 1 (pool50 vs pool100): "
+                f"{par1['decision_rule']['verdict']} "
+                f"saved={par1['summary']['saved_count']} "
+                f"broken={par1['summary']['broken_count']}"
+            )
+        elif rerank_flags == {True, False} and qe_flags == {False}:
             pairing = build_rag_rerank_pairing(result)
             pairing_json = output_dir / "rerank_pairing.json"
             pairing_json.write_text(
