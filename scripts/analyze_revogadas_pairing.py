@@ -114,10 +114,38 @@ def _mean_doc_recall(cfg: dict[str, Any]) -> float | None:
     return mean(float(v) for v in values)
 
 
+def _assert_isolated_pairing(before_cfg: dict[str, Any], after_cfg: dict[str, Any]) -> None:
+    """Garante que before/after diferem APENAS em exclude_revogadas.
+
+    Sem isto, pareia-se um delta contaminado (ex.: baseline sem rerank vs
+    rerank+filtro mistura o efeito do rerank com o do filtro). O pareamento de
+    revogadas só é válido entre configs idênticas em rerank e pool.
+    """
+    contaminacao = []
+    if bool(before_cfg.get("rerank")) != bool(after_cfg.get("rerank")):
+        contaminacao.append(
+            f"rerank ({before_cfg.get('rerank')} vs {after_cfg.get('rerank')})"
+        )
+    if before_cfg.get("candidates_k") != after_cfg.get("candidates_k"):
+        contaminacao.append(
+            f"candidates_k ({before_cfg.get('candidates_k')} vs "
+            f"{after_cfg.get('candidates_k')})"
+        )
+    if contaminacao:
+        raise ValueError(
+            "Pareamento de revogadas contaminado: as configs before/after "
+            "diferem além de exclude_revogadas em "
+            f"{', '.join(contaminacao)}. Use um run "
+            "`--mode rag --exclude-revogadas-comparison` (mesmo rerank e pool, "
+            "diferindo só no filtro)."
+        )
+
+
 def build_revogadas_pairing(
     before_cfg: dict[str, Any], after_cfg: dict[str, Any]
 ) -> dict[str, Any]:
     """Pareia per_question entre `before` (sem filtro) e `after` (com filtro)."""
+    _assert_isolated_pairing(before_cfg, after_cfg)
     before_by_qid = {q["question_id"]: q for q in before_cfg.get("per_question") or []}
     after_by_qid = {q["question_id"]: q for q in after_cfg.get("per_question") or []}
 

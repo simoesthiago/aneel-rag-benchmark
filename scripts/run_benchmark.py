@@ -364,6 +364,10 @@ def main() -> None:
         print(f"  Detalhe por pergunta salvo: {detail_path}")
     else:
         aggregate = None
+        # No modo cache, o próprio JSON de entrada é a fonte dos pareamentos
+        # derivados (que leem `detail_path` adiante). Sem isto, os analyzers
+        # disparavam UnboundLocalError.
+        detail_path = from_cache
         print(
             "  --from-cache ativo: results.csv e per_question.json não são "
             "regravados (o JSON de entrada é a fonte da verdade)."
