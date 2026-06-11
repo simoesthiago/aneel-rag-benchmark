@@ -287,7 +287,8 @@ versionada do GT (v2).
 > (URL ∈ corpus, excerpt cobertura ≥ 0.70). Republicar como versão nova;
 > nunca sobrescrever v1.
 
-**Status (2026-06-11 — ✅ infra + GT v2 publicado; re-run confirmado):**
+**Status (2026-06-11 — ✅ infra + 3a/3b/3c implementados e medidos; Hub da
+v2 completa + promoção a default PENDENTES de confirmação):**
 
 Descoberta ao medir o estado atual (o roadmap/auditoria precedem F1/F2):
 - **gt-0039 e gt-0046 já estão `usable`** — resolvidas pela F1/F2 (rerank
@@ -320,18 +321,40 @@ Re-run local contra o GT v2 (confirmação, 2026-06-11):
   real e atribuível (gt-0005) sobre o chão de ruído do gerador (o baseline
   cru caiu 26→25 na mesma rodada). Não tratar o +2 agregado como ganho real.
 
-Publicado:
-- GT v2 no Hub como **`version=retrieval-50-v2`** (v1 `retrieval-50` intacta;
-  `schema_version=2`). Validação cruzada passou (URL ∈ corpus, cobertura ≥
-  0.70). Critério pré-comprometido cumprido (versão nova, sem sobrescrever).
+3c — correções pontuais (implementado 2026-06-11, ✅ ambas viraram `usable`):
+- **gt-0041** (`fix_excerpt`/answer 3→11 parcelas): o `expected_answer` listava
+  3 parcelas do VMEuRB; o corpus (proc-rede-8-3-pr, item 1.2.1.1) tem 11
+  — (a) a (k). O sistema já respondia as 11 e levava correctness baixa contra
+  um gabarito incompleto. Completado o gabarito + excerpt literal:
+  **correctness 0.22 → 0.97**, ❌ → ✅ `usable`.
+- **gt-0013** (`clarify_question`): a REN 1095/2024 padroniza DUAS coisas
+  (número de identificação da UC e uso de CPF/CNPJ) — pergunta ambígua. O
+  sistema respondia CPF/CNPJ; o GT esperava o número da UC. Reformulada a
+  pergunta para apontar sem ambiguidade à UC: **correctness 0.72 → 0.93**,
+  ❌ → ✅ `usable`. (Quebra comparabilidade com v1 — aceitável: é versão nova.)
+- Script: `scripts/apply_gt_v2_3c.py`. GT local agora é a v2 COMPLETA
+  (3a+3b+3c), validada contra o corpus.
 
-Deferido (decisão separada):
-- Promover o GT v2 a **default** (bump de `GROUND_TRUTH_VERSION` →
-  `retrieval-50-v2` em `settings.py`) e re-rodar o baseline canônico contra
-  ele. Enquanto não houver bump, os runs default seguem na v1.
+Medição da v2 completa (local, contra o JSONL com 3a+3b+3c):
+- `answer_usable_rate` (pipeline): 0.604 (v1) → **0.6875 (33/48)**.
+- **Flips reais e atribuíveis da F3: +3** — gt-0005 (3a), gt-0041 e gt-0013
+  (3c). gt-0002 (3b) ficou com números honestos mas segue no muro de
+  correctness. (Parte do delta agregado ainda é ruído do gerador.)
 
-Adiado para 3c (revisão manual): gt-0041 (excerpt 3→11 parcelas), gt-0013
-(reformulação que quebra comparabilidade).
+Publicado / pendente no Hub:
+- Hub `version=retrieval-50-v2` contém **apenas 3a+3b** (publicado em
+  2026-06-11, validação cruzada OK, sem sobrescrever a v1). O **3c ainda NÃO
+  está no Hub**: completá-lo exigiria sobrescrever a v2 (viola o critério
+  "nunca sobrescrever") ou publicar uma versão nova — escrita no Hub que ficou
+  **bloqueada para confirmação do usuário** (segurança).
+
+Pendente da decisão do usuário (única ação que falta):
+1. Publicar a v2 COMPLETA no Hub como **versão nova** (ex.: `retrieval-50-v3`)
+   — respeita o "nunca sobrescrever". Comando:
+   `python scripts/publish_ground_truth.py --version retrieval-50-v3`.
+2. Promover a default: bump de `GROUND_TRUTH_VERSION` → essa versão em
+   `settings.py` + re-run do baseline canônico contra ela.
+Enquanto isso, o default segue na v1 e o GT local (Git) é a fonte completa.
 
 ---
 
