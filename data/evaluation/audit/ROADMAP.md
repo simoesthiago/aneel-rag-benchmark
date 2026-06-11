@@ -287,7 +287,7 @@ versionada do GT (v2).
 > (URL ∈ corpus, excerpt cobertura ≥ 0.70). Republicar como versão nova;
 > nunca sobrescrever v1.
 
-**Status (2026-06-10 — infra + dados prontos; re-run/republish DEFERIDOS):**
+**Status (2026-06-11 — ✅ infra + GT v2 publicado; re-run confirmado):**
 
 Descoberta ao medir o estado atual (o roadmap/auditoria precedem F1/F2):
 - **gt-0039 e gt-0046 já estão `usable`** — resolvidas pela F1/F2 (rerank
@@ -309,9 +309,26 @@ Implementado (3a + 3b, escopo desta rodada):
   é um muro de conteúdo** que a edição de fonte não derruba (a pergunta segue
   reprovando o gate; documentado). Script: `scripts/apply_gt_v2_anyof.py`.
 
-Deferido (sob nova confirmação, custa Cohere + OpenAI):
-- `publish_ground_truth(version="v2")` no Hub e re-run do benchmark contra a
-  v2 para medir o novo `answer_usable_rate`. Só então F3 → CONCLUÍDA.
+Re-run local contra o GT v2 (confirmação, 2026-06-11):
+- **gt-0005: ❌ → ✅ `usable`** — recall 0→1.0, citação 0→1.0 (o `any_of`
+  creditou a REN 1059). Conserto limpo confirmado.
+- **gt-0002: segue ❌** — recall 0→1.0 e doc_recall 0→1.0 (números honestos
+  via `any_of`), mas correctness 0.72 inalterada → reclassificada de
+  `retrieval_document_failure` para `citation_and_answer_failure`. O residual
+  é **geração**, não GT — exatamente como previsto.
+- `answer_usable_rate` (pipeline): 0.604 → 0.646. **Leitura honesta:** +1
+  real e atribuível (gt-0005) sobre o chão de ruído do gerador (o baseline
+  cru caiu 26→25 na mesma rodada). Não tratar o +2 agregado como ganho real.
+
+Publicado:
+- GT v2 no Hub como **`version=retrieval-50-v2`** (v1 `retrieval-50` intacta;
+  `schema_version=2`). Validação cruzada passou (URL ∈ corpus, cobertura ≥
+  0.70). Critério pré-comprometido cumprido (versão nova, sem sobrescrever).
+
+Deferido (decisão separada):
+- Promover o GT v2 a **default** (bump de `GROUND_TRUTH_VERSION` →
+  `retrieval-50-v2` em `settings.py`) e re-rodar o baseline canônico contra
+  ele. Enquanto não houver bump, os runs default seguem na v1.
 
 Adiado para 3c (revisão manual): gt-0041 (excerpt 3→11 parcelas), gt-0013
 (reformulação que quebra comparabilidade).
