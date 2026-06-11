@@ -287,6 +287,35 @@ versionada do GT (v2).
 > (URL ∈ corpus, excerpt cobertura ≥ 0.70). Republicar como versão nova;
 > nunca sobrescrever v1.
 
+**Status (2026-06-10 — infra + dados prontos; re-run/republish DEFERIDOS):**
+
+Descoberta ao medir o estado atual (o roadmap/auditoria precedem F1/F2):
+- **gt-0039 e gt-0046 já estão `usable`** — resolvidas pela F1/F2 (rerank
+  pool 100 + filtro), como ocorreu com a gt-0030. Não precisam de edição.
+- **Métricas eram AND** (`doc_recall`, `source_coverage` = fração de *todas*
+  as fontes): adicionar fonte alternativa ao GT *reduziria* o score. Logo a
+  F3 exigiu **semântica `any_of`**, não só edição de dados.
+
+Implementado (3a + 3b, escopo desta rodada):
+- **`any_of` schema + métricas group-aware** — campo opcional `group` por
+  fonte (OR no grupo, AND entre grupos; singleton = AND original, zero
+  regressão); `tipo`/`subtipo` opcionais por fonte; validador relaxado para
+  tipo por-fonte; `source_coverage`/`doc_recall_at_k` group-aware. Bump de
+  `schema_version` 1→2. Coberto por testes (matching/metrics/ground_truth).
+- **GT v2 local** (`aneel_retrieval_50.jsonl`, +2 fontes, validado contra o
+  corpus): gt-0005 (+REN 1059/2023, mesmo tipo) — conserto limpo
+  (correctness 0.95 → deve virar `usable`); gt-0002 (+PRORET 6.8 cross-tipo)
+  — recall/citação/doc_recall ficam honestos, **mas correctness=0.72 < 0.8
+  é um muro de conteúdo** que a edição de fonte não derruba (a pergunta segue
+  reprovando o gate; documentado). Script: `scripts/apply_gt_v2_anyof.py`.
+
+Deferido (sob nova confirmação, custa Cohere + OpenAI):
+- `publish_ground_truth(version="v2")` no Hub e re-run do benchmark contra a
+  v2 para medir o novo `answer_usable_rate`. Só então F3 → CONCLUÍDA.
+
+Adiado para 3c (revisão manual): gt-0041 (excerpt 3→11 parcelas), gt-0013
+(reformulação que quebra comparabilidade).
+
 ---
 
 ## Fase 4 — Atualização de corpus: PRODIST 2008 → 2021 [APROVADA, por último]

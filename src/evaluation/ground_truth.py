@@ -31,7 +31,9 @@ from src.config.settings import (
 
 GROUND_TRUTH_FILENAME = "ground_truth.jsonl"
 GROUND_TRUTH_MANIFEST_FILENAME = "manifest.json"
-GROUND_TRUTH_SCHEMA_VERSION = 1
+# v2: fontes ganham campos opcionais `group` (any_of) e `tipo`/`subtipo`
+# por-fonte (override cross-tipo). Aditivo — linhas v1 seguem válidas.
+GROUND_TRUTH_SCHEMA_VERSION = 2
 DEFAULT_EXPECTED_COUNT = 50
 DEFAULT_SUPPORT_EXCERPT_MIN_COVERAGE = 0.70
 DEFAULT_ANSWER_SUPPORT_MIN_COVERAGE = 0.55
@@ -430,15 +432,20 @@ def _validate_source(
     if document is None:
         errors.append(f"{label}: document_id não existe no corpus: {doc_id}.")
         return
-    if str(row.get("tipo")) != str(document["tipo"]):
+    # Tipo/subtipo são validados por-fonte: a fonte pode declarar `tipo`/
+    # `subtipo` próprios (fonte alternativa cross-tipo, ex.: PRORET numa
+    # pergunta REN num grupo `any_of`); na ausência, herda os da linha.
+    expected_tipo = str(source.get("tipo", row.get("tipo")))
+    expected_subtipo = str(source.get("subtipo", row.get("subtipo")))
+    if expected_tipo != str(document["tipo"]):
         errors.append(
             f"{label}: tipo diverge do corpus: "
-            f"{row.get('tipo')!r} != {document['tipo']!r}."
+            f"{expected_tipo!r} != {document['tipo']!r}."
         )
-    if str(row.get("subtipo")) != str(document["subtipo"]):
+    if expected_subtipo != str(document["subtipo"]):
         errors.append(
             f"{label}: subtipo diverge do corpus: "
-            f"{row.get('subtipo')!r} != {document['subtipo']!r}."
+            f"{expected_subtipo!r} != {document['subtipo']!r}."
         )
     valid_urls = {
         url for url in [document["url_original"], document["url_consolidado"]] if url

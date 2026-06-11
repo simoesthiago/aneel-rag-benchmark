@@ -28,7 +28,11 @@ from typing import Any, Iterable
 import pandas as pd
 
 from src.embeddings.cache import QueryEmbeddingCache
-from src.evaluation.matching import build_relevance_vector, source_coverage
+from src.evaluation.matching import (
+    build_relevance_vector,
+    document_groups,
+    source_coverage,
+)
 from src.evaluation.metrics import (
     doc_recall_at_k,
     evaluate_response,
@@ -317,7 +321,9 @@ def evaluate_question(
     return {
         "question_id": question.get("question_id"),
         "recall_at_k": source_coverage(retrieved, fontes),
-        "doc_recall_at_k": doc_recall_at_k(retrieved, expected_doc_ids, k=top_k),
+        "doc_recall_at_k": doc_recall_at_k(
+            retrieved, expected_doc_ids, k=top_k, groups=document_groups(fontes)
+        ),
         "precision_at_k": precision,
         "mrr_at_k": mrr,
         "ndcg_at_k": ndcg_at_k(relevances, k=top_k),
@@ -517,7 +523,9 @@ def evaluate_question_rag(
         ),
     )
     recall = source_coverage(contexts, fontes)
-    doc_recall = doc_recall_at_k(contexts, expected_doc_ids, k=top_k)
+    doc_recall = doc_recall_at_k(
+        contexts, expected_doc_ids, k=top_k, groups=document_groups(fontes)
+    )
     citation_acc = _citation_accuracy_from_response(response, relevances)
     answer_is_usable = _answer_usable(
         recall_at_k=recall,
