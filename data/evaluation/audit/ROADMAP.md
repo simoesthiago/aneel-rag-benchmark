@@ -262,7 +262,7 @@ Run de 3 configs (baseline, rerank@50, rerank@100) com pareamento isolado.
 
 ---
 
-## Fase 3 — Ground Truth v2: fontes alternativas + correções
+## Fase 3 — Ground Truth v2: fontes alternativas + correções (✅ CONCLUÍDA)
 
 **Problema:** 6 falhas são do GT, não do sistema (auditor confirmou
 fontes alternativas legítimas + 1 excerpt incompleto + 1 pergunta ambígua).
@@ -287,8 +287,8 @@ versionada do GT (v2).
 > (URL ∈ corpus, excerpt cobertura ≥ 0.70). Republicar como versão nova;
 > nunca sobrescrever v1.
 
-**Status (2026-06-11 — ✅ infra + 3a/3b/3c implementados e medidos; Hub da
-v2 completa + promoção a default PENDENTES de confirmação):**
+**Status (2026-06-11 — ✅ CONCLUÍDA: infra `any_of` + GT v2 (3a/3b/3c) +
+publicado como `retrieval-50-v3` + promovido a default + canônico re-rodado):**
 
 Descoberta ao medir o estado atual (o roadmap/auditoria precedem F1/F2):
 - **gt-0039 e gt-0046 já estão `usable`** — resolvidas pela F1/F2 (rerank
@@ -341,20 +341,18 @@ Medição da v2 completa (local, contra o JSONL com 3a+3b+3c):
   (3c). gt-0002 (3b) ficou com números honestos mas segue no muro de
   correctness. (Parte do delta agregado ainda é ruído do gerador.)
 
-Publicado / pendente no Hub:
-- Hub `version=retrieval-50-v2` contém **apenas 3a+3b** (publicado em
-  2026-06-11, validação cruzada OK, sem sobrescrever a v1). O **3c ainda NÃO
-  está no Hub**: completá-lo exigiria sobrescrever a v2 (viola o critério
-  "nunca sobrescrever") ou publicar uma versão nova — escrita no Hub que ficou
-  **bloqueada para confirmação do usuário** (segurança).
-
-Pendente da decisão do usuário (única ação que falta):
-1. Publicar a v2 COMPLETA no Hub como **versão nova** (ex.: `retrieval-50-v3`)
-   — respeita o "nunca sobrescrever". Comando:
-   `python scripts/publish_ground_truth.py --version retrieval-50-v3`.
-2. Promover a default: bump de `GROUND_TRUTH_VERSION` → essa versão em
-   `settings.py` + re-run do baseline canônico contra ela.
-Enquanto isso, o default segue na v1 e o GT local (Git) é a fonte completa.
+Promoção a default (✅ CONCLUÍDA, 2026-06-11):
+- GT v2 completo publicado no Hub como **`version=retrieval-50-v3`** (versão
+  nova — respeita "nunca sobrescrever"). Versões `retrieval-50` (v1) e
+  `retrieval-50-v2` (intermediária, só 3a/3b) preservadas no Hub.
+- **`GROUND_TRUTH_VERSION` default → `retrieval-50-v3`** em `settings.py`.
+  Runs default agora carregam a v3 (com 3a+3b+3c).
+- **Baseline canônico re-rodado contra a v3** (do Hub): `results/rag-50/`
+  atualizado. Pipeline (rerank@100 + filtro) `answer_usable_rate` = **0.6875
+  (33/48)**; baseline cru 0.542. doc_recall 0.875.
+- F3 entregue ponta a ponta: infra `any_of` + GT v2 (3a/3b/3c) + publicação +
+  default + canônico. Ganho real e atribuível: **+3** (gt-0005, gt-0041,
+  gt-0013). gt-0002 segue no muro de correctness (residual de geração).
 
 ---
 
