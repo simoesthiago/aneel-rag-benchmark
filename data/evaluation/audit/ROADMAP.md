@@ -54,9 +54,9 @@ Não chutamos. Cada decisão passou por um protocolo:
 | gt-0046 | citation | GT incompleto: chunks do mesmo manual | **F3** |
 | gt-0041 | answer_quality | excerpt do GT incompleto (3 de 11 parcelas) | **F3** |
 | gt-0013 | citation_and_answer | pergunta ambígua (2 dimensões) | **F3** |
-| gt-0017 | retrieval_passage | corpus PRODIST v0 (2008) desatualizado | **F4** |
-| gt-0019 | citation | corpus PRODIST v0 desatualizado | **F4** |
-| gt-0022 | citation_and_answer | corpus PRODIST v0 desatualizado | **F4** |
+| gt-0017 | retrieval_passage | chunk da def. de anti-ilhamento não recuperado (não é outdated; ver F4) | **Retrieval** |
+| gt-0019 | answer_quality | resposta incompleta (escopo); GT correto (ver F4) | **F7** |
+| gt-0022 | answer_quality | enquadramento alternativo da BDGD; GT correto (ver F4) | **F7** |
 | gt-0027 | retrieval_document | vocabulário: 2.4 vs 2.1 (sem termo discriminante) | **F5** |
 | gt-0023 | citation_and_answer | identificador vizinho: 2.1 vs 2.1A (somou RI) | **F5** |
 | gt-0024 | citation_and_answer | identificador vizinho: 2.1 vs 2.1A | **F5** |
@@ -134,7 +134,7 @@ trecho. Juntas (11) são o "piso de retrieval" dentro das 24.
 | gt-0030 | doc rank 82 | F2† |
 | gt-0002 | doc — GT incompleto | F3 |
 | gt-0005 | passagem — concept-dense | F3/F8 |
-| gt-0017 | passagem — corpus PRODIST v0 | F4 |
+| gt-0017 | passagem — chunk da def. não recuperado (não outdated) | Retrieval |
 | gt-0027 | doc — vocabulário 2.4 vs 2.1 | F5 |
 | gt-0025 | passagem — excerpt enumerado | F6 |
 
@@ -360,7 +360,30 @@ Promoção a default (✅ CONCLUÍDA, 2026-06-11):
 
 ---
 
-## Fase 4 — Atualização de corpus: PRODIST 2008 → 2021 [APROVADA, por último]
+## Fase 4 — Atualização de corpus: PRODIST 2008 → 2021 [REBUILD NÃO JUSTIFICADO — só proveniência opcional]
+
+**Status (2026-06-11 — diagnóstico read-only antes de gastar):** a premissa
+("essas 3 falham por corpus desatualizado") **foi refutada**. O próprio
+auditor já notava que o conteúdo é estável 2008↔2021 e que "a resposta do
+sistema corresponde à redação vigente". Olhando o modo de falha real (canônico
+v2):
+- **gt-0017** (`retrieval_passage`, recall=0, corr=0.88): o sistema responde
+  **certo**; falha só porque o **chunk** da definição de anti-ilhamento do
+  `prodist-modulo-03` (que É recuperado, doc_recall=1.0) não foi recuperado.
+  É **retrieval/chunking** — trocar para 2021 não muda. (O doc que o sistema
+  citou, `ren-2023-1076`, é sobre ride-through, não a definição.)
+- **gt-0019 / gt-0022** (`answer_quality`, corr=0.78): GT correto; resposta
+  incompleta (escopo) / enquadramento alternativo. São **gerador (F7)**.
+
+**Conclusão:** o rebuild caro (~US$3-8 + download na máquina local + re-publish
+de corpus/índices) **não viraria nenhuma das 3**. Reclassificadas: gt-0017 →
+retrieval; gt-0019/0022 → F7. O update do corpus para 2021 vira **higiene de
+proveniência opcional** (faz o GT citar a norma vigente; **não muda o score**),
+a fazer só se/quando houver re-ingestão por outra razão.
+
+---
+
+### Plano original (preservado para referência)
 
 **Problema:** o corpus tem PRODIST v0 de 2008 (`aren2008345`); a vigente é
 REN 956/2021. GT e corpus "concordam" mas ambos obsoletos. Auditor (web
@@ -490,10 +513,11 @@ concept-dense afetadas. Para 1 pergunta, o GT enrichment da F3 é mais barato.
 | Pós-F1 (revogadas) | +gt-0003 | 6 |
 | Pós-F2 (rerank pool 100) | +gt-0007/0012/0026/0034 | ~4 |
 | Pós-F3 (GT v2) | +gt-0002/0005/0039/0041/0046/0013 | ~4 |
-| Pós-F4 (corpus PRODIST) | +gt-0017/0019/0022 | ~3 |
+| ~~Pós-F4 (corpus PRODIST)~~ | rebuild não justificado (ver F4) | — |
+| Retrieval (gt-0017) | chunk da def. não recuperado | — |
 | Pós-F5 (identificadores) | +gt-0027/0023/0024 | ~1 |
 | Pós-F6 (matching enumerado) | +gt-0025 | ~1 |
-| Pós-F7 (gerador) | +gt-0015/0049 | **0–1** |
+| Pós-F7 (gerador) | +gt-0015/0049/**0019/0022** | **0–2** |
 | **Teto teórico** | **~98–100%** | 0–1 |
 
 Os números pós-fase **não são promessas** — cada um será confirmado por
