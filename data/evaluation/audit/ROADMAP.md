@@ -220,6 +220,15 @@ insustentável — esse delta está dentro do ruído. O sinal estável é
 "no limite"): aquele veredito também está no chão de ruído — vale a
 ressalva, ainda que `doc_recall` da F2 (+0.042) seja sólido por si só.
 
+> **CORREÇÃO (2026-06-11, medição formal — ver "Chão de ruído" abaixo):** a
+> afirmação "±1-2" acima veio de um snapshot de **2 runs sobre o GT v1**. A
+> medição formal com **3 réplicas sobre o GT v2** (config default, sem cache
+> de geração) deu **0 perguntas instáveis** — o gate é **muito mais
+> determinístico** do que este parágrafo sugere. O ruído é baixo e
+> intermitente (depende de quantas perguntas estão na borda do limiar), não
+> "±1-2 sempre". A disciplina de "olhar flips atribuíveis, não delta agregado"
+> continua válida, mas a paranoia com ruído pode ser relaxada para o v2.
+
 **Resultado (veredito `promote`):** ver `results/rag-50/revogadas_pairing.md`.
 - `delta_doc_recall = +0.021` (estável entre runs) ✅; `hard_broken = 0` ✅.
 - **Salva** gt-0008 e gt-0030: sem filtro citavam normas **revogadas**
@@ -401,6 +410,39 @@ atualizar fontes do GT.
 **Critério pré-comprometido:**
 > Executar após F1–F3. Promover SE ≥ 2 das 3 perguntas-alvo passarem a
 > `usable` sem regressão global.
+
+---
+
+## Fase 2.5 — Chão de ruído do gate (✅ MEDIDO 2026-06-11)
+
+**Objetivo:** quantificar a variância run-a-run do `answer_usable_rate` para
+ler ganhos de 1–2 perguntas com a régua certa.
+
+**Método:** rodar a config default (pipeline rerank@100 + filtro, GT v2) N
+vezes e comparar pergunta a pergunta. Não há cache de geração/judge (o
+`--cache-path` cobre só query embeddings), então cada réplica faz chamadas
+LLM frescas.
+
+**Resultado (3 réplicas válidas):** `33/48` nas **três**, com **0 perguntas
+instáveis** — o gate foi **totalmente determinístico** entre réplicas.
+Conclusão: o ruído do gerador a temperatura 0 é **baixo e intermitente**, bem
+menor que o "±1-2" estimado na F1 (que era um snapshot de 2 runs no v1, com
+mais perguntas na borda). **Corrige aquela afirmação.**
+
+**Implicação prática:** um flip atribuível de +1 (com mecanismo visível, como
+gt-0005/gt-0041) é confiável; não é preciso a paranoia de ruído da F1 para o
+v2. A disciplina mantida é "ver o mecanismo do flip", não "delta agregado".
+
+**Ressalva:** N=3 (não 5). As réplicas 4 e 5 **falharam por limite da Cohere**
+(ver abaixo). 3 réplicas idênticas já são forte evidência de determinismo,
+mas não excluem flips raros.
+
+> ⚠️ **BLOQUEADOR OPERACIONAL — quota Cohere esgotada.** A `COHERE_API_KEY` é
+> uma **Trial key (1000 chamadas/mês)** e foi **esgotada** nesta sessão (HTTP
+> 429). O rerank do pipeline depende dela, então **rodar mais benchmarks
+> (F5/F6/F7 e qualquer re-run) está bloqueado** até a chave ser renovada/
+> upgradada (Production key em dashboard.cohere.com). Implementação de código
+> pode prosseguir; **validação por medição, não.**
 
 ---
 
