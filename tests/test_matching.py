@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from src.evaluation.matching import (
     build_relevance_vector,
+    document_groups,
+    group_sources,
     is_relevant,
     section_signature_from_chunk,
     section_signature_from_label,
+    source_coverage,
 )
 
 
@@ -35,13 +38,17 @@ def _source(
     section_label: str = "",
     relevance: int = 3,
     support_excerpt: str = "",
+    group: str | None = None,
 ) -> dict:
-    return {
+    source = {
         "document_id": document_id,
         "section_label": section_label,
         "relevance": relevance,
         "support_excerpt": support_excerpt,
     }
+    if group is not None:
+        source["group"] = group
+    return source
 
 
 def test_section_signature_from_chunk_reduz_a_tokens_canonicos():
@@ -233,3 +240,62 @@ def test_build_relevance_vector_preserva_ordem_do_ranking():
         )
     ]
     assert build_relevance_vector(chunks, fontes) == [3, 0, 3]
+
+
+# -----------------------------------------------------------------------------
+# Semântica any_of (grupos de fontes alternativas) — Fase 3
+# -----------------------------------------------------------------------------
+
+
+def test_group_sources_fontes_sem_grupo_viram_singletons():
+    fontes = [
+        _source(document_id="a", section_label="Art. 1º"),
+        _source(document_id="b", section_label="Art. 2º"),
+    ]
+    grupos = group_sources(fontes)
+    assert len(grupos) == 2
+    assert all(len(g) == 1 for g in grupos)
+
+
+def test_group_sources_mesmo_group_vira_um_grupo():
+    fontes = [
+        _source(document_id="a", section_label="Art. 1º", group="g1"),
+        _source(document_id="b", section_label="Art. 1º", group="g1"),
+        _source(document_id="c", section_label="Art. 3º"),
+    ]
+    grupos = group_sources(fontes)
+    # 1 grupo nomeado (a, b) + 1 singleton (c)
+    assert len(grupos) == 2
+    tamanhos = sorted(len(g) for g in grupos)
+    assert tamanhos == [1, 2]
+
+
+def test_document_groups_particiona_doc_ids_por_grupo():
+    fontes = [
+        _source(document_id="a", group="g1"),
+        _source(document_id="b", group="g1"),
+        _source(document_id="c"),
+    ]
+    grupos = document_groups(fontes)
+    assert sorted(sorted(g) for g in grupos) == [["a", "b"], ["c"]]
+
+
+def test_source_coverage_any_of_credita_grupo_com_uma_alternativa():
+    # Grupo g1 = {docA, docB} alternativos; só docB é recuperado -> grupo
+    # coberto -> recall 1.0 (não 0.5 como na semântica AND).
+    fontes = [
+        _source(document_id="doc-a", section_label="Art. 1º", group="g1"),
+        _source(document_id="doc-b", section_label="Art. 1º", group="g1"),
+    ]
+    chunks = [_chunk(document_id="doc-b", artigo="Art. 1º")]
+    assert source_coverage(chunks, fontes) == 1.0
+
+
+def test_source_coverage_singletons_preservam_semantica_and():
+    # Sem `group`, cada fonte é obrigatória: cobrir 1 de 2 dá 0.5.
+    fontes = [
+        _source(document_id="doc-a", section_label="Art. 1º"),
+        _source(document_id="doc-b", section_label="Art. 1º"),
+    ]
+    chunks = [_chunk(document_id="doc-b", artigo="Art. 1º")]
+    assert source_coverage(chunks, fontes) == 0.5

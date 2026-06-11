@@ -291,3 +291,76 @@ def test_publish_ground_truth_recusa_sobrescrever_sem_force(tmp_path: Path):
             repo_id="simoesthiago/aneel-corpus",
             api=FakeApi(),
         )
+
+
+def _corpus_df_cross_tipo() -> pd.DataFrame:
+    texto = (
+        "A produçăo, transmissăo e distribuiçăo de energia elétrica devem "
+        "ser reguladas e fiscalizadas."
+    )
+    return pd.DataFrame(
+        [
+            {
+                "id": "doc-1",
+                "tipo": "lei",
+                "subtipo": "lei_federal",
+                "url_original": "https://example.com/doc-1.pdf",
+                "url_consolidado": None,
+                "metodo_extracao": "texto",
+                "texto_bruto": texto,
+            },
+            {
+                "id": "doc-2",
+                "tipo": "procedimento",
+                "subtipo": "proret",
+                "url_original": "https://example.com/doc-2.pdf",
+                "url_consolidado": None,
+                "metodo_extracao": "texto",
+                "texto_bruto": texto,
+            },
+        ]
+    )
+
+
+def _cross_tipo_source(*, tipo_override: bool) -> dict:
+    fonte = _source(document_id="doc-2", url="https://example.com/doc-2.pdf")
+    fonte["group"] = "g1"
+    if tipo_override:
+        fonte["tipo"] = "procedimento"
+        fonte["subtipo"] = "proret"
+    return fonte
+
+
+def test_validate_aceita_fonte_cross_tipo_com_override_por_fonte():
+    # any_of: fonte alternativa de OUTRO tipo (procedimento) numa pergunta lei,
+    # carregando `tipo`/`subtipo` próprios -> passa.
+    from src.evaluation.ground_truth import validate_ground_truth
+
+    fonte_principal = _source()
+    fonte_principal["group"] = "g1"
+    row = _question(
+        relevant_sources=[fonte_principal, _cross_tipo_source(tipo_override=True)]
+    )
+    summary = validate_ground_truth(
+        [row], corpus_df=_corpus_df_cross_tipo(), expected_count=1
+    )
+    assert summary["question_count"] == 1
+
+
+def test_validate_rejeita_fonte_cross_tipo_sem_override():
+    # Sem o override por-fonte, a fonte procedimento diverge do tipo lei da
+    # linha -> erro de tipo (comportamento estrito preservado).
+    from src.evaluation.ground_truth import (
+        GroundTruthValidationError,
+        validate_ground_truth,
+    )
+
+    fonte_principal = _source()
+    fonte_principal["group"] = "g1"
+    row = _question(
+        relevant_sources=[fonte_principal, _cross_tipo_source(tipo_override=False)]
+    )
+    with pytest.raises(GroundTruthValidationError, match="tipo diverge"):
+        validate_ground_truth(
+            [row], corpus_df=_corpus_df_cross_tipo(), expected_count=1
+        )

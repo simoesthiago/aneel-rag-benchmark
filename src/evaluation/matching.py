@@ -80,26 +80,66 @@ def build_relevance_vector(
     return [is_relevant(chunk, fontes) for chunk in retrieved]
 
 
+def group_sources(
+    relevant_sources: Iterable[dict[str, Any]],
+) -> list[list[dict[str, Any]]]:
+    """Particiona fontes em grupos `any_of` (OR dentro do grupo).
+
+    Fontes que compartilham um mesmo valor não-vazio de `group` são
+    alternativas mutuamente aceitáveis (basta uma ser coberta). Fontes sem
+    `group` viram grupos singleton — preservando a semântica AND original
+    (cada fonte é obrigatória por si só) para o ground truth não anotado.
+
+    A ordem dos grupos é determinística: grupos nomeados na ordem de primeira
+    aparição, depois os singletons na ordem original.
+    """
+    nomeados: dict[str, list[dict[str, Any]]] = {}
+    singletons: list[list[dict[str, Any]]] = []
+    for source in relevant_sources:
+        chave = source.get("group")
+        if chave is None or str(chave).strip() == "":
+            singletons.append([source])
+        else:
+            nomeados.setdefault(str(chave), []).append(source)
+    return list(nomeados.values()) + singletons
+
+
+def document_groups(
+    relevant_sources: Iterable[dict[str, Any]],
+) -> list[list[str]]:
+    """`document_id`s esperados particionados nos mesmos grupos `any_of`."""
+    grupos: list[list[str]] = []
+    for grupo in group_sources(relevant_sources):
+        ids = [str(s.get("document_id")) for s in grupo if s.get("document_id")]
+        if ids:
+            grupos.append(ids)
+    return grupos
+
+
 def source_coverage(
     retrieved: Iterable[dict[str, Any]],
     relevant_sources: Iterable[dict[str, Any]],
 ) -> float:
-    """Fração de fontes esperadas cobertas por pelo menos um chunk recuperado.
+    """Fração de **grupos** de fontes cobertos por pelo menos um chunk.
 
     Esta é a forma honesta de recall para benchmarks RAG: o que importa é se
     cada fonte do gabarito foi "tocada" no top-k, não o tamanho exato do
     overlap. Múltiplos chunks podem cobrir a mesma fonte.
+
+    Com a semântica `any_of` (ver `group_sources`), um grupo de alternativas
+    conta como coberto se **qualquer** de suas fontes for tocada — fontes não
+    anotadas viram singletons, recuperando o comportamento AND original.
     """
     chunks = list(retrieved)
-    fontes = list(relevant_sources)
-    if not fontes:
+    grupos = group_sources(list(relevant_sources))
+    if not grupos:
         return 0.0
-    cobertas = sum(
+    cobertos = sum(
         1
-        for source in fontes
-        if any(is_relevant(chunk, [source]) > 0 for chunk in chunks)
+        for grupo in grupos
+        if any(is_relevant(chunk, [source]) > 0 for source in grupo for chunk in chunks)
     )
-    return cobertas / len(fontes)
+    return cobertos / len(grupos)
 
 
 def section_signature_from_chunk(chunk: dict[str, Any]) -> str:
@@ -194,6 +234,8 @@ def _source_grade(source: dict[str, Any]) -> int:
 
 __all__ = [
     "build_relevance_vector",
+    "document_groups",
+    "group_sources",
     "is_relevant",
     "normalize_text",
     "section_signature_from_chunk",

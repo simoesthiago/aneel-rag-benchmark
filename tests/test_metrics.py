@@ -60,6 +60,25 @@ def test_doc_recall_at_k_ignora_section_label():
     assert doc_recall_at_k(contexts, ["outro-doc"], k=1) == 0.0
 
 
+def test_doc_recall_at_k_any_of_credita_grupo_alternativo():
+    from src.evaluation.metrics import doc_recall_at_k
+
+    contexts = [
+        {"document_id": "ren-2023-1059", "artigo": "Art. 1o"},
+    ]
+    # Grupo any_of {REN 1000, REN 1059}: só REN 1059 recuperado.
+    grupos = [["ren-2021-1000", "ren-2023-1059"]]
+    # any_of -> grupo coberto -> recall 1.0 (não 0.5 como na semântica AND).
+    assert doc_recall_at_k(contexts, [], k=3, groups=grupos) == 1.0
+    # Sem `groups`, os 2 docs são obrigatórios e só 1 foi coberto -> 0.5.
+    assert (
+        doc_recall_at_k(contexts, ["ren-2021-1000", "ren-2023-1059"], k=3) == 0.5
+    )
+    # Dois grupos, só um coberto -> 0.5 (AND entre grupos).
+    grupos_2 = [["ren-2021-1000", "ren-2023-1059"], ["doc-ausente"]]
+    assert doc_recall_at_k(contexts, [], k=3, groups=grupos_2) == 0.5
+
+
 def test_article_hit_valida_documento_e_artigo():
     from src.evaluation.metrics import article_hit_at_k
 

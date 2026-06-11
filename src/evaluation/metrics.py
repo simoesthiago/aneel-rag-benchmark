@@ -34,6 +34,8 @@ def doc_recall_at_k(
     contexts: Iterable[dict[str, Any]],
     expected_document_ids: Iterable[str],
     k: int = 10,
+    *,
+    groups: list[list[str]] | None = None,
 ) -> float:
     """Fração de `document_id`s esperados cobertos por algum chunk no top-k.
 
@@ -44,18 +46,35 @@ def doc_recall_at_k(
     específico — sinal de problema de chunking/granularidade, não de
     retrieval por se.
 
+    Semântica `any_of`: quando `groups` é fornecido (lista de grupos de
+    `document_id`s alternativos), um grupo conta como coberto se **qualquer**
+    de seus docs aparece no top-k, e a métrica é a fração de grupos cobertos.
+    Sem `groups`, cada doc esperado é seu próprio grupo (comportamento AND
+    original).
+
     Args:
         contexts: chunks devolvidos pelo Retriever, com campo `document_id`
-        expected_document_ids: ids únicos dos documentos esperados (do GT)
+        expected_document_ids: ids dos documentos esperados (do GT)
         k: top-k a considerar
+        groups: partição `any_of` opcional dos docs esperados
     """
-    expected = {str(doc_id) for doc_id in expected_document_ids if doc_id}
-    if not expected:
-        return 0.0
     top_k = list(contexts)[:k]
     retrieved_docs = {
         str(ctx.get("document_id")) for ctx in top_k if ctx.get("document_id")
     }
+    if groups:
+        grupos = [
+            {str(d) for d in grupo if d} for grupo in groups
+        ]
+        grupos = [g for g in grupos if g]
+        if not grupos:
+            return 0.0
+        cobertos = sum(1 for g in grupos if retrieved_docs & g)
+        return cobertos / len(grupos)
+
+    expected = {str(doc_id) for doc_id in expected_document_ids if doc_id}
+    if not expected:
+        return 0.0
     return len(retrieved_docs & expected) / len(expected)
 
 
