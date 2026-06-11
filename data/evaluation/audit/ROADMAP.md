@@ -288,7 +288,7 @@ versionada do GT (v2).
 > nunca sobrescrever v1.
 
 **Status (2026-06-11 — ✅ CONCLUÍDA: infra `any_of` + GT v2 (3a/3b/3c) +
-publicado como `retrieval-50-v3` + promovido a default + canônico re-rodado):**
+publicado como `retrieval-50-v2` + promovido a default + canônico re-rodado):**
 
 Descoberta ao medir o estado atual (o roadmap/auditoria precedem F1/F2):
 - **gt-0039 e gt-0046 já estão `usable`** — resolvidas pela F1/F2 (rerank
@@ -342,14 +342,18 @@ Medição da v2 completa (local, contra o JSONL com 3a+3b+3c):
   correctness. (Parte do delta agregado ainda é ruído do gerador.)
 
 Promoção a default (✅ CONCLUÍDA, 2026-06-11):
-- GT v2 completo publicado no Hub como **`version=retrieval-50-v3`** (versão
-  nova — respeita "nunca sobrescrever"). Versões `retrieval-50` (v1) e
-  `retrieval-50-v2` (intermediária, só 3a/3b) preservadas no Hub.
-- **`GROUND_TRUTH_VERSION` default → `retrieval-50-v3`** em `settings.py`.
-  Runs default agora carregam a v3 (com 3a+3b+3c).
-- **Baseline canônico re-rodado contra a v3** (do Hub): `results/rag-50/`
-  atualizado. Pipeline (rerank@100 + filtro) `answer_usable_rate` = **0.6875
-  (33/48)**; baseline cru 0.542. doc_recall 0.875.
+- GT v2 completo publicado no Hub como **`version=retrieval-50-v2`**. Estado
+  final do Hub: **`retrieval-50` (v1) + `retrieval-50-v2` (completa)**.
+  (Durante o desenvolvimento houve um intermediário só com 3a/3b e uma v3;
+  foram consolidados nesta v2 completa e os resíduos retirados do Hub — o
+  conteúdo do intermediário está preservado no histórico Git, no commit
+  anterior ao 3c.)
+- **`GROUND_TRUTH_VERSION` default → `retrieval-50-v2`** em `settings.py`.
+  Runs default agora carregam a v2 completa (3a+3b+3c).
+- **Baseline canônico re-rodado contra a v2 completa** (do Hub):
+  `results/rag-50/` atualizado. Pipeline (rerank@100 + filtro)
+  `answer_usable_rate` = **0.6875 (33/48)**; baseline cru 0.542;
+  doc_recall 0.875.
 - F3 entregue ponta a ponta: infra `any_of` + GT v2 (3a/3b/3c) + publicação +
   default + canônico. Ganho real e atribuível: **+3** (gt-0005, gt-0041,
   gt-0013). gt-0002 segue no muro de correctness (residual de geração).

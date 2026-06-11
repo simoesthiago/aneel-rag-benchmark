@@ -174,11 +174,12 @@ VECTORSTORE_HUB_PREFIX: str = "data/vectorstores"
 # -----------------------------------------------------------------------------
 GROUND_TRUTH_HUB_PREFIX: str = "data/evaluation/ground_truth"
 # Fase 3: GT v2 completo (any_of 3a/3b + correções 3c) promovido a default,
-# publicado no Hub como `retrieval-50-v3`. As versões `retrieval-50` (v1) e
-# `retrieval-50-v2` (intermediária, só 3a/3b) ficam preservadas no Hub.
+# publicado no Hub como `retrieval-50-v2`. A v1 (`retrieval-50`) fica
+# preservada. (O intermediário incompleto 3a/3b foi retirado e consolidado
+# nesta v2 completa; seu conteúdo está preservado no histórico Git.)
 GROUND_TRUTH_VERSION: str = _get_optional(
     "GROUND_TRUTH_VERSION",
-    "retrieval-50-v3",
+    "retrieval-50-v2",
 )
 
 
