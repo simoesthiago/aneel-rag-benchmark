@@ -471,6 +471,31 @@ depois das fases baratas, isolada, quando já sabemos o que sobrou.
 > Testar a abordagem 1 (boost, mais barata) isolada, com pareamento. Só
 > passar para 2/3 se 1 não atingir `saved >= 2*broken`.
 
+**Status (2026-06-11 — abordagem 1 testada: `keep_baseline`, REJEITADA):**
+
+Implementado o boost de metadados (`src/rag/identifier_match.py` +
+`Retriever.boost_identificador`, flag **default-off**): quando a pergunta cita
+"Submódulo X.Y", injeta no pool de rerank todos os chunks cujo `document_id`
+casa o identificador com fronteira exata (2.1 ≠ 2.1A ≠ 2.10; 7 testes).
+Validação econômica (`scripts/diagnostics/diagnose_f5_boost.py`, só as 12
+perguntas que citam submódulo, pois o boost é no-op nas demais):
+
+- **`saved=0, broken=0`** → critério `saved >= 2*broken` **não atingido**.
+- **Causa-raiz 1 — o gargalo é o reranker, não o pool:** gt-0027 (2.4) e
+  gt-0028 (7.2) seguem com `doc_recall=0` mesmo com os chunks certos no pool —
+  o Cohere rerank não os sobe ao top-10 (sinal semântico não favorece o doc
+  exato em perguntas de identificador confusável).
+- **Causa-raiz 2 — identificador não discrimina versão:** "Submódulo 2.1"
+  casa ~98 chunks de várias versões; inundar o pool **regrediu** gt-0024
+  (`doc_recall 1.0 → 0.0`, empurrou a versão-alvo para fora). O roadmap já
+  previa "Risco: alto de não funcionar".
+
+**Decisão:** manter `keep_baseline`. O código fica atrás do flag default-off
+como resultado documentado + base para uma eventual abordagem 3 (forçar ao
+topo, com discriminação de versão). gt-0027/0028 permanecem como retrieval
+residual; gt-0023/0024 são citação/versão; gt-0037 é gerador (F7). Seguir
+para F6/F7 (mais barato e com payoff mais claro).
+
 ---
 
 ## Fase 6 — Matching por embedding para excerpts enumerados
