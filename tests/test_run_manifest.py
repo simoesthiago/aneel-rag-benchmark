@@ -110,6 +110,54 @@ def test_build_run_manifest_campos_obrigatorios() -> None:
     json.dumps(manifest)
 
 
+def test_build_run_manifest_mescla_config_flags() -> None:
+    # O agregado do retrieval não materializa as colunas de higiene; os flags
+    # vêm da StoreConfig e precisam aparecer no manifesto.
+    flags = [
+        {"label": "base", "exclude_revogadas": True, "boost_identificador": False},
+        {"label": "rerank", "exclude_revogadas": True, "candidates_k_override": 100},
+    ]
+    manifest = build_run_manifest(
+        mode="retrieval",
+        run_id="r1",
+        aggregate=_fake_aggregate(),
+        top_k=10,
+        ground_truth_version="retrieval-50-v2",
+        ground_truth_source="hub",
+        num_questions=50,
+        num_skipped=2,
+        cache_stats=None,
+        models={"embedding_model": "text-embedding-3-large"},
+        artifact_paths={"results_csv": "results.csv"},
+        config_flags=flags,
+    )
+    # Flags presentes + métrica do agregado preservada na mesma entrada.
+    assert manifest["configs"][0]["label"] == "base"
+    assert manifest["configs"][0]["exclude_revogadas"] is True
+    assert manifest["configs"][0]["doc_recall_at_k"] == 0.875
+    assert manifest["configs"][1]["candidates_k_override"] == 100
+
+
+def test_build_run_manifest_config_flags_tamanho_divergente() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        build_run_manifest(
+            mode="retrieval",
+            run_id="r1",
+            aggregate=_fake_aggregate(),  # 2 linhas
+            top_k=10,
+            ground_truth_version="v",
+            ground_truth_source="hub",
+            num_questions=50,
+            num_skipped=2,
+            cache_stats=None,
+            models={},
+            artifact_paths={},
+            config_flags=[{"label": "só uma"}],  # 1 entrada
+        )
+
+
 def test_write_run_manifest_grava_arquivo(tmp_path) -> None:
     manifest = build_run_manifest(
         mode="retrieval",

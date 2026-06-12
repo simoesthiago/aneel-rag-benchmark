@@ -104,14 +104,34 @@ def build_run_manifest(
     cache_stats: dict[str, int] | None,
     models: dict[str, str],
     artifact_paths: dict[str, str],
+    config_flags: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Monta o dict do manifesto a partir de dados reais do run.
 
     `aggregate` é o DataFrame de métricas (sem a coluna `per_question`); cada
     config vira uma entrada com seus filtros/flags e métricas agregadas.
+
+    `config_flags` (opcional) é a lista de flags por configuração, na mesma
+    ordem das linhas do agregado — tipicamente `asdict(StoreConfig)`. Necessária
+    porque o agregado do modo retrieval não materializa colunas como
+    `exclude_revogadas`/`exclude_superseded_versions`; sem isso o manifesto
+    não registraria os filtros de higiene do run. Mesclada por posição: os
+    flags da config (definição autoritativa) prevalecem em colisão de chave;
+    as colunas de métrica do agregado são preservadas.
     """
     commit, dirty = _git_state()
     configs = _aggregate_records(aggregate)
+    if config_flags is not None:
+        if len(config_flags) != len(configs):
+            raise ValueError(
+                "config_flags e linhas do agregado têm tamanhos diferentes "
+                f"({len(config_flags)} vs {len(configs)}); não dá para parear "
+                "por posição com segurança."
+            )
+        configs = [
+            {**metrics, **flags}
+            for flags, metrics in zip(config_flags, configs)
+        ]
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "run_id": run_id,

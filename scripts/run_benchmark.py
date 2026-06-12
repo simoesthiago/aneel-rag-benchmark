@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -603,6 +604,10 @@ def main() -> None:
             artifact_paths["failure_analysis_md"] = "failure_analysis.md"
             models["llm_model"] = settings.LLM_MODEL
             models["llm_judge_model"] = settings.LLM_JUDGE_MODEL
+        # Flags por config (na ordem das linhas do agregado) para o manifesto
+        # registrar filtros de higiene/rerank — o agregado do retrieval não
+        # materializa essas colunas. `label` ajuda a leitura no relatório.
+        config_flags = [{**asdict(c), "label": c.label} for c in configs]
         manifest = build_run_manifest(
             mode=args.mode,
             run_id=run_id,
@@ -615,6 +620,7 @@ def main() -> None:
             cache_stats=result.cache_stats,
             models=models,
             artifact_paths=artifact_paths,
+            config_flags=config_flags,
         )
         manifest_path = write_run_manifest(output_dir, manifest)
         print(f"  Manifesto do run salvo: {manifest_path}")
