@@ -72,8 +72,12 @@ def _git_state() -> tuple[str | None, bool]:
     except (subprocess.SubprocessError, FileNotFoundError):
         return None, False
     try:
+        # `--untracked-files=no`: dirty significa "código RASTREADO difere do
+        # HEAD". Arquivos não rastreados não contam — senão o próprio diretório
+        # de saída do run (criado antes de escrever o manifesto) auto-marcaria
+        # todo run como dirty.
         status = subprocess.check_output(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             stderr=subprocess.DEVNULL,
         ).decode()
     except (subprocess.SubprocessError, FileNotFoundError):
