@@ -498,7 +498,22 @@ para F6/F7 (mais barato e com payoff mais claro).
 
 ---
 
-## Fase 6 — Matching por embedding para excerpts enumerados
+## Fase 6 — Matching por embedding para excerpts enumerados [PREMISSA REFUTADA]
+
+**Status (2026-06-11 — diagnóstico read-only):** a premissa não bate com o
+estado atual. O alvo gt-0025 **não** é mais `retrieval_passage_failure` (doc
+achado, excerpt enumerado não casa). No canônico v2 é
+`retrieval_document_failure` (`doc_recall=0`) **com `corr=0.97`**: o sistema
+responde as 4 condições corretamente, mas usando uma **versão mais antiga do
+mesmo submódulo** (cita "Proret Submod 2.3 V 1.0 aren2011457"; o GT espera a
+V2.0C/2022) → o doc-id exato não bate. **É discriminação de versão, não
+matching de excerpt enumerado.** A intervenção da F6 (matching por embedding
+dentro do doc achado) não se aplica. gt-0025 junta-se ao cluster de versão
+(gt-0023/0024/0026). Ver "Mapa das residuais" abaixo.
+
+---
+
+### Plano original (preservado para referência)
 
 **Problema:** gt-0025 tem excerpt com 4 condições enumeradas (a/b/c/d) que
 se partem diferente em cada chunking — o SUMMARY provou que **nenhuma
@@ -568,6 +583,39 @@ default fixed-size não sofre de H12.
 **Custo:** alto (H12 fix + rebuild hierarchical + roteador). **Condicional:**
 só executar se F3 não resolver gt-0005 E se houver ≥ 3 perguntas
 concept-dense afetadas. Para 1 pergunta, o GT enrichment da F3 é mais barato.
+
+---
+
+## Mapa das residuais (medido no canônico v2, 2026-06-11)
+
+Estado real: **33/48 `usable`**, **15 residuais**. Ao classificar pela métrica,
+emerge um padrão que reposiciona F4/F5/F6 (todas tinham premissa do estado v1):
+
+**Grupo A — o sistema responde CERTO (corr ≥ 0.86), mas falha em
+citação/recall (9 de 15):** gt-0002, gt-0004, gt-0017, gt-0023, gt-0024,
+gt-0025, gt-0026, gt-0028, gt-0029. O conteúdo está correto; o gate reprova
+por *bookkeeping*: a fonte recuperada/citada é **outra versão do mesmo
+submódulo** (gt-0023/0024/0025/0026), uma **norma relacionada** (gt-0002 PRORET
+6.8, gt-0004 REN 1059 que altera a 1000), ou o **doc-alvo não foi recuperado**
+embora o sistema acerte de outra fonte (gt-0028/0029) / passagem (gt-0017).
+
+**Grupo B — o sistema responde ERRADO (corr < 0.8), gerador real (6 de 15):**
+gt-0015 (0.18), gt-0019 (0.78), gt-0022 (0.78), gt-0027 (0.18, + doc não
+recuperado), gt-0037 (0.12), gt-0049 (0.74, + doc não recuperado). Estes são
+F7 (qualidade de resposta).
+
+**Implicação:** se a métrica de topo fosse *"o sistema dá a resposta correta"*,
+o número honesto seria **~42/48 (~87%)** — o Grupo A é majoritariamente
+discriminação de versão/citação, não erro do sistema. O gate (que exige
+`citation ≥ 0.5`) reprova legitimamente o Grupo A pela definição, mas a
+**causa-raiz dominante dos residuais é confusão de versão/identificador**, não
+os problemas que F5/F6 miravam.
+
+**Maior alavanca restante (decisão de proveniência pendente):** aceitar via
+`any_of` a versão/fonte que o sistema usa no Grupo A (conteúdo estável,
+resposta correta) flipa recall **e** citação de uma vez. A ressalva é
+metodológica: aceitar uma versão mais antiga do submódulo como "correta" para
+uma pergunta version-agnóstica. **Requer decisão do usuário** antes de aplicar.
 
 ---
 
