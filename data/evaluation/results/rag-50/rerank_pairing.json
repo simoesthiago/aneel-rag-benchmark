@@ -1,7 +1,7 @@
 {
   "buckets": {
     "saved_by_rerank": {
-      "count": 9,
+      "count": 13,
       "questions": [
         {
           "question_id": "gt-0003",
@@ -32,6 +32,15 @@
         },
         {
           "question_id": "gt-0014",
+          "baseline_failure_type": "citation_and_answer_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0023",
           "baseline_failure_type": "citation_failure",
           "rerank_failure_type": "usable",
           "recall_baseline": 1.0,
@@ -40,7 +49,52 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0030",
+          "question_id": "gt-0024",
+          "baseline_failure_type": "citation_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0025",
+          "baseline_failure_type": "retrieval_passage_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 0.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0026",
+          "baseline_failure_type": "retrieval_document_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 0.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 0.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0027",
+          "baseline_failure_type": "retrieval_document_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 0.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 0.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0028",
+          "baseline_failure_type": "citation_and_answer_failure",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0029",
           "baseline_failure_type": "retrieval_document_failure",
           "rerank_failure_type": "usable",
           "recall_baseline": 0.0,
@@ -58,25 +112,7 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0039",
-          "baseline_failure_type": "citation_failure",
-          "rerank_failure_type": "usable",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
-          "question_id": "gt-0040",
-          "baseline_failure_type": "answer_quality_failure",
-          "rerank_failure_type": "usable",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
-          "question_id": "gt-0046",
+          "question_id": "gt-0038",
           "baseline_failure_type": "citation_failure",
           "rerank_failure_type": "usable",
           "recall_baseline": 1.0,
@@ -87,10 +123,28 @@
       ]
     },
     "broken_by_rerank": {
-      "count": 2,
+      "count": 5,
       "questions": [
         {
-          "question_id": "gt-0004",
+          "question_id": "gt-0001",
+          "baseline_failure_type": "usable",
+          "rerank_failure_type": "answer_quality_failure",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0009",
+          "baseline_failure_type": "usable",
+          "rerank_failure_type": "answer_quality_failure",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0035",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "citation_failure",
           "recall_baseline": 1.0,
@@ -99,7 +153,16 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0037",
+          "question_id": "gt-0039",
+          "baseline_failure_type": "usable",
+          "rerank_failure_type": "citation_failure",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0046",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "citation_and_answer_failure",
           "recall_baseline": 1.0,
@@ -110,10 +173,10 @@
       ]
     },
     "stable_pass": {
-      "count": 24,
+      "count": 22,
       "questions": [
         {
-          "question_id": "gt-0001",
+          "question_id": "gt-0004",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "usable",
           "recall_baseline": 1.0,
@@ -141,15 +204,6 @@
         },
         {
           "question_id": "gt-0008",
-          "baseline_failure_type": "usable",
-          "rerank_failure_type": "usable",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
-          "question_id": "gt-0009",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "usable",
           "recall_baseline": 1.0,
@@ -203,15 +257,6 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0020",
-          "baseline_failure_type": "usable",
-          "rerank_failure_type": "usable",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
           "question_id": "gt-0021",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "usable",
@@ -248,15 +293,6 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0035",
-          "baseline_failure_type": "usable",
-          "rerank_failure_type": "usable",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
           "question_id": "gt-0036",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "usable",
@@ -266,7 +302,16 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0038",
+          "question_id": "gt-0037",
+          "baseline_failure_type": "usable",
+          "rerank_failure_type": "usable",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0040",
           "baseline_failure_type": "usable",
           "rerank_failure_type": "usable",
           "recall_baseline": 1.0,
@@ -331,17 +376,8 @@
       ]
     },
     "stable_fail_same_type": {
-      "count": 8,
+      "count": 5,
       "questions": [
-        {
-          "question_id": "gt-0002",
-          "baseline_failure_type": "citation_failure",
-          "rerank_failure_type": "citation_failure",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
         {
           "question_id": "gt-0015",
           "baseline_failure_type": "answer_quality_failure",
@@ -362,8 +398,17 @@
         },
         {
           "question_id": "gt-0019",
-          "baseline_failure_type": "answer_quality_failure",
-          "rerank_failure_type": "answer_quality_failure",
+          "baseline_failure_type": "citation_failure",
+          "rerank_failure_type": "citation_failure",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        },
+        {
+          "question_id": "gt-0020",
+          "baseline_failure_type": "citation_failure",
+          "rerank_failure_type": "citation_failure",
           "recall_baseline": 1.0,
           "recall_rerank": 1.0,
           "doc_recall_baseline": 1.0,
@@ -371,7 +416,21 @@
         },
         {
           "question_id": "gt-0022",
-          "baseline_failure_type": "answer_quality_failure",
+          "baseline_failure_type": "citation_and_answer_failure",
+          "rerank_failure_type": "citation_and_answer_failure",
+          "recall_baseline": 1.0,
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 1.0,
+          "doc_recall_rerank": 1.0
+        }
+      ]
+    },
+    "stable_fail_changed_type": {
+      "count": 3,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "baseline_failure_type": "citation_and_answer_failure",
           "rerank_failure_type": "answer_quality_failure",
           "recall_baseline": 1.0,
           "recall_rerank": 1.0,
@@ -379,72 +438,13 @@
           "doc_recall_rerank": 1.0
         },
         {
-          "question_id": "gt-0026",
+          "question_id": "gt-0030",
           "baseline_failure_type": "retrieval_document_failure",
-          "rerank_failure_type": "retrieval_document_failure",
-          "recall_baseline": 0.0,
-          "recall_rerank": 0.0,
-          "doc_recall_baseline": 0.0,
-          "doc_recall_rerank": 0.0
-        },
-        {
-          "question_id": "gt-0027",
-          "baseline_failure_type": "retrieval_document_failure",
-          "rerank_failure_type": "retrieval_document_failure",
-          "recall_baseline": 0.0,
-          "recall_rerank": 0.0,
-          "doc_recall_baseline": 0.0,
-          "doc_recall_rerank": 0.0
-        },
-        {
-          "question_id": "gt-0029",
-          "baseline_failure_type": "retrieval_document_failure",
-          "rerank_failure_type": "retrieval_document_failure",
-          "recall_baseline": 0.0,
-          "recall_rerank": 0.0,
-          "doc_recall_baseline": 0.0,
-          "doc_recall_rerank": 0.0
-        }
-      ]
-    },
-    "stable_fail_changed_type": {
-      "count": 5,
-      "questions": [
-        {
-          "question_id": "gt-0023",
-          "baseline_failure_type": "citation_and_answer_failure",
           "rerank_failure_type": "citation_failure",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
-          "question_id": "gt-0024",
-          "baseline_failure_type": "citation_and_answer_failure",
-          "rerank_failure_type": "citation_failure",
-          "recall_baseline": 1.0,
-          "recall_rerank": 1.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 1.0
-        },
-        {
-          "question_id": "gt-0025",
-          "baseline_failure_type": "retrieval_passage_failure",
-          "rerank_failure_type": "retrieval_document_failure",
           "recall_baseline": 0.0,
-          "recall_rerank": 0.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 0.0
-        },
-        {
-          "question_id": "gt-0028",
-          "baseline_failure_type": "citation_and_answer_failure",
-          "rerank_failure_type": "retrieval_document_failure",
-          "recall_baseline": 1.0,
-          "recall_rerank": 0.0,
-          "doc_recall_baseline": 1.0,
-          "doc_recall_rerank": 0.0
+          "recall_rerank": 1.0,
+          "doc_recall_baseline": 0.0,
+          "doc_recall_rerank": 1.0
         },
         {
           "question_id": "gt-0049",
@@ -459,37 +459,39 @@
     }
   },
   "summary": {
-    "saved_count": 9,
-    "broken_count": 2,
-    "net_delta": 7,
-    "delta_doc_failure": 0,
+    "saved_count": 13,
+    "broken_count": 5,
+    "net_delta": 8,
+    "delta_doc_failure": -5,
     "rerank_candidates_k": 100,
     "rerank_exclude_revogadas": true,
-    "baseline_answer_usable_rate": 0.5416666666666666,
-    "rerank_answer_usable_rate": 0.6875,
+    "rerank_exclude_superseded_versions": true,
+    "rerank_restrict_to_query_submodulo": true,
+    "baseline_answer_usable_rate": 0.5625,
+    "rerank_answer_usable_rate": 0.7291666666666666,
     "baseline_failure_type_counts": {
-      "usable": 26,
-      "citation_failure": 5,
-      "citation_and_answer_failure": 4,
+      "usable": 27,
+      "citation_and_answer_failure": 5,
       "retrieval_document_failure": 6,
-      "answer_quality_failure": 4,
-      "retrieval_passage_failure": 3
+      "answer_quality_failure": 1,
+      "retrieval_passage_failure": 3,
+      "citation_failure": 6
     },
     "rerank_failure_type_counts": {
-      "usable": 33,
-      "citation_failure": 4,
-      "answer_quality_failure": 3,
+      "answer_quality_failure": 4,
+      "usable": 35,
       "retrieval_passage_failure": 1,
-      "retrieval_document_failure": 6,
-      "citation_and_answer_failure": 1
+      "citation_failure": 5,
+      "citation_and_answer_failure": 2,
+      "retrieval_document_failure": 1
     }
   },
   "decision_rule": {
     "rule": "promover rerank a default SE saved_by_rerank >= 2 * broken_by_rerank E delta_doc_failure <= +1",
-    "saved": 9,
-    "broken": 2,
-    "threshold_broken_x_ratio": 4,
-    "delta_doc_failure": 0,
+    "saved": 13,
+    "broken": 5,
+    "threshold_broken_x_ratio": 10,
+    "delta_doc_failure": -5,
     "max_delta_doc_failure": 1,
     "verdict": "promote",
     "reasons": []

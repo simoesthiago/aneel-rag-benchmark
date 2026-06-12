@@ -129,10 +129,9 @@ HF_DATASET_REPO: str = _get_optional(
     "HF_DATASET_REPO",
     "simoesthiago/aneel-corpus",
 )
-# Gerador da Camada 3.5: modelo barato para smoke. A tarefa é estruturada
-# (PT-BR + JSON com `resposta`/`indices_citados`), então o nano cobre. Se as
-# métricas indicarem que o gerador é o gargalo, sobe para "gpt-5.4-mini".
-LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-5.4-nano")
+# Gerador da Camada 3.5: o smoke usa GPT-5.4 Mini por equilibrar custo e
+# qualidade em respostas regulatórias curtas com JSON estruturado.
+LLM_MODEL: str = _get_optional("LLM_MODEL", "gpt-5.4-mini")
 
 # Juiz da Camada 4 (faithfulness, answer_correctness): mantemos um nível acima
 # do gerador para o sinal ser discriminativo, sem inflar custo (1 chamada por
@@ -146,6 +145,9 @@ LLM_GENERATION_TEMPERATURE: float = float(
     _get_optional("LLM_GENERATION_TEMPERATURE", "0")
 )
 LLM_GENERATION_MAX_TOKENS: int = int(_get_optional("LLM_GENERATION_MAX_TOKENS", "800"))
+LLM_REQUEST_TIMEOUT_SECONDS: float = float(
+    _get_optional("LLM_REQUEST_TIMEOUT_SECONDS", "60")
+)
 
 EMBEDDING_PROVIDER: str = _get_optional("EMBEDDING_PROVIDER", "openai")
 EMBEDDING_MODEL: str = _get_optional("EMBEDDING_MODEL", "text-embedding-3-large")

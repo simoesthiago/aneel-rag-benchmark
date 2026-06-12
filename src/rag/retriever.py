@@ -26,6 +26,7 @@ import pandas as pd
 from src.embeddings.cache import QueryEmbeddingCache
 from src.embeddings.embedder import OpenAIEmbeddingProvider
 from src.rag.identifier_match import doc_matches_submodulo, query_submodulo_id
+from src.rag.version_hygiene import non_current_document_ids
 from src.vectorstore.faiss_store import FAISSVectorStore
 from src.vectorstore.hub import carregar_vectorstore
 
@@ -59,6 +60,8 @@ class Retriever:
         reranker: Any | None = None,
         candidates_k: int | None = None,
         exclude_situacoes: frozenset[str] | None = None,
+        exclude_superseded_versions: bool = False,
+        restrict_to_query_submodulo: bool = False,
         boost_identificador: bool = False,
     ):
         self.provider = provider
@@ -77,6 +80,15 @@ class Retriever:
         self.exclude_situacoes: frozenset[str] = frozenset(
             s.strip().lower() for s in (exclude_situacoes or frozenset())
         )
+        # Fase F1.5 — higiene de versão: descarta versões SUPERADAS de submódulos
+        # PRORET (várias versões históricas do mesmo doc, todas `situacao=None`,
+        # escapam do filtro de revogadas). Mantém só a versão mais recente de
+        # cada submódulo e descarta aliases sem ato quando há id oficial.
+        self.exclude_superseded_versions = exclude_superseded_versions
+        # Quando a pergunta nomeia um submódulo ("PRORET Submódulo 2.1"),
+        # isso é uma restrição documental explícita: 2.1A e 8.3 não deveriam
+        # competir com 2.1. Default-off para medir isoladamente.
+        self.restrict_to_query_submodulo = restrict_to_query_submodulo
 
         if bundle is None:
             bundle = carregar_vectorstore(
@@ -94,14 +106,22 @@ class Retriever:
         self.dir: Path | None = bundle.get("dir")
 
         if embedder is None:
-            embedder = OpenAIEmbeddingProvider(
-                model_name=self.manifest["model"]
-            )
+            embedder = OpenAIEmbeddingProvider(model_name=self.manifest["model"])
         self.embedder = embedder
 
         self._validar_compatibilidade_embedder()
         self._parents_by_id: dict[str, dict[str, Any]] = {}
         self._configurar_modo_hierarchical()
+
+        # Conjunto de `document_id` superados é derivado do índice INTEIRO (não
+        # só dos candidatos), para conhecer a versão vigente de cada submódulo.
+        self._superseded_ids: frozenset[str] = frozenset()
+        if self.exclude_superseded_versions:
+            self._superseded_ids = frozenset(
+                non_current_document_ids(
+                    self.metadata["document_id"].astype(str).unique().tolist()
+                )
+            )
 
     def _validar_compatibilidade_embedder(self) -> None:
         """Falha cedo se o embedder não bater com o manifest da store."""
@@ -143,8 +163,7 @@ class Retriever:
                 "Não é possível substituir filhos por pais."
             )
         self._parents_by_id = {
-            str(row["chunk_id"]): row.to_dict()
-            for _, row in self.parents.iterrows()
+            str(row["chunk_id"]): row.to_dict() for _, row in self.parents.iterrows()
         }
 
     def retrieve(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
@@ -177,15 +196,19 @@ class Retriever:
             row["score"] = float(score)
             candidatos.append(row)
 
-        if self.exclude_situacoes:
+        candidatos = [row for row in candidatos if self._row_passa_filtros(row)]
+
+        identificador = (
+            query_submodulo_id(query) if self.restrict_to_query_submodulo else None
+        )
+        if identificador:
             candidatos = [
                 row
                 for row in candidatos
-                if str(row.get("situacao") or "").strip().lower()
-                not in self.exclude_situacoes
+                if doc_matches_submodulo(str(row.get("document_id")), identificador)
             ]
-
-        if self.boost_identificador and self.reranker is not None:
+            candidatos = self._injetar_por_identificador(query, candidatos)
+        elif self.boost_identificador and self.reranker is not None:
             candidatos = self._injetar_por_identificador(query, candidatos)
 
         if self.mode == "hierarchical":
@@ -222,13 +245,21 @@ class Retriever:
             row = self.metadata.loc[idx].to_dict()
             if row.get("chunk_id") in presentes:
                 continue
-            situacao = str(row.get("situacao") or "").strip().lower()
-            if self.exclude_situacoes and situacao in self.exclude_situacoes:
+            if not self._row_passa_filtros(row):
                 continue
             row["score"] = 0.0
             candidatos.append(row)
             presentes.add(row.get("chunk_id"))
         return candidatos
+
+    def _row_passa_filtros(self, row: dict[str, Any]) -> bool:
+        """Aplica filtros documentais comuns a candidatos densos e injetados."""
+        situacao = str(row.get("situacao") or "").strip().lower()
+        if self.exclude_situacoes and situacao in self.exclude_situacoes:
+            return False
+        if self._superseded_ids and str(row.get("document_id")) in self._superseded_ids:
+            return False
+        return True
 
     def _candidatos_a_buscar(self, top_k: int) -> int:
         """Quantos candidatos pegar no FAISS antes de rerank/hierarchical."""
@@ -238,10 +269,12 @@ class Retriever:
             self.reranker is not None
             or self.mode == "hierarchical"
             or self.exclude_situacoes
+            or self.exclude_superseded_versions
+            or self.restrict_to_query_submodulo
         ):
             # 50 candidatos é um default comum em rerankers como Cohere.
             # No hierarchical, esse piso compensa a deduplicação por pai.
-            # Com filtro de situação, o piso compensa os chunks descartados.
+            # Com filtro de situação/versão, o piso compensa os chunks descartados.
             return max(
                 top_k * DEFAULT_CANDIDATE_MULTIPLIER,
                 DEFAULT_MIN_CANDIDATES,
@@ -269,9 +302,7 @@ class Retriever:
         return list(melhor_por_pai.values())
 
     @staticmethod
-    def _rankear(
-        items: list[dict[str, Any]], top_k: int
-    ) -> list[dict[str, Any]]:
+    def _rankear(items: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]]:
         """Ordena por score decrescente, atribui rank, e corta em top_k."""
         ordenado = sorted(items, key=lambda item: item["score"], reverse=True)
         ordenado = ordenado[:top_k]

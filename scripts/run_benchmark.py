@@ -339,6 +339,15 @@ def main() -> None:
                     "exclude_revogadas": bool(
                         row.get("exclude_revogadas") or False
                     ),
+                    "exclude_superseded_versions": bool(
+                        row.get("exclude_superseded_versions") or False
+                    ),
+                    "restrict_to_query_submodulo": bool(
+                        row.get("restrict_to_query_submodulo") or False
+                    ),
+                    "boost_identificador": bool(
+                        row.get("boost_identificador") or False
+                    ),
                     "llm_status_counts": row.get("llm_status_counts"),
                     "generator_status_counts": row.get("generator_status_counts"),
                     "per_question": row["per_question"],

@@ -95,6 +95,17 @@ class _FakeIndex:
         return scores[order].reshape(1, -1), order.reshape(1, -1)
 
 
+class _FakeReranker:
+    """Reranker mínimo: preserva a ordem de entrada e corta top_k."""
+
+    def __init__(self):
+        self.calls: list[list[str]] = []
+
+    def rerank(self, query: str, candidatos: list[dict], top_k: int):
+        self.calls.append([str(row.get("document_id")) for row in candidatos])
+        return candidatos[:top_k]
+
+
 def _build_index(vectors: list[list[float]], dimension: int) -> _FakeIndex:
     return _FakeIndex(vectors, dimension)
 
@@ -198,6 +209,164 @@ def test_retriever_filtra_situacoes_excluidas():
     assert ids == {"doc-a::0", "doc-c::0"}  # vigente + None mantidos
 
 
+def test_retriever_filtra_versoes_superadas():
+    """exclude_superseded_versions descarta versões PRORET antigas, mantém a
+    mais recente do submódulo e docs sem versão."""
+    v1 = "proret-modulo02-subm2-3-proret-submod-2-3-v-1-0-aren2011457"
+    v2 = "proret-modulo02-subm2-3-proret-submod-2-3-v-2-0-aren2015686"
+    v2c = "proret-modulo02-subm2-3-proret-submod-2-3-v-2-0c-aren20221003"
+    ren = "ren-2021-1000"
+    chunks = [
+        _chunk_row(f"{v1}::0", "versao antiga", situacao=None),
+        _chunk_row(f"{v2}::0", "versao media", situacao=None),
+        _chunk_row(f"{v2c}::0", "versao vigente", situacao=None),
+        _chunk_row(f"{ren}::0", "norma sem versao", situacao=None),
+    ]
+    vectors = [
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.9, 0.0, 0.0],
+        [0.0, 0.8, 0.0, 0.0],
+    ]
+    bundle = _build_bundle(chunks, vectors)
+    embedder = _FakeEmbedder(
+        "text-embedding-3-small", dimension=4, vectors={"q": [0.0, 1.0, 0.0, 0.0]}
+    )
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=bundle,
+        embedder=embedder,
+        exclude_superseded_versions=True,
+    )
+
+    resultados = retriever.retrieve("q", top_k=4)
+    docs = {r["document_id"] for r in resultados}
+    assert v1 not in docs and v2 not in docs  # versões antigas descartadas
+    assert v2c in docs  # versão vigente mantida
+    assert ren in docs  # doc sem versão intacto
+
+
+def test_retriever_exclui_alias_nao_oficial_da_versao_vigente():
+    alias = "proret-modulo2-subm2-1-proret-submodulo-2-1-v-2-5"
+    oficial = "proret-modulo02-subm2-1-proret-submod-2-1-v-2-5-aren20251114"
+    antigo = "proret-modulo02-subm2-1-proret-submod-2-1-v-2-4-aren20241091"
+    chunks = [
+        _chunk_row(f"{alias}::0", "alias sem ato", situacao=None),
+        _chunk_row(f"{oficial}::0", "id oficial", situacao=None),
+        _chunk_row(f"{antigo}::0", "versao antiga", situacao=None),
+    ]
+    vectors = [
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.9, 0.0, 0.0],
+        [0.0, 0.8, 0.0, 0.0],
+    ]
+    bundle = _build_bundle(chunks, vectors)
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=bundle,
+        embedder=_FakeEmbedder(
+            "text-embedding-3-small", 4, {"q": [0.0, 1.0, 0.0, 0.0]}
+        ),
+        exclude_superseded_versions=True,
+    )
+
+    docs = {r["document_id"] for r in retriever.retrieve("q", top_k=3)}
+    assert docs == {oficial}
+
+
+def test_retriever_restringe_submodulo_explicito():
+    sub21 = "proret-modulo02-subm2-1-proret-submod-2-1-v-2-5-aren20251114"
+    sub21a = "proret-modulo02-subm2-1a-proret-submod-2-1a-v-2-2-aren20251114"
+    sub83 = "proret-modulo08-subm8-3-proret-submod-8-3-v-2-2-aren20231058"
+    chunks = [
+        _chunk_row(f"{sub21a}::0", "ri", situacao=None),
+        _chunk_row(f"{sub83}::0", "outro submodulo", situacao=None),
+        _chunk_row(f"{sub21}::0", "parcela a", situacao=None),
+    ]
+    vectors = [
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.9, 0.0, 0.0],
+        [0.0, 0.8, 0.0, 0.0],
+    ]
+    bundle = _build_bundle(chunks, vectors)
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=bundle,
+        embedder=_FakeEmbedder(
+            "text-embedding-3-small",
+            4,
+            {
+                "No PRORET Submódulo 2.1, como é calculada a Parcela A?": [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                ]
+            },
+        ),
+        restrict_to_query_submodulo=True,
+    )
+
+    resultados = retriever.retrieve(
+        "No PRORET Submódulo 2.1, como é calculada a Parcela A?",
+        top_k=3,
+    )
+    assert [r["document_id"] for r in resultados] == [sub21]
+
+
+def test_retriever_injeta_submodulo_explicito_antes_do_rerank():
+    sub21 = "proret-modulo02-subm2-1-proret-submod-2-1-v-2-5-aren20251114"
+    outro = "ren-2021-1000"
+    chunks = [
+        _chunk_row(f"{outro}::0", "top denso", situacao=None),
+        _chunk_row(f"{sub21}::0", "fora do top denso", situacao=None),
+    ]
+    vectors = [
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.1, 0.0, 0.0],
+    ]
+    bundle = _build_bundle(chunks, vectors)
+    reranker = _FakeReranker()
+    retriever = Retriever(
+        provider="openai",
+        model="text-embedding-3-small",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        bundle=bundle,
+        embedder=_FakeEmbedder(
+            "text-embedding-3-small",
+            4,
+            {
+                "No PRORET Submódulo 2.1, como é calculada a Parcela A?": [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                ]
+            },
+        ),
+        reranker=reranker,
+        candidates_k=1,
+        restrict_to_query_submodulo=True,
+    )
+
+    resultados = retriever.retrieve(
+        "No PRORET Submódulo 2.1, como é calculada a Parcela A?",
+        top_k=1,
+    )
+    assert [r["document_id"] for r in resultados] == [sub21]
+    assert reranker.calls == [[sub21]]
+
+
 def test_retriever_filtro_eleva_piso_de_candidatos():
     """Com filtro ativo e sem rerank, busca >= DEFAULT_MIN_CANDIDATES."""
     from src.rag.retriever import DEFAULT_MIN_CANDIDATES
@@ -207,9 +376,7 @@ def test_retriever_filtro_eleva_piso_de_candidatos():
         model="text-embedding-3-small",
         chunk_strategy="article-aware",
         metodo_extracao="markdown",
-        bundle=_build_bundle(
-            [_chunk_row("doc-a::0", "t")], [[1.0, 0.0, 0.0, 0.0]]
-        ),
+        bundle=_build_bundle([_chunk_row("doc-a::0", "t")], [[1.0, 0.0, 0.0, 0.0]]),
         embedder=_FakeEmbedder("text-embedding-3-small", 4, {}),
         exclude_situacoes=frozenset({"revogada"}),
     )
@@ -243,9 +410,7 @@ def test_retriever_falha_se_embedder_modelo_divergente_do_manifest():
         [[1.0, 0.0, 0.0, 0.0]],
         model="text-embedding-3-small",
     )
-    embedder_errado = _FakeEmbedder(
-        "text-embedding-3-large", dimension=4, vectors={}
-    )
+    embedder_errado = _FakeEmbedder("text-embedding-3-large", dimension=4, vectors={})
 
     with pytest.raises(ValueError, match="Embedder incompatível"):
         Retriever(
@@ -265,9 +430,7 @@ def test_retriever_falha_se_dimensao_embedder_divergente():
         model="text-embedding-3-small",
         dimension=4,
     )
-    embedder_errado = _FakeEmbedder(
-        "text-embedding-3-small", dimension=8, vectors={}
-    )
+    embedder_errado = _FakeEmbedder("text-embedding-3-small", dimension=8, vectors={})
 
     with pytest.raises(ValueError, match="Dimensão"):
         Retriever(
@@ -424,9 +587,7 @@ def test_retriever_hierarchical_busca_mais_filhos_antes_de_deduplicar():
         _chunk_row(
             f"doc-a::child::{idx}",
             f"filho {idx}",
-            parent_chunk_id=(
-                "doc-a::parent::A" if idx < 3 else "doc-a::parent::B"
-            ),
+            parent_chunk_id=("doc-a::parent::A" if idx < 3 else "doc-a::parent::B"),
         )
         for idx in range(4)
     ]
@@ -631,7 +792,9 @@ def test_naive_rag_usa_query_expandida_no_retriever_e_original_no_generator():
 
     resposta = rag.query("Qual é a finalidade do PRORET Submódulo 2.4?", top_k=3)
 
-    assert retriever.received == ["Qual é a finalidade do PRORET Submódulo 2.4? [expandido]"]
+    assert retriever.received == [
+        "Qual é a finalidade do PRORET Submódulo 2.4? [expandido]"
+    ]
     assert generator.received == ["Qual é a finalidade do PRORET Submódulo 2.4?"]
     assert resposta["query"] == "Qual é a finalidade do PRORET Submódulo 2.4?"
     assert resposta["expanded_query"].endswith("[expandido]")

@@ -12,6 +12,9 @@
   externa independente (2 fases, vieses opostos) provou que o número
   honesto é **62–73%**: boa parte das "falhas" era ruído de ground truth,
   não falha de sistema.
+- Estado canônico após F1/F2/F1.5 (2026-06-12): **35/48 usáveis (72,9%)**
+  no pipeline completo contra **27/48 (56,3%)** no baseline cru; `doc_recall`
+  do pipeline está em **0,979** e sobrou só **1** falha de documento.
 - A métrica é **confiável**: 0 falsos positivos em 8 aprovações auditadas.
 - Cada uma das 24 falhas tem **causa-raiz confirmada** e uma fase de
   correção dedicada. **Nenhuma falha é "misteriosa" e nenhuma é abandonada.**
@@ -241,6 +244,62 @@ ressalva, ainda que `doc_recall` da F2 (+0.042) seja sólido por si só.
 - **Aplicado:** `exclude_revogadas=True` é o default do rerank em
   `build_rag_baseline_configs`. gt-0003 (motivação original) já fora
   resolvida pela F2 — está `usable` no baseline sem o filtro.
+
+---
+
+## Fase 1.5 — Higiene de versões PRORET e submódulo explícito (✅ CONCLUÍDA)
+
+**Problema:** a F1 removeu normas marcadas `revogada`, mas várias versões
+históricas de submódulos PRORET ficaram com `situacao=None`. O índice tinha,
+por exemplo, V1.0, V2.0 e V2.0C do mesmo Submódulo 2.3 competindo entre si.
+O buscador citava a versão semanticamente parecida, não necessariamente a
+vigente esperada pelo GT.
+
+**Classificação do Grupo A:** das 9 residuais em que o sistema respondia certo
+mas falhava em versão/citação, **7 eram versão do mesmo submódulo**; `gt-0004`
+era fonte relacionada legítima (REN 1059 altera/cobre a REN 1000); `gt-0017`
+permanece residual de passagem.
+
+**Intervenção:**
+- `non_current_document_ids` identifica versões/aliases não correntes por
+  submódulo PRORET, mantendo a versão mais nova e preferindo o id oficial com
+  ato (`aren`/`adsp`) quando existe.
+- `Retriever(..., exclude_superseded_versions=True)` descarta versões antigas
+  e aliases não oficiais depois da busca densa.
+- `restrict_to_query_submodulo=True` trata "Submódulo X.Y" na pergunta como
+  restrição documental explícita e injeta o submódulo correto antes do rerank.
+- O matcher passou a preservar qualificadores de Procedimentos de Rede
+  (`5.1-OP`, `2.10-RQ`), evitando confundir `proc-rede-s-bmodulo-5-1-op` com
+  PRORET `subm5-1`.
+- GT v2 foi atualizado e republicado: `gt-0002` aponta para PRORET 6.8
+  vigente v1.10c; `gt-0004` aceita REN 1059 como alternativa legítima.
+
+**Critério pré-comprometido:** promover a higiene se o pareamento isolado
+salvar perguntas e não houver *hard break* — regressão que perde
+`doc_recall`, indicando remoção de documento necessário.
+
+**Resultado isolado (ver `version_hygiene_pairing.json`):**
+- rerank@100 + filtro de revogadas **sem** higiene → **30/48** usáveis;
+- mesma config **com** higiene → **38/48** usáveis;
+- `saved`: 10; `broken`: 2; **`hard_broken`: 0** → `PROMOVER`;
+- Grupo A: **8/9 resolvidas** (`gt-0002`, `gt-0004`, `gt-0023`, `gt-0024`,
+  `gt-0025`, `gt-0026`, `gt-0028`, `gt-0029`); `gt-0017` fica como residual
+  de passagem.
+
+**Resultado canônico pós-promoção (2026-06-12):** `make benchmark-rag`
+equivalente, carregando GT v2 do Hub:
+- baseline cru: **27/48** usáveis (`0.5625`);
+- pipeline completo (`rerank@100 + sem_revogadas + sem_versoes_antigas +
+  submodulo_exato`): **35/48** usáveis (`0.7292`);
+- `recall_at_k=0.958`, `doc_recall_at_k=0.979`;
+- `retrieval_document_failure`: **6 → 1**;
+- pareamento baseline cru vs pipeline: **13 salvas**, **5 quebradas**,
+  `net_delta=+8`, veredito `promote`.
+
+**Aplicado:** `exclude_superseded_versions=True` e
+`restrict_to_query_submodulo=True` são defaults do rerank em
+`build_rag_baseline_configs`. O baseline cru permanece apenas como controle
+comparativo.
 
 ---
 
@@ -586,59 +645,51 @@ concept-dense afetadas. Para 1 pergunta, o GT enrichment da F3 é mais barato.
 
 ---
 
-## Mapa das residuais (medido no canônico v2, 2026-06-11)
+## Mapa das residuais (canônico pós-F1/F2/F1.5, 2026-06-12)
 
-Estado real: **33/48 `usable`**, **15 residuais**. Ao classificar pela métrica,
-emerge um padrão que reposiciona F4/F5/F6 (todas tinham premissa do estado v1):
+Estado real: **35/48 `usable`**, **13 residuais**. A higiene de versões
+resolveu a maior parte do antigo Grupo A sem aceitar norma velha como correta:
+o sistema agora tende a citar a versão vigente.
 
-**Grupo A — o sistema responde CERTO (corr ≥ 0.86), mas falha em
-citação/recall (9 de 15):** gt-0002, gt-0004, gt-0017, gt-0023, gt-0024,
-gt-0025, gt-0026, gt-0028, gt-0029. O conteúdo está correto; o gate reprova
-por *bookkeeping*: a fonte recuperada/citada é **outra versão do mesmo
-submódulo** (gt-0023/0024/0025/0026), uma **norma relacionada** (gt-0002 PRORET
-6.8, gt-0004 REN 1059 que altera a 1000), ou o **doc-alvo não foi recuperado**
-embora o sistema acerte de outra fonte (gt-0028/0029) / passagem (gt-0017).
+| qid | failure_type atual | leitura |
+|---|---|---|
+| gt-0001 | answer_quality | gerador/judge: resposta com contexto e citação certos, correctness 0.72 |
+| gt-0002 | answer_quality | retrieval/citação corrigidos; resta correctness 0.72 |
+| gt-0009 | answer_quality | borderline de geração (correctness 0.78) |
+| gt-0015 | answer_quality | erro real de conteúdo do gerador |
+| gt-0017 | retrieval_passage | único residual do antigo Grupo A: doc aparece, trecho alvo não casa |
+| gt-0019 | citation_failure | resposta correta, citação abaixo do limiar |
+| gt-0020 | citation_failure | resposta correta, citação abaixo do limiar |
+| gt-0022 | citation_and_answer | gerador piorou nesta réplica (correctness 0.28) |
+| gt-0030 | citation_failure | doc/trecho recuperados; seleção de citação falha |
+| gt-0035 | citation_failure | doc/trecho recuperados; seleção de citação falha |
+| gt-0039 | citation_failure | doc/trecho recuperados; citação diluída por citações extras |
+| gt-0046 | citation_and_answer | resposta/citação na borda do GT |
+| gt-0049 | retrieval_document | única falha de documento restante no canônico |
 
-**Grupo B — o sistema responde ERRADO (corr < 0.8), gerador real (6 de 15):**
-gt-0015 (0.18), gt-0019 (0.78), gt-0022 (0.78), gt-0027 (0.18, + doc não
-recuperado), gt-0037 (0.12), gt-0049 (0.74, + doc não recuperado). Estes são
-F7 (qualidade de resposta).
-
-**Implicação:** se a métrica de topo fosse *"o sistema dá a resposta correta"*,
-o número honesto seria **~42/48 (~87%)** — o Grupo A é majoritariamente
-discriminação de versão/citação, não erro do sistema. O gate (que exige
-`citation ≥ 0.5`) reprova legitimamente o Grupo A pela definição, mas a
-**causa-raiz dominante dos residuais é confusão de versão/identificador**, não
-os problemas que F5/F6 miravam.
-
-**Maior alavanca restante (decisão de proveniência pendente):** aceitar via
-`any_of` a versão/fonte que o sistema usa no Grupo A (conteúdo estável,
-resposta correta) flipa recall **e** citação de uma vez. A ressalva é
-metodológica: aceitar uma versão mais antiga do submódulo como "correta" para
-uma pergunta version-agnóstica. **Requer decisão do usuário** antes de aplicar.
+**Leitura principal:** o gargalo mudou. Antes, várias falhas eram
+bookkeeping de versão/fonte; agora o pipeline tem `doc_recall=0.979` e só
+uma pergunta sem documento-alvo. As próximas alavancas são F7 (gerador e
+seleção de citações) e investigação pontual de gt-0049.
 
 ---
 
-## Projeção de impacto (pré-comprometida, a confirmar por medição)
+## Projeção de impacto e próximos focos
 
 | marco | answer_usable_rate | falhas residuais |
 |---|---|---|
 | Reportado (antes da auditoria) | 50,0% (24/48) | — |
 | **Honesto (pós-auditoria)** | **62–73%** | 7 reais |
-| Pós-F1 (revogadas) | +gt-0003 | 6 |
-| Pós-F2 (rerank pool 100) | +gt-0007/0012/0026/0034 | ~4 |
-| Pós-F3 (GT v2) | +gt-0002/0005/0039/0041/0046/0013 | ~4 |
+| Pós-F3 (GT v2, antes da F1.5) | 68,8% (33/48) | 15 |
+| **Pós-F1/F2/F1.5 canônico** | **72,9% (35/48)** | **13** |
 | ~~Pós-F4 (corpus PRODIST)~~ | rebuild não justificado (ver F4) | — |
-| Retrieval (gt-0017) | chunk da def. não recuperado | — |
-| Pós-F5 (identificadores) | +gt-0027/0023/0024 | ~1 |
-| Pós-F6 (matching enumerado) | +gt-0025 | ~1 |
-| Pós-F7 (gerador) | +gt-0015/0049/**0019/0022** | **0–2** |
-| **Teto teórico** | **~98–100%** | 0–1 |
+| Retrieval pontual | gt-0017 (passagem) + gt-0049 (documento) | 11 |
+| F7 gerador/citação | gt-0001/0002/0009/0015/0019/0020/0022/0030/0035/0039/0046 | variável |
 
-Os números pós-fase **não são promessas** — cada um será confirmado por
-comparação pareada com critério pré-comprometido. O valor do roadmap está
-em ter um plano onde **cada uma das 24 falhas tem dono, causa-raiz e teste
-de saída**, e onde a execução é guiada por medição, não por intuição.
+Os próximos ganhos não devem vir de mais limpeza ampla de índice: a métrica de
+documento já está quase saturada. O foco passa a ser seleção de citações,
+prompt/self-check do gerador e investigação pontual das duas falhas de
+retrieval restantes (`gt-0017`, `gt-0049`).
 
 ## Sequência sugerida (ponto de partida; reavaliada a cada gate)
 

@@ -67,6 +67,7 @@ def generate_llm_answer(
     model: str | None = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
+    timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Gera resposta com LLM ancorada nos contextos do retriever.
 
@@ -97,16 +98,25 @@ def generate_llm_answer(
 
         client = OpenAI(api_key=get_llm_api_key())
 
-    if model is None or temperature is None or max_tokens is None:
+    if (
+        model is None
+        or temperature is None
+        or max_tokens is None
+        or timeout_seconds is None
+    ):
         from src.config.settings import (
             LLM_GENERATION_MAX_TOKENS,
             LLM_GENERATION_TEMPERATURE,
             LLM_MODEL,
+            LLM_REQUEST_TIMEOUT_SECONDS,
         )
 
         model = model or LLM_MODEL
         temperature = LLM_GENERATION_TEMPERATURE if temperature is None else temperature
         max_tokens = LLM_GENERATION_MAX_TOKENS if max_tokens is None else max_tokens
+        timeout_seconds = (
+            LLM_REQUEST_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
+        )
 
     user_prompt = USER_PROMPT_TEMPLATE.format(
         query=query,
@@ -118,7 +128,8 @@ def generate_llm_answer(
         response = client.chat.completions.create(
             model=model,
             temperature=temperature,
-            max_tokens=max_tokens,
+            **_token_limit_kwargs(model, max_tokens),
+            timeout=timeout_seconds,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -165,6 +176,18 @@ def _coerce_indices(raw: Any, *, n: int) -> list[int]:
             vistos.add(idx)
             out.append(idx)
     return out
+
+
+def _token_limit_kwargs(model: str, max_tokens: int) -> dict[str, int]:
+    """Parâmetro correto de teto de tokens por família de modelo.
+
+    Modelos GPT-5.x na API de Chat Completions rejeitam `max_tokens` e exigem
+    `max_completion_tokens`. Modelos chat legados, como `gpt-4o-mini`, seguem
+    aceitando `max_tokens`.
+    """
+    if str(model).lower().startswith("gpt-5"):
+        return {"max_completion_tokens": max_tokens}
+    return {"max_tokens": max_tokens}
 
 
 def _render_answer(

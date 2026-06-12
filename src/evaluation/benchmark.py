@@ -44,6 +44,7 @@ from src.rag.generator import generate_llm_answer
 from src.rag.naive import NaiveRAG
 from src.rag.query_expander import QueryExpander
 from src.rag.retriever import Retriever, RetrieverMode
+from src.vectorstore.hub import carregar_vectorstore
 
 PROVIDER = "openai"
 EMBEDDING_MODELS = ("text-embedding-3-large", "text-embedding-3-small")
@@ -74,6 +75,8 @@ class StoreConfig:
     candidates_k_override: int | None = None
     query_expansion: bool = False
     exclude_revogadas: bool = False
+    exclude_superseded_versions: bool = False
+    restrict_to_query_submodulo: bool = False
     boost_identificador: bool = False
 
     @property
@@ -85,6 +88,10 @@ class StoreConfig:
             suffix += "+qe"
         if self.exclude_revogadas:
             suffix += "+sem_revogadas"
+        if self.exclude_superseded_versions:
+            suffix += "+sem_versoes_antigas"
+        if self.restrict_to_query_submodulo:
+            suffix += "+submodulo_exato"
         if self.boost_identificador:
             suffix += "+boost_id"
         return (
@@ -160,6 +167,8 @@ def build_rag_baseline_configs(
     query_expansion: bool = False,
     rerank_pools: tuple[int, ...] | None = None,
     exclude_revogadas_comparison: bool = False,
+    superseded_versions_comparison: bool = False,
+    version_hygiene_comparison: bool = False,
     boost_identificador_comparison: bool = False,
 ) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
@@ -170,9 +179,11 @@ def build_rag_baseline_configs(
 
     O config com rerank usa `candidates_k_override=100` (pool 100), promovido
     a default pela Fase 2 do roadmap (`rerank_pool_pairing`: pool 100 atinge
-    answer_usable_rate 0.604 vs 0.583 do pool 50), e `exclude_revogadas=True`,
+    answer_usable_rate 0.604 vs 0.583 do pool 50); `exclude_revogadas=True`,
     promovido a default pela Fase 1 (`revogadas_pairing`: delta_doc_recall
-    +0.021, hard_broken=0; higiene factual contra citação de normas revogadas).
+    +0.021, hard_broken=0; higiene factual contra citação de normas revogadas);
+    e higiene de versões/submódulo exato, promovida na Fase F1.5
+    (`version_hygiene_pairing`: 30/48 -> 38/48, hard_broken=0).
 
     Quando `query_expansion=True`, retorna 4 configs (cartesiano rerank × QE)
     para medir a interação entre rerank e query expansion no mesmo run.
@@ -191,6 +202,10 @@ def build_rag_baseline_configs(
         ("query_expansion", query_expansion),
         ("rerank_pools", rerank_pools is not None),
         ("exclude_revogadas_comparison", exclude_revogadas_comparison),
+        (
+            "version_hygiene_comparison",
+            version_hygiene_comparison or superseded_versions_comparison,
+        ),
         ("boost_identificador_comparison", boost_identificador_comparison),
     ]
     _ativos = [nome for nome, ativo in _exclusive if ativo]
@@ -225,6 +240,8 @@ def build_rag_baseline_configs(
         rerank=True,
         candidates_k_override=RERANK_DEFAULT_POOL,
         exclude_revogadas=True,
+        exclude_superseded_versions=True,
+        restrict_to_query_submodulo=True,
     )
     if rerank_pools is not None:
         return [baseline] + [
@@ -245,6 +262,21 @@ def build_rag_baseline_configs(
         rerank_com_revogadas = replace(rerank, exclude_revogadas=False)
         rerank_sem_revogadas = replace(rerank, exclude_revogadas=True)
         return [rerank_com_revogadas, rerank_sem_revogadas]
+    if version_hygiene_comparison or superseded_versions_comparison:
+        # Fase F1.5: pipeline promovido (rerank@100 + filtro de revogadas) com
+        # vs sem higiene de versão completa. O "com" remove versões/aliases
+        # não correntes e respeita submódulo explícito na pergunta.
+        sem_higiene = replace(
+            rerank,
+            exclude_superseded_versions=False,
+            restrict_to_query_submodulo=False,
+        )
+        com_higiene = replace(
+            rerank,
+            exclude_superseded_versions=True,
+            restrict_to_query_submodulo=True,
+        )
+        return [sem_higiene, com_higiene]
     if boost_identificador_comparison:
         # Fase 5: pipeline promovido (rerank@100 + filtro) com vs sem o boost
         # de identificador, diferindo só nesse flag.
@@ -348,15 +380,14 @@ def _default_retriever_factory(
     config: StoreConfig,
     repo_id: str | None,
     query_cache: QueryEmbeddingCache | None = None,
+    bundle: dict[str, Any] | None = None,
 ) -> Retriever:
     reranker = None
     if config.rerank:
         from src.rag.reranker import CohereReranker
 
         reranker = CohereReranker()
-    exclude_situacoes = (
-        frozenset({"revogada"}) if config.exclude_revogadas else None
-    )
+    exclude_situacoes = frozenset({"revogada"}) if config.exclude_revogadas else None
     return Retriever(
         provider=config.provider,
         model=config.model,
@@ -364,10 +395,13 @@ def _default_retriever_factory(
         metodo_extracao=config.metodo_extracao,
         mode=config.mode,
         repo_id=repo_id,
+        bundle=bundle,
         query_cache=query_cache,
         reranker=reranker,
         candidates_k=config.candidates_k_override,
         exclude_situacoes=exclude_situacoes,
+        exclude_superseded_versions=config.exclude_superseded_versions,
+        restrict_to_query_submodulo=config.restrict_to_query_submodulo,
         boost_identificador=config.boost_identificador,
     )
 
@@ -581,8 +615,9 @@ def _default_rag_factory(
     config: StoreConfig,
     repo_id: str | None,
     query_cache: QueryEmbeddingCache | None = None,
+    bundle: dict[str, Any] | None = None,
 ) -> NaiveRAG:
-    retriever = _default_retriever_factory(config, repo_id, query_cache)
+    retriever = _default_retriever_factory(config, repo_id, query_cache, bundle)
     expander = QueryExpander() if config.query_expansion else None
     return NaiveRAG(
         retriever,
@@ -590,6 +625,54 @@ def _default_rag_factory(
         generator=generate_llm_answer,
         query_expander=expander,
     )
+
+
+def _vectorstore_cache_key(
+    config: StoreConfig,
+    repo_id: str | None,
+) -> tuple[str | None, str, str, str, str]:
+    """Chave do bundle físico da store, independente de filtros/rerank."""
+    return (
+        repo_id,
+        config.provider,
+        config.model,
+        config.chunk_strategy,
+        config.metodo_extracao,
+    )
+
+
+def _cached_default_rag_factory(
+    bundle_cache: dict[tuple[str | None, str, str, str, str], dict[str, Any]],
+):
+    """Factory default com cache per-run do bundle de vectorstore.
+
+    O smoke RAG compara configs que frequentemente usam a mesma store física
+    (baseline vs rerank). Reusar o bundle evita baixar a mesma metadata/FAISS
+    duas vezes do Hub e reduz timeouts transitórios.
+    """
+
+    def factory(
+        config: StoreConfig,
+        repo_id: str | None,
+        query_cache: QueryEmbeddingCache | None = None,
+    ) -> NaiveRAG:
+        key = _vectorstore_cache_key(config, repo_id)
+        if key not in bundle_cache:
+            bundle_cache[key] = carregar_vectorstore(
+                provider=config.provider,
+                model=config.model,
+                chunk_strategy=config.chunk_strategy,
+                metodo_extracao=config.metodo_extracao,
+                repo_id=repo_id,
+            )
+        return _default_rag_factory(
+            config,
+            repo_id,
+            query_cache,
+            bundle=bundle_cache[key],
+        )
+
+    return factory
 
 
 def _mean_present(rows: list[dict[str, Any]], key: str) -> float | None:
@@ -719,9 +802,7 @@ def _row_per_question_dict(row: Any) -> dict[str, dict[str, Any]]:
     for question in row.get("per_question") or []:
         qid = str(question.get("question_id"))
         if qid in indexed:
-            raise ValueError(
-                f"question_id duplicado dentro de uma config: {qid!r}"
-            )
+            raise ValueError(f"question_id duplicado dentro de uma config: {qid!r}")
         indexed[qid] = question
     return indexed
 
@@ -856,6 +937,12 @@ def build_rag_rerank_pairing(result: BenchmarkResult) -> dict[str, Any]:
             "rerank_exclude_revogadas": bool(
                 rerank_row.get("exclude_revogadas") or False
             ),
+            "rerank_exclude_superseded_versions": bool(
+                rerank_row.get("exclude_superseded_versions") or False
+            ),
+            "rerank_restrict_to_query_submodulo": bool(
+                rerank_row.get("restrict_to_query_submodulo") or False
+            ),
             "baseline_answer_usable_rate": (
                 None
                 if baseline_row.get("answer_usable_rate") is None
@@ -901,23 +988,27 @@ def render_rag_rerank_pairing_md(pairing: dict[str, Any]) -> str:
         "",
     ]
 
-    # Nota dinâmica: após F1/F2, a config "rerank" carrega os defaults
-    # promovidos (pool 100 + filtro de revogadas), então "rerank" aqui é o
+    # Nota dinâmica: após F1/F2/F1.5, a config "rerank" carrega os defaults
+    # promovidos (pool 100 + filtros de higiene), então "rerank" aqui é o
     # pipeline completo — não rerank isolado. Só emite quando há default
     # promovido (filtro ON e/ou pool != 50), preservando o sentido literal
     # para runs antigos/puros.
     pool = summary.get("rerank_candidates_k")
     filtro_on = bool(summary.get("rerank_exclude_revogadas"))
+    versoes_on = bool(summary.get("rerank_exclude_superseded_versions"))
+    submodulo_on = bool(summary.get("rerank_restrict_to_query_submodulo"))
     pool_promovido = pool is not None and pool != 50
-    if filtro_on or pool_promovido:
+    if filtro_on or pool_promovido or versoes_on or submodulo_on:
         partes = []
         if pool_promovido:
             partes.append(f"pool {pool} (F2)")
         if filtro_on:
             partes.append("filtro de revogadas (F1)")
+        if versoes_on or submodulo_on:
+            partes.append("higiene de versões/submódulo exato (F1.5)")
         lines.extend(
             [
-                f"> **Nota:** a config \"rerank\" reflete os defaults promovidos "
+                f'> **Nota:** a config "rerank" reflete os defaults promovidos '
                 f"— {' + '.join(partes)}. Este pareamento mede **baseline cru "
                 "vs pipeline completo**, não rerank isolado.",
                 "",
@@ -1050,6 +1141,12 @@ def load_benchmark_result_from_per_question_json(
                 "candidates_k": config.get("candidates_k"),
                 "query_expansion": bool(config.get("query_expansion") or False),
                 "exclude_revogadas": bool(config.get("exclude_revogadas") or False),
+                "exclude_superseded_versions": bool(
+                    config.get("exclude_superseded_versions") or False
+                ),
+                "restrict_to_query_submodulo": bool(
+                    config.get("restrict_to_query_submodulo") or False
+                ),
                 "per_question": per_question,
                 "failure_type_counts": failure_counts,
                 "answer_usable_rate": answer_usable_rate,
@@ -1102,6 +1199,8 @@ def run_rag_config(
         "candidates_k": config.candidates_k_override,
         "query_expansion": config.query_expansion,
         "exclude_revogadas": config.exclude_revogadas,
+        "exclude_superseded_versions": config.exclude_superseded_versions,
+        "restrict_to_query_submodulo": config.restrict_to_query_submodulo,
         "boost_identificador": config.boost_identificador,
         "num_questions": len(por_pergunta),
         "latency_avg_ms": summary["latency_avg"],
@@ -1162,6 +1261,10 @@ def run_rag_benchmark(
     if query_cache is None:
         query_cache = QueryEmbeddingCache()
 
+    effective_rag_factory = rag_factory
+    if rag_factory is _default_rag_factory:
+        effective_rag_factory = _cached_default_rag_factory({})
+
     linhas = []
     for config in configs_list:
         print(f"  Avaliando RAG {config.label} ...")
@@ -1170,7 +1273,7 @@ def run_rag_benchmark(
             evaluation_questions,
             top_k=top_k,
             repo_id=repo_id,
-            rag_factory=rag_factory,
+            rag_factory=effective_rag_factory,
             query_cache=query_cache,
             llm_metrics_fn=llm_metrics_fn,
         )

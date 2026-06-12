@@ -9,9 +9,11 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from src.evaluation import benchmark as benchmark_module
 from src.evaluation.benchmark import (
     BenchmarkResult,
     StoreConfig,
+    _cached_default_rag_factory,
     build_rag_failure_analysis,
     build_rag_baseline_configs,
     build_rag_rerank_pairing,
@@ -118,6 +120,12 @@ def test_build_rag_baseline_configs_limita_escopo_a_baseline_e_rerank():
     # pareamento: delta_doc_recall +0.021, hard_broken=0, higiene factual).
     assert configs[0].exclude_revogadas is False
     assert configs[1].exclude_revogadas is True
+    # Fase F1.5: higiene de versões PRORET + restrição de submódulo explícito
+    # são defaults do rerank promovido (30/48 -> 38/48, hard_broken=0).
+    assert configs[0].exclude_superseded_versions is False
+    assert configs[0].restrict_to_query_submodulo is False
+    assert configs[1].exclude_superseded_versions is True
+    assert configs[1].restrict_to_query_submodulo is True
 
 
 def test_evaluate_question_rag_calcula_metricas_e_citation_accuracy():
@@ -297,6 +305,59 @@ def test_run_rag_benchmark_devolve_dataframe_e_pula_source_only():
     assert result.skipped_questions[0]["question_id"] == "gt-9999"
 
 
+def test_cached_default_rag_factory_reusa_bundle_da_mesma_store(monkeypatch):
+    bundles_carregados = []
+    bundles_recebidos = []
+
+    def fake_carregar_vectorstore(**kwargs):
+        bundle = {"id": len(bundles_carregados) + 1, "kwargs": kwargs}
+        bundles_carregados.append(bundle)
+        return bundle
+
+    def fake_default_rag_factory(config, repo_id, query_cache=None, bundle=None):
+        bundles_recebidos.append(bundle)
+        return _FakeRAG([], citations=[])
+
+    monkeypatch.setattr(
+        benchmark_module,
+        "carregar_vectorstore",
+        fake_carregar_vectorstore,
+    )
+    monkeypatch.setattr(
+        benchmark_module,
+        "_default_rag_factory",
+        fake_default_rag_factory,
+    )
+
+    factory = _cached_default_rag_factory({})
+    base = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="fixed-size",
+        metodo_extracao="markdown",
+        mode="flat",
+    )
+
+    factory(base, "repo-teste", None)
+    factory(
+        StoreConfig(
+            provider=base.provider,
+            model=base.model,
+            chunk_strategy=base.chunk_strategy,
+            metodo_extracao=base.metodo_extracao,
+            mode=base.mode,
+            rerank=True,
+            exclude_revogadas=True,
+            exclude_superseded_versions=True,
+        ),
+        "repo-teste",
+        None,
+    )
+
+    assert len(bundles_carregados) == 1
+    assert bundles_recebidos == [bundles_carregados[0], bundles_carregados[0]]
+
+
 def test_build_rag_failure_analysis_resume_falhas_por_config():
     rows = [
         {
@@ -390,6 +451,8 @@ def _pairing_result(
     rerank_per_question: list[dict[str, Any]] | None,
     rerank_candidates_k: int | None = None,
     rerank_exclude_revogadas: bool = False,
+    rerank_exclude_superseded_versions: bool = False,
+    rerank_restrict_to_query_submodulo: bool = False,
 ) -> BenchmarkResult:
     rows: list[dict[str, Any]] = []
     rows.append(
@@ -417,6 +480,8 @@ def _pairing_result(
                 "rerank": True,
                 "candidates_k": rerank_candidates_k,
                 "exclude_revogadas": rerank_exclude_revogadas,
+                "exclude_superseded_versions": rerank_exclude_superseded_versions,
+                "restrict_to_query_submodulo": rerank_restrict_to_query_submodulo,
                 "answer_usable_rate": (
                     sum(1 for q in rerank_per_question if q["answer_usable"])
                     / len(rerank_per_question)
@@ -567,8 +632,8 @@ def test_build_rag_rerank_pairing_decision_promote():
 
 
 def test_rerank_pairing_expoe_metadados_da_config_rerank():
-    # O summary deve carregar pool e filtro da config rerank, para o renderer
-    # poder anotar que "rerank" reflete o pipeline promovido (F1/F2).
+    # O summary deve carregar os filtros da config rerank, para o renderer
+    # poder anotar que "rerank" reflete o pipeline promovido (F1/F2/F1.5).
     baseline = [_pairing_question("gt-0001", answer_usable=False, failure_type="x")]
     rerank = [_pairing_question("gt-0001", answer_usable=True, failure_type="usable")]
     pairing = build_rag_rerank_pairing(
@@ -577,17 +642,21 @@ def test_rerank_pairing_expoe_metadados_da_config_rerank():
             rerank_per_question=rerank,
             rerank_candidates_k=100,
             rerank_exclude_revogadas=True,
+            rerank_exclude_superseded_versions=True,
+            rerank_restrict_to_query_submodulo=True,
         )
     )
     assert pairing["summary"]["rerank_candidates_k"] == 100
     assert pairing["summary"]["rerank_exclude_revogadas"] is True
+    assert pairing["summary"]["rerank_exclude_superseded_versions"] is True
+    assert pairing["summary"]["rerank_restrict_to_query_submodulo"] is True
 
 
 def test_render_rerank_pairing_nota_pipeline_quando_promovido():
     baseline = [_pairing_question("gt-0001", answer_usable=False, failure_type="x")]
     rerank = [_pairing_question("gt-0001", answer_usable=True, failure_type="usable")]
 
-    # Pipeline promovido (pool 100 + filtro) -> nota presente.
+    # Pipeline promovido (pool 100 + filtros) -> nota presente.
     md_promovido = render_rag_rerank_pairing_md(
         build_rag_rerank_pairing(
             _pairing_result(
@@ -595,12 +664,15 @@ def test_render_rerank_pairing_nota_pipeline_quando_promovido():
                 rerank_per_question=rerank,
                 rerank_candidates_k=100,
                 rerank_exclude_revogadas=True,
+                rerank_exclude_superseded_versions=True,
+                rerank_restrict_to_query_submodulo=True,
             )
         )
     )
     assert "pipeline completo" in md_promovido
     assert "filtro de revogadas (F1)" in md_promovido
     assert "pool 100 (F2)" in md_promovido
+    assert "higiene de versões/submódulo exato (F1.5)" in md_promovido
 
     # Rerank puro (sem filtro, pool default) -> nota ausente.
     md_puro = render_rag_rerank_pairing_md(
@@ -698,8 +770,7 @@ def test_build_rag_rerank_pairing_decision_keep_optional_por_doc_failure():
     assert pairing["summary"]["delta_doc_failure"] == 2
     assert pairing["decision_rule"]["verdict"] == "keep_optional"
     assert any(
-        "delta_doc_failure" in reason
-        for reason in pairing["decision_rule"]["reasons"]
+        "delta_doc_failure" in reason for reason in pairing["decision_rule"]["reasons"]
     )
 
 
@@ -805,7 +876,7 @@ def test_load_benchmark_result_from_per_question_json_reconstroi_metrics(
     result = load_benchmark_result_from_per_question_json(path)
 
     assert len(result.metrics) == 2
-    baseline_row = result.metrics[result.metrics["rerank"] == False].iloc[0]  # noqa: E712
+    baseline_row = result.metrics[~result.metrics["rerank"]].iloc[0]
     assert baseline_row["answer_usable_rate"] == 0.5
     assert baseline_row["failure_type_counts"] == {
         "usable": 1,
@@ -841,8 +912,8 @@ def test_build_rag_baseline_configs_rerank_pools_incompativel_com_qe():
 
 
 def test_build_rag_baseline_configs_qe_herda_pipeline_promovido():
-    # rerank_qe deve herdar os defaults promovidos (pool 100 + filtro de
-    # revogadas), senão o run de QE compara contra um rerank antigo.
+    # rerank_qe deve herdar os defaults promovidos (pool 100 + filtros de
+    # higiene), senão o run de QE compara contra um rerank antigo.
     configs = build_rag_baseline_configs(query_expansion=True)
 
     assert len(configs) == 4
@@ -850,6 +921,8 @@ def test_build_rag_baseline_configs_qe_herda_pipeline_promovido():
     rerank_qe = by_key[(True, True)]
     assert rerank_qe.candidates_k_override == 100
     assert rerank_qe.exclude_revogadas is True
+    assert rerank_qe.exclude_superseded_versions is True
+    assert rerank_qe.restrict_to_query_submodulo is True
 
 
 def test_run_rag_config_emite_candidates_k():
@@ -1047,7 +1120,21 @@ def test_build_rag_baseline_configs_exclude_revogadas_comparison():
     assert [c.rerank for c in configs] == [True, True]
     assert [c.candidates_k_override for c in configs] == [100, 100]
     assert [c.exclude_revogadas for c in configs] == [False, True]
-    assert configs[1].label.endswith("+sem_revogadas")
+    assert [c.exclude_superseded_versions for c in configs] == [True, True]
+    assert [c.restrict_to_query_submodulo for c in configs] == [True, True]
+    assert "+sem_revogadas" in configs[1].label
+
+
+def test_build_rag_baseline_configs_version_hygiene_comparison():
+    configs = build_rag_baseline_configs(version_hygiene_comparison=True)
+
+    assert len(configs) == 2
+    assert [c.rerank for c in configs] == [True, True]
+    assert [c.candidates_k_override for c in configs] == [100, 100]
+    assert [c.exclude_revogadas for c in configs] == [True, True]
+    assert [c.exclude_superseded_versions for c in configs] == [False, True]
+    assert [c.restrict_to_query_submodulo for c in configs] == [False, True]
+    assert configs[1].label.endswith("+sem_versoes_antigas+submodulo_exato")
 
 
 def test_build_rag_baseline_configs_revogadas_incompativel():
@@ -1093,6 +1180,43 @@ def test_run_rag_config_emite_exclude_revogadas():
     )
 
     assert result["exclude_revogadas"] is True
+
+
+def test_run_rag_config_emite_higiene_de_versao():
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+
+    def rag_factory(config, repo_id, query_cache=None):
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    config = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="fixed-size",
+        metodo_extracao="markdown",
+        mode="flat",
+        rerank=True,
+        candidates_k_override=100,
+        exclude_revogadas=True,
+        exclude_superseded_versions=True,
+        restrict_to_query_submodulo=True,
+    )
+    result = run_rag_config(
+        config,
+        [_question("gt-0001")],
+        top_k=1,
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+    )
+
+    assert result["exclude_superseded_versions"] is True
+    assert result["restrict_to_query_submodulo"] is True
 
 
 def _filter_config(
