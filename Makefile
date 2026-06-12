@@ -198,6 +198,8 @@ benchmark-retrieval-smoke:
 
 # Roda as 50 perguntas × 16 configurações. Custa embeddings de query OpenAI
 # (50 perguntas × 2 modelos = 100 embeddings de query).
+# Saída: data/evaluation/runs/retrieval/<run_id>/ (results.csv, per_question.json,
+# manifest.json). Cada run é timestampado e separado — ver data/README.md.
 benchmark-retrieval:
 	$(PYTHON) scripts/run_benchmark.py --top-k 10
 
@@ -209,15 +211,17 @@ benchmark-retrieval:
 # MAS trial limita 10 req/min — leva ~80 min mesmo com retry. Para uma
 # config só com rerank, use
 # scripts/diagnostics/diagnose_rerank_best_pool100.py.
-# Saída separada do baseline (não sobrescreve results.csv original).
+# Saída: data/evaluation/runs/retrieval/<run_id>/ — cada run é timestampado, então
+# não sobrescreve o baseline (o manifest.json registra rerank=True e o pool).
 benchmark-retrieval-rerank:
 	$(PYTHON) scripts/run_benchmark.py --top-k 10 --rerank \
-		--rerank-candidates-k 100 \
-		--output-dir data/evaluation/results/retrieval-50-rerank
+		--rerank-candidates-k 100
 
 # Smoke RAG ponta-a-ponta: baseline atual + mesma config com rerank. Exige
 # OPENAI_API_KEY/LLM_API_KEY para gerar e julgar respostas; sem chave, registra
 # skipped_no_llm_key e preserva o fluxo para teste offline.
+# Saída: data/evaluation/runs/rag/<run_id>/ (results.csv, per_question.json,
+# failure_analysis.{json,md}, manifest.json). Ver data/README.md.
 benchmark-rag:
 	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10
 

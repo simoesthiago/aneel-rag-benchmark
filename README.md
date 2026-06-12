@@ -120,7 +120,8 @@ granularidade de chunk.
 
 O smoke RAG ponta-a-ponta roda com `make benchmark-rag`. Ele avalia duas
 configurações controladas — baseline atual e baseline com rerank — e grava os
-resultados em `data/evaluation/results/rag-50/`. Com chave configurada, há
+resultados num run timestampado em `data/evaluation/runs/rag/<run_id>/` (com
+`manifest.json`; ver o contrato em `data/README.md`). Com chave configurada, há
 custo de geração e de juiz LLM; sem `OPENAI_API_KEY` ou `LLM_API_KEY`, o
 gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
 `COHERE_API_KEY`; para validar apenas a mecânica local sem Cohere, use
@@ -139,7 +140,7 @@ gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
 
 O repositório Git contém código, configuração e documentação. Dados pesados — PDFs, Parquet e índices FAISS — ficam **fora do Git** (HuggingFace Hub).
 
-**Exceção deliberada:** os artefatos de avaliação em `data/evaluation/` (`results*.csv`, `per_question*.json`, pareamentos, diagnósticos e auditorias) **são versionados**. São leves e funcionam como o registro reprodutível e auditável das decisões de promoção (cada fase do roadmap tem critério pré-comprometido e pareamento preservado).
+**Exceção deliberada:** os artefatos de avaliação em `data/evaluation/` (ground truth, runs de benchmark com `manifest.json`, `results.csv`, `per_question.json`, pareamentos, diagnósticos e auditorias) **são versionados**. São leves e funcionam como o registro reprodutível e auditável das decisões de promoção (cada fase do roadmap tem critério pré-comprometido e pareamento preservado). O contrato completo de `data/` (entrada canônica vs run bruto vs auditoria vs relatório, e o que vai ou não para o Git) está em [`data/README.md`](data/README.md).
 
 ---
 

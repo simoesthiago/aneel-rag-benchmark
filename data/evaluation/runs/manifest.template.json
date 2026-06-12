@@ -1,0 +1,55 @@
+{
+  "_comment": "Template/contrato do manifest.json gerado por scripts/run_benchmark.py. NÃO é um run real — é a referência do schema. Cada run grava seu próprio manifest.json em data/evaluation/runs/<mode>/<run_id>/manifest.json. Gerado por src/evaluation/run_manifest.py (schema_version 1).",
+  "schema_version": 1,
+  "run_id": "<timestamp_utc>-<commit_curto>[-dirty]",
+  "mode": "rag | retrieval",
+  "created_at": "2026-06-12T14:30:00Z",
+  "git_commit": "9b3fe6f",
+  "git_dirty": false,
+  "top_k": 10,
+  "ground_truth": {
+    "version": "retrieval-50-v2",
+    "source": "hub | local:<path>",
+    "num_questions": 50,
+    "num_skipped": 2,
+    "num_evaluable": 48
+  },
+  "models": {
+    "embedding_model": "text-embedding-3-large",
+    "rerank_model": "rerank-multilingual-v3.0",
+    "llm_model": "gpt-5.4-mini",
+    "llm_judge_model": "gpt-5.4-mini"
+  },
+  "configs": [
+    {
+      "_comment": "Uma entrada por configuração avaliada. Os campos abaixo vêm direto do DataFrame agregado do benchmark: flags de chunking/embedding/rerank/filtros de higiene + métricas. Lista ilustrativa de chaves; o conjunto exato depende do modo.",
+      "model": "text-embedding-3-large",
+      "chunk_strategy": "fixed-size",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": true,
+      "candidates_k": 100,
+      "query_expansion": false,
+      "exclude_revogadas": true,
+      "exclude_superseded_versions": true,
+      "restrict_to_query_submodulo": true,
+      "boost_identificador": false,
+      "recall_at_k": 0.958,
+      "doc_recall_at_k": 0.979,
+      "precision_at_k": 0.0,
+      "mrr_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "answer_usable_rate": 0.7292
+    }
+  ],
+  "cache_stats": {
+    "hits": 0,
+    "misses": 0
+  },
+  "artifact_paths": {
+    "results_csv": "results.csv",
+    "per_question": "per_question.json",
+    "failure_analysis_json": "failure_analysis.json",
+    "failure_analysis_md": "failure_analysis.md"
+  }
+}

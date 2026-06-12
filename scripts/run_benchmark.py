@@ -25,7 +25,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd  # noqa: E402
 
+from src.config import settings  # noqa: E402
 from src.embeddings.cache import QueryEmbeddingCache  # noqa: E402
+from src.evaluation.run_manifest import (  # noqa: E402
+    build_run_manifest,
+    default_run_dir,
+    make_run_id,
+    write_run_manifest,
+)
 from src.evaluation.benchmark import (  # noqa: E402
     build_rag_failure_analysis,
     build_rag_baseline_configs,
@@ -216,9 +223,13 @@ def main() -> None:
         if args.ground_truth is not None:
             print(f"Carregando ground truth local: {args.ground_truth}")
             questions = load_ground_truth_jsonl(args.ground_truth)
+            gt_source = f"local:{args.ground_truth}"
+            gt_version = args.ground_truth.name
         else:
             print("Baixando ground truth retrieval-50 do HuggingFace Hub ...")
             questions = load_ground_truth_hub()
+            gt_source = "hub"
+            gt_version = settings.GROUND_TRUTH_VERSION
 
         if args.limit_questions:
             questions = questions[: args.limit_questions]
@@ -298,11 +309,18 @@ def main() -> None:
 
     df = result.metrics
 
-    output_dir: Path = args.output_dir or Path(
-        "data/evaluation/results/rag-50"
-        if args.mode == "rag"
-        else "data/evaluation/results/retrieval-50"
-    )
+    # Novo contrato de `data/` (Marco A): runs brutos vão para
+    # `data/evaluation/runs/<mode>/<run_id>/`, cada um com seu manifest.json.
+    # `--output-dir` continua sobrescrevendo (usado por experimentos pareados).
+    # Com `--from-cache` e sem override, os artefatos derivados ficam ao lado
+    # do per_question.json de origem, não num run novo vazio.
+    run_id = make_run_id()
+    if args.output_dir is not None:
+        output_dir = args.output_dir
+    elif from_cache is not None:
+        output_dir = from_cache.parent
+    else:
+        output_dir = default_run_dir(args.mode, run_id)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if from_cache is None:
@@ -555,6 +573,39 @@ def main() -> None:
                 f"    Par 2 (com rerank): {par2['decision_rule']['verdict']} "
                 f"saved={par2['summary']['saved_count']} broken={par2['summary']['broken_count']}"
             )
+
+    # Manifesto do run (Marco A): registro auto-suficiente do que gerou estes
+    # artefatos. Só no caminho de run fresco — `--from-cache` reaproveita um run
+    # existente e não recalcula métricas/configs.
+    if from_cache is None and aggregate is not None:
+        artifact_paths = {
+            "results_csv": "results.csv",
+            "per_question": "per_question.json",
+        }
+        models = {
+            "embedding_model": settings.EMBEDDING_MODEL,
+            "rerank_model": settings.COHERE_RERANK_MODEL,
+        }
+        if args.mode == "rag":
+            artifact_paths["failure_analysis_json"] = "failure_analysis.json"
+            artifact_paths["failure_analysis_md"] = "failure_analysis.md"
+            models["llm_model"] = settings.LLM_MODEL
+            models["llm_judge_model"] = settings.LLM_JUDGE_MODEL
+        manifest = build_run_manifest(
+            mode=args.mode,
+            run_id=run_id,
+            aggregate=aggregate,
+            top_k=args.top_k,
+            ground_truth_version=gt_version,
+            ground_truth_source=gt_source,
+            num_questions=len(questions),
+            num_skipped=len(result.skipped_questions),
+            cache_stats=result.cache_stats,
+            models=models,
+            artifact_paths=artifact_paths,
+        )
+        manifest_path = write_run_manifest(output_dir, manifest)
+        print(f"  Manifesto do run salvo: {manifest_path}")
 
     if aggregate is not None and "ndcg_at_k" in aggregate.columns:
         print("\nResumo (top-5 por nDCG@k):")
