@@ -25,6 +25,7 @@ import pandas as pd
 
 from src.embeddings.cache import QueryEmbeddingCache
 from src.embeddings.embedder import OpenAIEmbeddingProvider
+from src.rag.identifier_match import doc_matches_submodulo, query_submodulo_id
 from src.vectorstore.faiss_store import FAISSVectorStore
 from src.vectorstore.hub import carregar_vectorstore
 
@@ -58,6 +59,7 @@ class Retriever:
         reranker: Any | None = None,
         candidates_k: int | None = None,
         exclude_situacoes: frozenset[str] | None = None,
+        boost_identificador: bool = False,
     ):
         self.provider = provider
         self.model = model
@@ -67,6 +69,9 @@ class Retriever:
         self.query_cache = query_cache
         self.reranker = reranker
         self.candidates_k = candidates_k
+        # Fase 5: injeta no pool de rerank os chunks cujo document_id casa
+        # exatamente o submódulo citado na pergunta (boost de metadados).
+        self.boost_identificador = boost_identificador
         # Situações de documento a descartar pós-retrieval (ex.: "revogada").
         # Normalizado para lower; o metadata herda `situacao` do documento.
         self.exclude_situacoes: frozenset[str] = frozenset(
@@ -180,6 +185,9 @@ class Retriever:
                 not in self.exclude_situacoes
             ]
 
+        if self.boost_identificador and self.reranker is not None:
+            candidatos = self._injetar_por_identificador(query, candidatos)
+
         if self.mode == "hierarchical":
             candidatos = self._substituir_por_pais(candidatos)
 
@@ -190,6 +198,37 @@ class Retriever:
             return candidatos
 
         return self._rankear(candidatos, top_k)
+
+    def _injetar_por_identificador(
+        self, query: str, candidatos: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Adiciona ao pool de rerank os chunks do submódulo citado na pergunta.
+
+        Fase 5: quando a pergunta cita "Submódulo 2.4", o doc-alvo às vezes nem
+        entra no top-k denso (gt-0027/0028). Aqui injetamos todos os chunks
+        cujo `document_id` casa exatamente o identificador (com fronteira:
+        2.1 ≠ 2.1A ≠ 2.10) e que ainda não estão no pool, deixando o rerank
+        ordenar. Sem score denso, entram com `score=0.0` (o rerank reavalia).
+        Respeita o filtro de situação. No-op se a pergunta não cita submódulo.
+        """
+        identificador = query_submodulo_id(query)
+        if not identificador:
+            return candidatos
+
+        presentes = {row.get("chunk_id") for row in candidatos}
+        doc_ids = self.metadata["document_id"].astype(str)
+        casa = doc_ids.map(lambda d: doc_matches_submodulo(d, identificador))
+        for idx in self.metadata.index[casa]:
+            row = self.metadata.loc[idx].to_dict()
+            if row.get("chunk_id") in presentes:
+                continue
+            situacao = str(row.get("situacao") or "").strip().lower()
+            if self.exclude_situacoes and situacao in self.exclude_situacoes:
+                continue
+            row["score"] = 0.0
+            candidatos.append(row)
+            presentes.add(row.get("chunk_id"))
+        return candidatos
 
     def _candidatos_a_buscar(self, top_k: int) -> int:
         """Quantos candidatos pegar no FAISS antes de rerank/hierarchical."""

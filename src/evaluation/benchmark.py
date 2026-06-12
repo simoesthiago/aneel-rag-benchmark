@@ -74,6 +74,7 @@ class StoreConfig:
     candidates_k_override: int | None = None
     query_expansion: bool = False
     exclude_revogadas: bool = False
+    boost_identificador: bool = False
 
     @property
     def label(self) -> str:
@@ -84,6 +85,8 @@ class StoreConfig:
             suffix += "+qe"
         if self.exclude_revogadas:
             suffix += "+sem_revogadas"
+        if self.boost_identificador:
+            suffix += "+boost_id"
         return (
             f"{self.model}|{self.chunk_strategy}|{self.metodo_extracao}|"
             f"{self.mode}{suffix}"
@@ -157,6 +160,7 @@ def build_rag_baseline_configs(
     query_expansion: bool = False,
     rerank_pools: tuple[int, ...] | None = None,
     exclude_revogadas_comparison: bool = False,
+    boost_identificador_comparison: bool = False,
 ) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
@@ -187,6 +191,7 @@ def build_rag_baseline_configs(
         ("query_expansion", query_expansion),
         ("rerank_pools", rerank_pools is not None),
         ("exclude_revogadas_comparison", exclude_revogadas_comparison),
+        ("boost_identificador_comparison", boost_identificador_comparison),
     ]
     _ativos = [nome for nome, ativo in _exclusive if ativo]
     if len(_ativos) > 1:
@@ -240,6 +245,12 @@ def build_rag_baseline_configs(
         rerank_com_revogadas = replace(rerank, exclude_revogadas=False)
         rerank_sem_revogadas = replace(rerank, exclude_revogadas=True)
         return [rerank_com_revogadas, rerank_sem_revogadas]
+    if boost_identificador_comparison:
+        # Fase 5: pipeline promovido (rerank@100 + filtro) com vs sem o boost
+        # de identificador, diferindo só nesse flag.
+        sem_boost = replace(rerank, boost_identificador=False)
+        com_boost = replace(rerank, boost_identificador=True)
+        return [sem_boost, com_boost]
     if not query_expansion:
         return [baseline, rerank]
     baseline_qe = StoreConfig(
@@ -357,6 +368,7 @@ def _default_retriever_factory(
         reranker=reranker,
         candidates_k=config.candidates_k_override,
         exclude_situacoes=exclude_situacoes,
+        boost_identificador=config.boost_identificador,
     )
 
 
@@ -1090,6 +1102,7 @@ def run_rag_config(
         "candidates_k": config.candidates_k_override,
         "query_expansion": config.query_expansion,
         "exclude_revogadas": config.exclude_revogadas,
+        "boost_identificador": config.boost_identificador,
         "num_questions": len(por_pergunta),
         "latency_avg_ms": summary["latency_avg"],
         "latency_p95_ms": summary["latency_p95"],
