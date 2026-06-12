@@ -113,6 +113,7 @@ def build_store_configs(
     *,
     include_rerank: bool = False,
     rerank_candidates_k: int | None = None,
+    apply_hygiene: bool = False,
 ) -> list[StoreConfig]:
     """Gera as configurações da matriz de retrieval.
 
@@ -122,6 +123,13 @@ def build_store_configs(
       rerank. Diagnóstico em 1.3-alt-b/Opção A mostrou que pool 50 (default
       do Retriever) deixa trechos profundos fora do alcance; pool 100 sobe
       passage_recall +4 pp ao custo de doc_recall -2 pp.
+    - Se `apply_hygiene=True`, liga os filtros de higiene de corpus/retrieval
+      (`exclude_revogadas`, `exclude_superseded_versions`,
+      `restrict_to_query_submodulo`) em TODAS as configs. Higiene independe de
+      rerank; ela foi promovida a default do pipeline RAG nas Fases F1/F1.5, e
+      a matriz oficial de retrieval (Marco B) precisa aplicá-la para ser
+      comparável ao pipeline promovido. `boost_identificador` fica de fora —
+      foi rejeitado/default-off na F5.
     """
     configs: list[StoreConfig] = []
     for model in EMBEDDING_MODELS:
@@ -146,17 +154,22 @@ def build_store_configs(
                         mode=mode,
                     )
                 )
-    if include_rerank:
-        configs = configs + [
-            StoreConfig(
-                provider=c.provider,
-                model=c.model,
-                chunk_strategy=c.chunk_strategy,
-                metodo_extracao=c.metodo_extracao,
-                mode=c.mode,
-                rerank=True,
-                candidates_k_override=rerank_candidates_k,
+    if apply_hygiene:
+        configs = [
+            replace(
+                c,
+                exclude_revogadas=True,
+                exclude_superseded_versions=True,
+                restrict_to_query_submodulo=True,
             )
+            for c in configs
+        ]
+    if include_rerank:
+        # `replace` preserva os flags de higiene já aplicados acima; o código
+        # antigo recriava o StoreConfig à mão e descartava qualquer flag não
+        # listado explicitamente.
+        configs = configs + [
+            replace(c, rerank=True, candidates_k_override=rerank_candidates_k)
             for c in configs
         ]
     return configs

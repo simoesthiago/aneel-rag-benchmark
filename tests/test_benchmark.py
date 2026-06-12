@@ -66,6 +66,39 @@ def test_build_store_configs_com_rerank_duplica_matriz():
     assert len({c.label for c in configs}) == 32
 
 
+def test_build_store_configs_apply_hygiene_liga_filtros_em_todas():
+    configs = build_store_configs(apply_hygiene=True)
+    assert len(configs) == 16
+    assert all(c.exclude_revogadas for c in configs)
+    assert all(c.exclude_superseded_versions for c in configs)
+    assert all(c.restrict_to_query_submodulo for c in configs)
+    # boost_identificador foi rejeitado na F5 — fica de fora da higiene.
+    assert all(not c.boost_identificador for c in configs)
+
+
+def test_build_store_configs_sem_hygiene_nao_liga_filtros():
+    configs = build_store_configs()
+    assert all(not c.exclude_revogadas for c in configs)
+    assert all(not c.exclude_superseded_versions for c in configs)
+    assert all(not c.restrict_to_query_submodulo for c in configs)
+
+
+def test_build_store_configs_rerank_preserva_higiene():
+    # O rerank duplica as configs; os flags de higiene precisam sobreviver à
+    # duplicação (regressão: o código antigo recriava o StoreConfig e os perdia).
+    configs = build_store_configs(
+        include_rerank=True,
+        rerank_candidates_k=100,
+        apply_hygiene=True,
+    )
+    assert len(configs) == 32
+    assert all(c.exclude_revogadas for c in configs)
+    assert all(c.exclude_superseded_versions for c in configs)
+    assert all(c.restrict_to_query_submodulo for c in configs)
+    rerank_configs = [c for c in configs if c.rerank]
+    assert {c.candidates_k_override for c in rerank_configs} == {100}
+
+
 def test_build_store_configs_aplica_pool_apenas_no_rerank():
     configs = build_store_configs(
         include_rerank=True,

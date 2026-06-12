@@ -138,6 +138,17 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--apply-hygiene",
+        action="store_true",
+        help=(
+            "Em --mode retrieval, liga os filtros de higiene "
+            "(sem_revogadas + sem_versoes_antigas + submodulo_exato) em todas "
+            "as configs da matriz, deixando-a comparável ao pipeline RAG "
+            "promovido (Fases F1/F1.5). Obrigatório nos runs oficiais do "
+            "Marco B. Sem efeito em --mode rag (lá a higiene já é default)."
+        ),
+    )
+    parser.add_argument(
         "--rerank-candidates-k",
         type=int,
         default=None,
@@ -274,6 +285,7 @@ def main() -> None:
             configs = build_store_configs(
                 include_rerank=args.rerank,
                 rerank_candidates_k=args.rerank_candidates_k,
+                apply_hygiene=args.apply_hygiene,
             )
         if args.limit_configs:
             configs = configs[: args.limit_configs]

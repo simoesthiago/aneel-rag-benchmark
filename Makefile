@@ -196,12 +196,16 @@ benchmark-retrieval-smoke:
 		--limit-configs 1 \
 		--limit-questions 2
 
-# Roda as 50 perguntas × 16 configurações. Custa embeddings de query OpenAI
-# (50 perguntas × 2 modelos = 100 embeddings de query).
-# Saída: data/evaluation/runs/retrieval/<run_id>/ (results.csv, per_question.json,
-# manifest.json). Cada run é timestampado e separado — ver data/README.md.
+# Matriz oficial de retrieval (Marco B): 50 perguntas × 16 configs, com filtros
+# de higiene (sem_revogadas + sem_versoes_antigas + submodulo_exato) para ficar
+# comparável ao pipeline RAG promovido. Custa embeddings de query OpenAI
+# (50 perguntas × 2 modelos = 100 embeddings; o --cache-path reaproveita entre
+# configs e entre runs). Saída: data/evaluation/runs/retrieval/<run_id>/
+# (results.csv, per_question.json, manifest.json). Ver data/README.md.
 benchmark-retrieval:
-	$(PYTHON) scripts/run_benchmark.py --top-k 10
+	$(PYTHON) scripts/run_benchmark.py --top-k 10 \
+		--apply-hygiene \
+		--cache-path data/evaluation/cache/query_embeddings.json
 
 # Opt-in: dobra para 32 configs adicionando variantes +rerank (Cohere Rerank 3).
 # Exige COHERE_API_KEY no .env. Pool de candidatos = 100 conforme diagnóstico
@@ -213,9 +217,12 @@ benchmark-retrieval:
 # scripts/diagnostics/diagnose_rerank_best_pool100.py.
 # Saída: data/evaluation/runs/retrieval/<run_id>/ — cada run é timestampado, então
 # não sobrescreve o baseline (o manifest.json registra rerank=True e o pool).
+# --apply-hygiene mantém a metade com rerank comparável à sem rerank e ao RAG.
 benchmark-retrieval-rerank:
 	$(PYTHON) scripts/run_benchmark.py --top-k 10 --rerank \
-		--rerank-candidates-k 100
+		--rerank-candidates-k 100 \
+		--apply-hygiene \
+		--cache-path data/evaluation/cache/query_embeddings.json
 
 # Smoke RAG ponta-a-ponta: baseline atual + mesma config com rerank. Exige
 # OPENAI_API_KEY/LLM_API_KEY para gerar e julgar respostas; sem chave, registra
