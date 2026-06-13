@@ -13,6 +13,8 @@ from __future__ import annotations
 import time
 from typing import Any, Protocol
 
+import httpx
+
 from src.config.settings import COHERE_RERANK_MODEL, get_cohere_api_key
 
 # Trial keys do Cohere têm rate limit de 10 req/min. Production keys
@@ -90,15 +92,24 @@ class CohereReranker:
         documents: list[str],
         top_n: int,
     ):
-        """Chama Cohere com retry exponencial em 429/5xx.
+        """Chama Cohere com retry exponencial em 429 e timeouts de rede.
 
-        Necessário para trial keys (rate limit 10 req/min). Production keys
-        raramente disparam — o overhead é trivial nesses casos.
+        Dois motivos para o retry:
+        - trial keys têm rate limit de 10 req/min → 429 (`TooManyRequestsError`);
+        - num benchmark de ~768 chamadas, um único timeout de rede transiente
+          (`httpx.TransportError`, ex.: `ReadTimeout`) não pode derrubar o run
+          inteiro. Antes, só o 429 era tratado e um ReadTimeout abortava tudo.
+
+        Production keys raramente disparam — o overhead é trivial nesses casos.
         """
         try:
             from cohere.errors import TooManyRequestsError
         except ImportError:  # versões antigas do SDK
             TooManyRequestsError = Exception  # type: ignore[assignment]
+
+        # `httpx.TransportError` é a base de TimeoutException/NetworkError, então
+        # cobre ReadTimeout, ConnectError etc. com uma só cláusula.
+        retryable = (TooManyRequestsError, httpx.TransportError)
 
         client = self._load_client()
         backoff = self.initial_backoff_seconds
@@ -111,7 +122,7 @@ class CohereReranker:
                     documents=documents,
                     top_n=top_n,
                 )
-            except TooManyRequestsError as exc:
+            except retryable as exc:
                 last_exc = exc
                 if attempt == self.max_retries:
                     raise

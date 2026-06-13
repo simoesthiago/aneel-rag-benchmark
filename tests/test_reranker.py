@@ -5,11 +5,30 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
+import httpx
 import numpy as np
 import pandas as pd
 
 from src.rag.reranker import CohereReranker
 from src.rag.retriever import Retriever
+
+
+class _FlakyCohereClient:
+    """Falha com ReadTimeout nas primeiras chamadas e sucede depois."""
+
+    def __init__(self, falhas: int):
+        self.falhas = falhas
+        self.calls = 0
+
+    def rerank(self, *, model, query, documents, top_n):
+        self.calls += 1
+        if self.calls <= self.falhas:
+            raise httpx.ReadTimeout("timeout simulado")
+        results = [
+            SimpleNamespace(index=idx, relevance_score=1.0 - (idx * 0.1))
+            for idx in range(top_n)
+        ]
+        return SimpleNamespace(results=results)
 
 
 class _FakeCohereClient:
@@ -102,6 +121,32 @@ def test_cohere_reranker_reordena_via_cliente_e_devolve_top_k():
 def test_cohere_reranker_lista_vazia_devolve_vazio():
     reranker = CohereReranker(client=_FakeCohereClient())
     assert reranker.rerank("q", [], top_k=5) == []
+
+
+def test_cohere_reranker_retry_em_readtimeout(monkeypatch):
+    # Um timeout de rede transiente não pode derrubar o run: o reranker deve
+    # tentar de novo e suceder. Zera o sleep para o teste ser instantâneo.
+    monkeypatch.setattr("src.rag.reranker.time.sleep", lambda _s: None)
+    client = _FlakyCohereClient(falhas=2)
+    reranker = CohereReranker(client=client, initial_backoff_seconds=0.0)
+    docs = [{"texto": "a"}, {"texto": "b"}]
+    ordenado = reranker.rerank("query", docs, top_k=2)
+    assert client.calls == 3  # 2 falhas + 1 sucesso
+    assert len(ordenado) == 2
+
+
+def test_cohere_reranker_readtimeout_persistente_propaga(monkeypatch):
+    # Esgotado o retry, o erro propaga (não mascara falha real).
+    monkeypatch.setattr("src.rag.reranker.time.sleep", lambda _s: None)
+    client = _FlakyCohereClient(falhas=99)
+    reranker = CohereReranker(
+        client=client, max_retries=2, initial_backoff_seconds=0.0
+    )
+    import pytest
+
+    with pytest.raises(httpx.ReadTimeout):
+        reranker.rerank("query", [{"texto": "a"}], top_k=1)
+    assert client.calls == 3  # tentativa inicial + 2 retries
 
 
 def test_retriever_com_reranker_busca_mais_candidatos_e_reordena():
