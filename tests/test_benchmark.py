@@ -241,6 +241,90 @@ def test_run_full_benchmark_paraleliza_com_max_workers():
     assert sequencial["ndcg_at_k"].tolist() == paralelo["ndcg_at_k"].tolist()
 
 
+def test_run_full_benchmark_checkpoint_reaproveita_e_nao_refaz(tmp_path):
+    """Resume: re-rodar com o mesmo checkpoint não re-invoca o factory."""
+    chunks = [
+        {
+            "chunk_id": "doc-a::0",
+            "document_id": "ren-2021-1000",
+            "artigo": "Art. 1º",
+            "paragrafo": "§1º",
+            "texto": "trecho",
+        }
+    ]
+    chamadas = {"n": 0}
+
+    def factory(config, repo_id, query_cache=None):
+        chamadas["n"] += 1  # conta quantas configs foram realmente avaliadas
+        return _FakeRetriever(chunks)
+
+    configs = [
+        StoreConfig(
+            provider="openai",
+            model="text-embedding-3-large",
+            chunk_strategy="article-aware",
+            metodo_extracao=metodo,
+            mode="flat",
+        )
+        for metodo in ("markdown", "texto")
+    ]
+    perguntas = [_question(f"gt-{i:04d}") for i in range(1, 4)]
+    checkpoint = tmp_path / "ckpt.jsonl"
+
+    primeiro = run_full_benchmark(
+        perguntas,
+        top_k=1,
+        configs=configs,
+        retriever_factory=factory,
+        checkpoint_path=checkpoint,
+    ).metrics
+    assert chamadas["n"] == 2  # ambas configs avaliadas
+    assert checkpoint.exists()
+    assert len(checkpoint.read_text().strip().splitlines()) == 2
+
+    # Re-run: nada deve ser re-avaliado (factory não é chamado), e o resultado
+    # reaproveitado bate com o original.
+    segundo = run_full_benchmark(
+        perguntas,
+        top_k=1,
+        configs=configs,
+        retriever_factory=factory,
+        checkpoint_path=checkpoint,
+    ).metrics
+    assert chamadas["n"] == 2  # inalterado → reaproveitou do checkpoint
+    assert segundo["ndcg_at_k"].tolist() == primeiro["ndcg_at_k"].tolist()
+
+
+def test_run_full_benchmark_checkpoint_top_k_divergente_nao_reaproveita(tmp_path):
+    """Checkpoint de outro top_k não é comparável → recomputa."""
+    chunks = [{"chunk_id": "doc-a::0", "document_id": "d", "texto": "t"}]
+    chamadas = {"n": 0}
+
+    def factory(config, repo_id, query_cache=None):
+        chamadas["n"] += 1
+        return _FakeRetriever(chunks)
+
+    config = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        mode="flat",
+    )
+    checkpoint = tmp_path / "ckpt.jsonl"
+    run_full_benchmark(
+        [_question()], top_k=1, configs=[config],
+        retriever_factory=factory, checkpoint_path=checkpoint,
+    )
+    assert chamadas["n"] == 1
+    # top_k diferente → não reaproveita o registro anterior.
+    run_full_benchmark(
+        [_question()], top_k=5, configs=[config],
+        retriever_factory=factory, checkpoint_path=checkpoint,
+    )
+    assert chamadas["n"] == 2
+
+
 def test_run_full_benchmark_devolve_dataframe_com_colunas_esperadas():
     chunks = [
         {

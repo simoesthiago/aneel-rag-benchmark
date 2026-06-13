@@ -18,6 +18,7 @@ Total: 16 medições. Cada uma roda as 50 perguntas do `retrieval-50`.
 from __future__ import annotations
 
 import json
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -1303,6 +1304,46 @@ def run_rag_benchmark(
     )
 
 
+def _load_checkpoint(
+    checkpoint_path: Path | None, top_k: int
+) -> dict[str, dict[str, Any]]:
+    """Lê o checkpoint JSONL e devolve {label: linha} das configs já avaliadas.
+
+    Só reaproveita registros com o mesmo `top_k` do run atual (um checkpoint de
+    outro top_k não é comparável). Em colisão de label, o último registro vence.
+    Arquivo inexistente => dict vazio (primeiro run).
+    """
+    if checkpoint_path is None or not checkpoint_path.exists():
+        return {}
+    done: dict[str, dict[str, Any]] = {}
+    for line in checkpoint_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        record = json.loads(line)
+        if record.get("top_k") != top_k:
+            continue
+        done[record["label"]] = record["linha"]
+    if done:
+        print(f"  [checkpoint] {len(done)} config(s) reaproveitável(is) de {checkpoint_path}")
+    return done
+
+
+def _append_checkpoint(
+    checkpoint_path: Path, label: str, top_k: int, linha: dict[str, Any]
+) -> None:
+    """Anexa uma config concluída ao checkpoint JSONL (uma linha por config)."""
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    with checkpoint_path.open("a", encoding="utf-8") as fh:
+        fh.write(
+            json.dumps(
+                {"label": label, "top_k": top_k, "linha": linha},
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+
+
 def run_full_benchmark(
     questions: list[dict[str, Any]],
     *,
@@ -1312,6 +1353,7 @@ def run_full_benchmark(
     retriever_factory=_default_retriever_factory,
     query_cache: QueryEmbeddingCache | None = None,
     max_workers: int = 1,
+    checkpoint_path: Path | None = None,
 ) -> BenchmarkResult:
     """Roda todas as configs e devolve o resultado completo do benchmark.
 
@@ -1332,6 +1374,13 @@ def run_full_benchmark(
     (a) o gargalo é I/O — download/leitura de store + chamada HTTP da OpenAI;
     (b) o cache compartilhado funciona naturalmente entre threads;
     (c) consumo de RAM é proporcional aos workers ativos, não fixo.
+
+    `checkpoint_path` (opcional) liga resume por config: cada config concluída
+    é gravada (JSONL, append) assim que termina; ao re-rodar com o mesmo
+    caminho, configs já presentes são reaproveitadas sem refazer a chamada
+    (crucial num run de rerank, onde cada config custa ~48 chamadas Cohere e a
+    quota é limitada). A chave é `config.label` + `top_k`; mude o GT/top_k e
+    apague o checkpoint para forçar recomputo.
     """
     if configs is None:
         configs = build_store_configs()
@@ -1342,16 +1391,35 @@ def run_full_benchmark(
     if query_cache is None:
         query_cache = QueryEmbeddingCache()
 
+    def _augment(linha: dict[str, Any]) -> dict[str, Any]:
+        linha["num_questions_total"] = len(questions_list)
+        linha["num_questions_evaluated"] = len(evaluation_questions)
+        linha["num_questions_skipped"] = len(skipped_questions)
+        return linha
+
+    done = _load_checkpoint(checkpoint_path, top_k)
+    checkpoint_lock = threading.Lock()
+
     def _run(config: StoreConfig) -> dict[str, Any]:
-        print(f"  Avaliando {config.label} ...")
-        return run_config(
-            config,
-            evaluation_questions,
-            top_k=top_k,
-            repo_id=repo_id,
-            retriever_factory=retriever_factory,
-            query_cache=query_cache,
+        label = config.label
+        if label in done:
+            print(f"  [checkpoint] reaproveitando {label} (já avaliado)")
+            return done[label]
+        print(f"  Avaliando {label} ...")
+        linha = _augment(
+            run_config(
+                config,
+                evaluation_questions,
+                top_k=top_k,
+                repo_id=repo_id,
+                retriever_factory=retriever_factory,
+                query_cache=query_cache,
+            )
         )
+        if checkpoint_path is not None:
+            with checkpoint_lock:
+                _append_checkpoint(checkpoint_path, label, top_k, linha)
+        return linha
 
     if max_workers <= 1:
         linhas = [_run(config) for config in configs_list]
@@ -1360,10 +1428,6 @@ def run_full_benchmark(
             linhas = list(pool.map(_run, configs_list))
 
     print(f"  Query cache: {query_cache.stats}")
-    for linha in linhas:
-        linha["num_questions_total"] = len(questions_list)
-        linha["num_questions_evaluated"] = len(evaluation_questions)
-        linha["num_questions_skipped"] = len(skipped_questions)
     df = pd.DataFrame(linhas)
     return BenchmarkResult(
         metrics=df,

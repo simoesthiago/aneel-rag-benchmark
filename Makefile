@@ -218,11 +218,15 @@ benchmark-retrieval:
 # Saída: data/evaluation/runs/retrieval/<run_id>/ — cada run é timestampado, então
 # não sobrescreve o baseline (o manifest.json registra rerank=True e o pool).
 # --apply-hygiene mantém a metade com rerank comparável à sem rerank e ao RAG.
+# --checkpoint dá resume por config: se um run cair no meio (timeout/429), basta
+# re-rodar este target — as configs já feitas são reaproveitadas sem refazer
+# chamadas Cohere. Apague o JSONL para forçar recomputo (ex.: trocou GT/top_k).
 benchmark-retrieval-rerank:
 	$(PYTHON) scripts/run_benchmark.py --top-k 10 --rerank \
 		--rerank-candidates-k 100 \
 		--apply-hygiene \
-		--cache-path data/evaluation/cache/query_embeddings.json
+		--cache-path data/evaluation/cache/query_embeddings.json \
+		--checkpoint data/evaluation/cache/retrieval_rerank_checkpoint.jsonl
 
 # Smoke RAG ponta-a-ponta: baseline atual + mesma config com rerank. Exige
 # OPENAI_API_KEY/LLM_API_KEY para gerar e julgar respostas; sem chave, registra

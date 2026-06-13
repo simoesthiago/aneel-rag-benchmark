@@ -121,6 +121,18 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help=(
+            "Em --mode retrieval, liga resume por config: cada config "
+            "concluída é gravada num JSONL; re-rodar com o mesmo caminho "
+            "reaproveita as já feitas sem refazer chamadas (essencial para o "
+            "rerank, onde cada config custa ~48 chamadas Cohere). Apague o "
+            "arquivo para forçar recomputo (ex.: trocou GT/top_k)."
+        ),
+    )
+    parser.add_argument(
         "--max-workers",
         type=int,
         default=1,
@@ -282,6 +294,11 @@ def main() -> None:
                     "  Aviso: --query-expansion-model só tem efeito com "
                     "--query-expansion."
                 )
+            if args.checkpoint is not None:
+                print(
+                    "  Aviso: --checkpoint só tem efeito em --mode retrieval; "
+                    "ignorado no modo rag."
+                )
         else:
             configs = build_store_configs(
                 include_rerank=args.rerank,
@@ -314,6 +331,7 @@ def main() -> None:
                 repo_id=args.repo_id,
                 query_cache=query_cache,
                 max_workers=args.max_workers,
+                checkpoint_path=args.checkpoint,
             )
 
         if query_cache is not None and args.cache_path is not None:
