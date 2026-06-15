@@ -128,6 +128,26 @@ def test_build_rag_baseline_configs_limita_escopo_a_baseline_e_rerank():
     assert configs[1].restrict_to_query_submodulo is True
 
 
+def test_build_rag_baseline_configs_finalists_gera_4_configs():
+    configs = build_rag_baseline_configs(finalists=True)
+
+    assert len(configs) == 4
+    assert len({c.label for c in configs}) == 4
+    assert {c.metodo_extracao for c in configs} == {"markdown", "texto"}
+    assert sum(1 for c in configs if c.rerank) == 2
+    # Todos os finalistas são large|fixed-size|flat.
+    assert {c.model for c in configs} == {"text-embedding-3-large"}
+    assert {c.chunk_strategy for c in configs} == {"fixed-size"}
+    assert {c.mode for c in configs} == {"flat"}
+    # As variantes com rerank herdam pool 100 + higiene promovidos.
+    for c in configs:
+        if c.rerank:
+            assert c.candidates_k_override == 100
+            assert c.exclude_revogadas
+            assert c.exclude_superseded_versions
+            assert c.restrict_to_query_submodulo
+
+
 def test_evaluate_question_rag_calcula_metricas_e_citation_accuracy():
     contexts = [
         _context(
@@ -303,6 +323,52 @@ def test_run_rag_benchmark_devolve_dataframe_e_pula_source_only():
     assert row["num_questions_evaluated"] == 1
     assert row["num_questions_skipped"] == 1
     assert result.skipped_questions[0]["question_id"] == "gt-9999"
+
+
+def test_run_rag_benchmark_checkpoint_reaproveita(tmp_path):
+    """Resume RAG: re-rodar com o mesmo checkpoint não re-invoca o factory."""
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+    chamadas = {"n": 0}
+
+    def rag_factory(config, repo_id, query_cache=None):
+        chamadas["n"] += 1  # uma vez por config avaliada de fato
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    configs = [_config(rerank=False), _config(rerank=True)]
+    checkpoint = tmp_path / "rag_ckpt.jsonl"
+
+    primeiro = run_rag_benchmark(
+        [_question()],
+        top_k=1,
+        configs=configs,
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+        checkpoint_path=checkpoint,
+    )
+    assert chamadas["n"] == 2
+    assert len(checkpoint.read_text().strip().splitlines()) == 2
+
+    segundo = run_rag_benchmark(
+        [_question()],
+        top_k=1,
+        configs=configs,
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+        checkpoint_path=checkpoint,
+    )
+    assert chamadas["n"] == 2  # nada re-avaliado → reaproveitou do checkpoint
+    assert len(segundo.metrics) == 2
+    assert (
+        segundo.metrics["answer_usable_rate"].tolist()
+        == primeiro.metrics["answer_usable_rate"].tolist()
+    )
 
 
 def test_cached_default_rag_factory_reusa_bundle_da_mesma_store(monkeypatch):

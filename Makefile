@@ -27,7 +27,7 @@
         vectorstore-sample vectorstore-main vectorstore-all \
         validate-vectorstore validate-vectorstore-all \
         benchmark-retrieval benchmark-retrieval-smoke \
-        benchmark-retrieval-rerank benchmark-rag \
+        benchmark-retrieval-rerank benchmark-rag benchmark-rag-finalists \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -235,6 +235,18 @@ benchmark-retrieval-rerank:
 # failure_analysis.{json,md}, manifest.json). Ver data/README.md.
 benchmark-rag:
 	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10
+
+# Marco C: RAG end-to-end nos 4 finalistas do Marco B
+# (large|fixed-size|{markdown,texto}|flat, com e sem rerank+higiene). Exige
+# OPENAI_API_KEY/LLM_API_KEY (gerador + juiz) e COHERE_API_KEY (configs com
+# rerank). --checkpoint dá resume por config: se cair no meio, re-rodar este
+# target retoma sem refazer geração/juiz/Cohere já pagos.
+# Saída: data/evaluation/runs/rag/<run_id>/.
+benchmark-rag-finalists:
+	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10 \
+		--finalists \
+		--cache-path data/evaluation/cache/query_embeddings.json \
+		--checkpoint data/evaluation/cache/rag_finalists_checkpoint.jsonl
 
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2

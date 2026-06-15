@@ -125,11 +125,20 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Em --mode retrieval, liga resume por config: cada config "
-            "concluída é gravada num JSONL; re-rodar com o mesmo caminho "
-            "reaproveita as já feitas sem refazer chamadas (essencial para o "
-            "rerank, onde cada config custa ~48 chamadas Cohere). Apague o "
-            "arquivo para forçar recomputo (ex.: trocou GT/top_k)."
+            "Liga resume por config (retrieval e rag): cada config concluída é "
+            "gravada num JSONL; re-rodar com o mesmo caminho reaproveita as já "
+            "feitas sem refazer chamadas (essencial para rerank/geração, onde "
+            "cada config custa dezenas de chamadas pagas). Apague o arquivo "
+            "para forçar recomputo (ex.: trocou GT/top_k)."
+        ),
+    )
+    parser.add_argument(
+        "--finalists",
+        action="store_true",
+        help=(
+            "Em --mode rag, roda as 4 configs finalistas do Marco B "
+            "(large|fixed-size|{markdown,texto}|flat, com e sem rerank+higiene) "
+            "para o RAG end-to-end do Marco C. Sem efeito em --mode retrieval."
         ),
     )
     parser.add_argument(
@@ -267,12 +276,13 @@ def main() -> None:
                 args.query_expansion,
                 args.rerank_pool_comparison,
                 args.exclude_revogadas_comparison,
+                args.finalists,
             ]
             if sum(bool(m) for m in _modos_exp) > 1:
                 raise SystemExit(
-                    "--query-expansion, --rerank-pool-comparison e "
-                    "--exclude-revogadas-comparison são mutuamente "
-                    "exclusivos (escopos experimentais distintos)."
+                    "--query-expansion, --rerank-pool-comparison, "
+                    "--exclude-revogadas-comparison e --finalists são "
+                    "mutuamente exclusivos (escopos experimentais distintos)."
                 )
             if args.rerank_pool_comparison:
                 configs = build_rag_baseline_configs(rerank_pools=(50, 100))
@@ -280,6 +290,8 @@ def main() -> None:
                 configs = build_rag_baseline_configs(
                     exclude_revogadas_comparison=True,
                 )
+            elif args.finalists:
+                configs = build_rag_baseline_configs(finalists=True)
             else:
                 configs = build_rag_baseline_configs(
                     query_expansion=args.query_expansion,
@@ -293,11 +305,6 @@ def main() -> None:
                 print(
                     "  Aviso: --query-expansion-model só tem efeito com "
                     "--query-expansion."
-                )
-            if args.checkpoint is not None:
-                print(
-                    "  Aviso: --checkpoint só tem efeito em --mode retrieval; "
-                    "ignorado no modo rag."
                 )
         else:
             configs = build_store_configs(
@@ -322,6 +329,7 @@ def main() -> None:
                 configs=configs,
                 repo_id=args.repo_id,
                 query_cache=query_cache,
+                checkpoint_path=args.checkpoint,
             )
         else:
             result = run_full_benchmark(
@@ -539,7 +547,7 @@ def main() -> None:
                 f"saved={par1['summary']['saved_count']} "
                 f"broken={par1['summary']['broken_count']}"
             )
-        elif rerank_flags == {True, False} and qe_flags == {False}:
+        elif rerank_flags == {True, False} and qe_flags == {False} and len(df) == 2:
             pairing = build_rag_rerank_pairing(result)
             pairing_json = output_dir / "rerank_pairing.json"
             pairing_json.write_text(
@@ -557,6 +565,16 @@ def main() -> None:
             print(
                 "  Pareamento rerank pulado (4 configs com QE); o pareamento "
                 "QE cobre rerank × query_expansion."
+            )
+        elif rerank_flags == {True, False} and len(df) > 2:
+            # Finalistas (Marco C): 4 configs. O pareamento simples assume
+            # exatamente 1 par; aqui a comparação é a tabela de 4 linhas
+            # (results.csv) + failure_analysis por config. Pareamento por par
+            # (markdown/texto) é feito como análise separada.
+            print(
+                "  Pareamento rerank simples pulado: "
+                f"{len(df)} configs (finalistas). Comparação no results.csv + "
+                "failure_analysis por config."
             )
         else:
             print(

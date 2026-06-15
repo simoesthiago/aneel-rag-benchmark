@@ -184,6 +184,7 @@ def build_rag_baseline_configs(
     superseded_versions_comparison: bool = False,
     version_hygiene_comparison: bool = False,
     boost_identificador_comparison: bool = False,
+    finalists: bool = False,
 ) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
@@ -211,8 +212,16 @@ def build_rag_baseline_configs(
     (o default vigente) diferindo apenas em `exclude_revogadas` (False/True),
     isolando o efeito do filtro de normas revogadas no retrieval (Fase 1 do
     roadmap). Mutuamente exclusivo com `query_expansion` e `rerank_pools`.
+
+    Quando `finalists=True`, retorna as 4 configs finalistas do Marco B
+    (`large|fixed-size|{markdown,texto}|flat`, cada uma com e sem rerank+higiene)
+    para o RAG end-to-end do Marco C. São os topos da matriz de retrieval por
+    nDCG/doc_recall; `small` e as estratégias hierarchical/article-aware ficam
+    de fora por desempenho claramente inferior. Mutuamente exclusivo com os
+    demais modos.
     """
     _exclusive = [
+        ("finalists", finalists),
         ("query_expansion", query_expansion),
         ("rerank_pools", rerank_pools is not None),
         ("exclude_revogadas_comparison", exclude_revogadas_comparison),
@@ -297,6 +306,15 @@ def build_rag_baseline_configs(
         sem_boost = replace(rerank, boost_identificador=False)
         com_boost = replace(rerank, boost_identificador=True)
         return [sem_boost, com_boost]
+    if finalists:
+        # Marco C: os 4 finalistas do Marco B. markdown (defaults atuais) +
+        # texto, cada um com e sem rerank+higiene. Ordem deliberada: as 2 sem
+        # rerank (sem custo Cohere) primeiro, as 2 com rerank por último — assim,
+        # com checkpoint, um kill durante o rerank não desperdiça o trabalho
+        # livre já gravado.
+        baseline_texto = replace(baseline, metodo_extracao="texto")
+        rerank_texto = replace(rerank, metodo_extracao="texto")
+        return [baseline, baseline_texto, rerank, rerank_texto]
     if not query_expansion:
         return [baseline, rerank]
     baseline_qe = StoreConfig(
@@ -1264,8 +1282,16 @@ def run_rag_benchmark(
     rag_factory=_default_rag_factory,
     query_cache: QueryEmbeddingCache | None = None,
     llm_metrics_fn=optional_llm_metrics,
+    checkpoint_path: Path | None = None,
 ) -> BenchmarkResult:
-    """Roda o smoke RAG nas configs selecionadas."""
+    """Roda o smoke RAG nas configs selecionadas.
+
+    `checkpoint_path` (opcional) liga resume por config, igual ao retrieval:
+    cada config concluída é gravada num JSONL assim que termina; re-rodar com o
+    mesmo caminho reaproveita as já feitas sem refazer geração/juiz/Cohere. Vale
+    ainda mais no RAG, onde cada config custa geração + juiz LLM por pergunta
+    (além de Cohere nas configs com rerank). Chave: `config.label` + `top_k`.
+    """
     if configs is None:
         configs = build_rag_baseline_configs()
     configs_list = list(configs)
@@ -1279,8 +1305,14 @@ def run_rag_benchmark(
     if rag_factory is _default_rag_factory:
         effective_rag_factory = _cached_default_rag_factory({})
 
+    done = _load_checkpoint(checkpoint_path, top_k)
+
     linhas = []
     for config in configs_list:
+        if config.label in done:
+            print(f"  [checkpoint] reaproveitando RAG {config.label} (já avaliado)")
+            linhas.append(done[config.label])
+            continue
         print(f"  Avaliando RAG {config.label} ...")
         linha = run_rag_config(
             config,
@@ -1294,6 +1326,8 @@ def run_rag_benchmark(
         linha["num_questions_total"] = len(questions_list)
         linha["num_questions_evaluated"] = len(evaluation_questions)
         linha["num_questions_skipped"] = len(skipped_questions)
+        if checkpoint_path is not None:
+            _append_checkpoint(checkpoint_path, config.label, top_k, linha)
         linhas.append(linha)
 
     print(f"  Query cache: {query_cache.stats}")
