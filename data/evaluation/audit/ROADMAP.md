@@ -8,6 +8,15 @@
 
 ## TL;DR para quem chega agora
 
+> **Atualização Marcos B–D (2026-06-15):** o default promovido passou a ser
+> `large·fixed-size·texto·flat + rerank@100 + higiene` (Marco C). O Marco D
+> (D1: citação parcimoniosa no gerador) elevou o pipeline a **41/48 (0.854)**
+> num run real (`runs/rag/20260615T140617Z-dd5f2c9`), com `citation_accuracy`
+> 0.764→0.837. Restam 7 residuais, majoritariamente artefato de métrica de
+> citação, rigor de juiz / GT incompleto, e 2 lacunas de retrieval (gt-0017/0049,
+> D3 opcional). Mapa abaixo é histórico (markdown+rerank); o atual está em
+> `PROGRESS.md` e `report/tables/rag_promoted_post_marco_d.*`.
+
 - O benchmark reportava **answer_usable_rate = 50%** (24/48). Auditoria
   externa independente (2 fases, vieses opostos) provou que o número
   honesto é **62–73%**: boa parte das "falhas" era ruído de ground truth,
