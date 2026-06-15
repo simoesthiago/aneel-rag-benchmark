@@ -24,6 +24,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROMOTE_RATIO = 2.0  # saved >= 2*broken (mesma régua das outras fases)
+# Tolerância de ruído na faithfulness: a sanidade do replay (gerador idêntico,
+# contextos congelados) mostrou variação de ~0.004-0.007 entre runs. Uma queda
+# dentro dessa banda é ruído do juiz, não regressão causada pela mudança. 0.01
+# ≈ 2× o ruído medido. Quedas maiores que isso reprovam a promoção.
+FAITH_NOISE_TOLERANCE = 0.01
 
 
 def parse_args() -> argparse.Namespace:
@@ -117,7 +122,8 @@ def main() -> None:
 
     n_saved, n_broken = len(saved), len(broken)
     faith_before, faith_after = _faith_avg(before), _faith_avg(after)
-    promote = n_saved >= PROMOTE_RATIO * n_broken and faith_after >= faith_before - 1e-9
+    faith_ok = faith_after >= faith_before - FAITH_NOISE_TOLERANCE
+    promote = n_saved >= PROMOTE_RATIO * n_broken and faith_ok
     verdict = "promote" if promote else "keep"
 
     b_usable = sum(1 for q in before["per_question"] if q.get("answer_usable"))
@@ -131,7 +137,7 @@ def main() -> None:
         f"- depois: `{args.after}` — usáveis {a_usable}/{len(a_by)}, "
         f"faithfulness {faith_after:.3f}",
         f"- regra: promover se `saved >= {PROMOTE_RATIO:g}*broken` e "
-        "faithfulness não cair.",
+        f"faithfulness não cair além do ruído (tol. {FAITH_NOISE_TOLERANCE:g}).",
         "",
         f"**saved={n_saved} | broken={n_broken} | net={n_saved - n_broken:+d} "
         f"| veredito: {verdict.upper()}**",

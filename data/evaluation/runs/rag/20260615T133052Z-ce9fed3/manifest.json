@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "run_id": "20260615T133052Z-ce9fed3",
+  "mode": "rag",
+  "created_at": "2026-06-15T13:30:53Z",
+  "git_commit": "ce9fed3",
+  "git_dirty": false,
+  "top_k": 10,
+  "ground_truth": {
+    "version": "retrieval-50-v2",
+    "source": "hub",
+    "num_questions": 50,
+    "num_skipped": 2,
+    "num_evaluable": 48
+  },
+  "models": {
+    "embedding_model": "text-embedding-3-large",
+    "rerank_model": "rerank-multilingual-v3.0",
+    "llm_model": "gpt-5.4-mini",
+    "llm_judge_model": "gpt-5.4-mini"
+  },
+  "configs": [
+    {
+      "provider": "openai",
+      "model": "text-embedding-3-large",
+      "chunk_strategy": "fixed-size",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": true,
+      "candidates_k": 100,
+      "query_expansion": false,
+      "exclude_revogadas": true,
+      "exclude_superseded_versions": true,
+      "restrict_to_query_submodulo": true,
+      "boost_identificador": false,
+      "num_questions": 48,
+      "latency_avg_ms": 4566.7836736708,
+      "latency_p95_ms": 11326.4919159701,
+      "llm_status_counts": "{\"ok\": 48}",
+      "generator_status_counts": "{\"ok\": 48}",
+      "recall_at_k": 0.9583333333,
+      "doc_recall_at_k": 0.9583333333,
+      "precision_at_k": 0.2103009259,
+      "mrr_at_k": 0.8975694444,
+      "ndcg_at_k": 0.8722315177,
+      "faithfulness_avg": 0.9789583333,
+      "answer_correctness_avg": 0.9208333333,
+      "citation_accuracy_avg": 0.7638888889,
+      "answer_usable_rate": 0.75,
+      "failure_type_counts": "{\"answer_quality_failure\": 6, \"usable\": 36, \"citation_and_answer_failure\": 1, \"retrieval_document_failure\": 2, \"citation_failure\": 3}",
+      "num_questions_total": 50,
+      "num_questions_evaluated": 48,
+      "num_questions_skipped": 2,
+      "candidates_k_override": 100,
+      "label": "text-embedding-3-large|fixed-size|texto|flat+rerank@pool100+sem_revogadas+sem_versoes_antigas+submodulo_exato"
+    }
+  ],
+  "cache_stats": {
+    "hits": 48,
+    "misses": 0,
+    "size": 97
+  },
+  "artifact_paths": {
+    "results_csv": "results.csv",
+    "per_question": "per_question.json",
+    "failure_analysis_json": "failure_analysis.json",
+    "failure_analysis_md": "failure_analysis.md"
+  }
+}

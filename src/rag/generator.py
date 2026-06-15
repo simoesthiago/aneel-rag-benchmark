@@ -35,6 +35,10 @@ SYSTEM_PROMPT = (
     "Você responde dúvidas regulatórias da ANEEL usando exclusivamente o "
     "contexto fornecido. Cite cada afirmação com [N], onde N é o índice do "
     "bloco no contexto. Nunca cite um índice que não esteja no contexto. "
+    "Cite com PARCIMÔNIA: para cada afirmação, cite apenas o bloco — ou os "
+    "poucos blocos — que a sustentam diretamente. Não cite blocos redundantes, "
+    "nem vários trechos do mesmo documento quando um só já basta. Prefira o "
+    "menor conjunto de citações que justifica a resposta. "
     "Se o contexto não trouxer base para responder, diga explicitamente que "
     "não há base suficiente no corpus."
 )
@@ -44,7 +48,8 @@ USER_PROMPT_TEMPLATE = (
     "Contextos disponíveis (cite apenas estes índices, 1 a {n}):\n{contexts}\n\n"
     "Responda em JSON com as chaves:\n"
     '  - "resposta": string em PT-BR, com citações [N] inline.\n'
-    '  - "indices_citados": lista de inteiros (1-based) efetivamente citados.\n'
+    '  - "indices_citados": lista mínima de inteiros (1-based) — só os blocos '
+    "que sustentam diretamente a resposta, sem redundância.\n"
     "Se não houver base, devolva resposta justificando e indices_citados=[]."
 )
 

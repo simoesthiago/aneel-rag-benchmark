@@ -1,0 +1,175 @@
+{
+  "metric_definition": {
+    "answer_usable": "recall_at_k > 0 and citation_accuracy >= 0.5 and answer_correctness >= 0.8",
+    "failure_types": {
+      "retrieval_document_failure": "documento esperado nao aparece no top-k",
+      "retrieval_passage_failure": "documento aparece, mas trecho esperado nao casa",
+      "citation_failure": "contexto e resposta passam, mas citacao fica abaixo do piso",
+      "answer_quality_failure": "contexto e citacao passam, mas resposta fica abaixo do piso",
+      "citation_and_answer_failure": "contexto passa, mas citacao e resposta falham",
+      "generator_failure": "gerador falhou ou usou fallback com erro",
+      "llm_judge_missing": "juiz LLM ausente; usabilidade inconclusiva",
+      "unknown_failure": "falha residual para revisao manual"
+    }
+  },
+  "configs": [
+    {
+      "label": "text-embedding-3-large|fixed-size|texto|flat+rerank",
+      "answer_usable_rate": 0.75,
+      "failure_type_counts": {
+        "answer_quality_failure": 6,
+        "usable": 36,
+        "citation_and_answer_failure": 1,
+        "retrieval_document_failure": 2,
+        "citation_failure": 3
+      },
+      "num_failures": 12,
+      "failures": [
+        {
+          "question_id": "gt-0001",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 1.0,
+          "answer_correctness": 0.72,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0002",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 1.0,
+          "answer_correctness": 0.72,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0009",
+          "failure_type": "citation_and_answer_failure",
+          "next_focus": "prompt_generator_or_context_use",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.3333333333333333,
+          "answer_correctness": 0.78,
+          "faithfulness": 0.86,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0015",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.5,
+          "answer_correctness": 0.18,
+          "faithfulness": 0.92,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0017",
+          "failure_type": "retrieval_document_failure",
+          "next_focus": "query_expansion_or_retrieval",
+          "recall_at_k": 0.0,
+          "doc_recall_at_k": 0.0,
+          "citation_accuracy": 0.0,
+          "answer_correctness": 0.95,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0018",
+          "failure_type": "citation_failure",
+          "next_focus": "prompt_or_citation_selection",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.3333333333333333,
+          "answer_correctness": 0.97,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0019",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.5,
+          "answer_correctness": 0.78,
+          "faithfulness": 0.86,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0022",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.5,
+          "answer_correctness": 0.72,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0033",
+          "failure_type": "citation_failure",
+          "next_focus": "prompt_or_citation_selection",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.3333333333333333,
+          "answer_correctness": 0.95,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0039",
+          "failure_type": "citation_failure",
+          "next_focus": "prompt_or_citation_selection",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 0.3333333333333333,
+          "answer_correctness": 0.95,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0040",
+          "failure_type": "answer_quality_failure",
+          "next_focus": "prompt_generator_or_ground_truth",
+          "recall_at_k": 1.0,
+          "doc_recall_at_k": 1.0,
+          "citation_accuracy": 1.0,
+          "answer_correctness": 0.72,
+          "faithfulness": 0.98,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        },
+        {
+          "question_id": "gt-0049",
+          "failure_type": "retrieval_document_failure",
+          "next_focus": "query_expansion_or_retrieval",
+          "recall_at_k": 0.0,
+          "doc_recall_at_k": 0.0,
+          "citation_accuracy": 0.0,
+          "answer_correctness": 0.88,
+          "faithfulness": 0.93,
+          "generator_status": "ok",
+          "llm_status": "ok"
+        }
+      ]
+    }
+  ]
+}
