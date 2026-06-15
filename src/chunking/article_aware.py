@@ -11,7 +11,8 @@ MAX_STRUCTURAL_WORDS = 800
 STRUCTURAL_OVERLAP = 80
 
 ARTICLE_RE = re.compile(
-    r"((?:Art\.?|Artigo)\s*\d+[º°o]?(?:-[A-Z])?)", re.IGNORECASE
+    r"(?im)^\s*(?:#{1,6}\s*)?(?:\*\*)?\s*"
+    r"((?:Art\.?|Artigo)\s*\d+[º°o]?(?:-[A-Z])?)"
 )
 PARAGRAPH_RE = re.compile(r"(§\s*\d+[º°o]?)", re.IGNORECASE)
 INCISO_RE = re.compile(r"(?:^|\n|\s)([IVXLCDM]+)\s*[-–]", re.IGNORECASE)

@@ -1,0 +1,2846 @@
+{
+  "inputs": {
+    "retrieval_per_question": "data/evaluation/runs/retrieval/20260614T161535Z-18d8e21/per_question.json",
+    "ground_truth": "data/evaluation/ground_truth/aneel_retrieval_50.jsonl",
+    "metadata_source": "simoesthiago/aneel-corpus:text-embedding-3-large"
+  },
+  "shape_summary": [
+    {
+      "strategy": "fixed-size",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 14438,
+      "tiny_lt_10": 0,
+      "tiny_lt_10_pct": 0.0,
+      "small_lt_30": 1,
+      "small_lt_30_pct": 0.0001,
+      "p50_words": 512,
+      "p95_words": 512,
+      "examples": [
+        {
+          "chunk_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes::markdown::fixed-size::0000",
+          "document_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes",
+          "n_words": 14,
+          "noise_kind": "outro",
+          "texto": "**_MODELO DE DOCUMENTO_** ** _FORMULÁRIO DE CIÊNCIAS, DECLARAÇÕES, REQUERIMENTOS E AUTORIZAÇÕES– COLABORADORES DO CONTRATADO_**"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed-size",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 14301,
+      "tiny_lt_10": 0,
+      "tiny_lt_10_pct": 0.0,
+      "small_lt_30": 1,
+      "small_lt_30_pct": 0.0001,
+      "p50_words": 512,
+      "p95_words": 512,
+      "examples": [
+        {
+          "chunk_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes::texto::fixed-size::0000",
+          "document_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes",
+          "n_words": 13,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "MODELO DE DOCUMENTO FORMULÁRIO DE CIÊNCIAS, DECLARAÇÕES, REQUERIMENTOS E AUTORIZAÇÕES– COLABORADORES DO CONTRATADO"
+        }
+      ]
+    },
+    {
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 84653,
+      "tiny_lt_10": 25600,
+      "tiny_lt_10_pct": 0.3024,
+      "small_lt_30": 51744,
+      "small_lt_30_pct": 0.6112,
+      "p50_words": 21,
+      "p95_words": 335,
+      "examples": [
+        {
+          "chunk_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima::markdown::article-aware::0007",
+          "document_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "48547.001672/2019-00"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0012",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0018",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "______________________________"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0024",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui::markdown::article-aware::0005",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        }
+      ]
+    },
+    {
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 34203,
+      "tiny_lt_10": 3388,
+      "tiny_lt_10_pct": 0.0991,
+      "small_lt_30": 11309,
+      "small_lt_30_pct": 0.3306,
+      "p50_words": 52,
+      "p95_words": 800,
+      "examples": [
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0007",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "SUMÁRIO"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0013",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0029",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "“APLGEO9999OPERACAO_MMAAAA_S999.rar”"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::article-aware::0000",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::article-aware::0041",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "103"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 92565,
+      "tiny_lt_10": 25600,
+      "tiny_lt_10_pct": 0.2766,
+      "small_lt_30": 51744,
+      "small_lt_30_pct": 0.559,
+      "p50_words": 24,
+      "p95_words": 300,
+      "examples": [
+        {
+          "chunk_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima::markdown::hierarchical-child::0007",
+          "document_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "48547.001672/2019-00"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0012",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0019",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "______________________________"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0025",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui::markdown::hierarchical-child::0005",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 44550,
+      "tiny_lt_10": 3388,
+      "tiny_lt_10_pct": 0.076,
+      "small_lt_30": 11309,
+      "small_lt_30_pct": 0.2538,
+      "p50_words": 89,
+      "p95_words": 300,
+      "examples": [
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0007",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "SUMÁRIO"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0013",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0030",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "“APLGEO9999OPERACAO_MMAAAA_S999.rar”"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical-child::0000",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical-child::0042",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "103"
+        }
+      ]
+    }
+  ],
+  "shape_summary_with_parents": [
+    {
+      "strategy": "fixed-size",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 14438,
+      "tiny_lt_10": 0,
+      "tiny_lt_10_pct": 0.0,
+      "small_lt_30": 1,
+      "small_lt_30_pct": 0.0001,
+      "p50_words": 512,
+      "p95_words": 512,
+      "examples": [
+        {
+          "chunk_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes::markdown::fixed-size::0000",
+          "document_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes",
+          "n_words": 14,
+          "noise_kind": "outro",
+          "texto": "**_MODELO DE DOCUMENTO_** ** _FORMULÁRIO DE CIÊNCIAS, DECLARAÇÕES, REQUERIMENTOS E AUTORIZAÇÕES– COLABORADORES DO CONTRATADO_**"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed-size",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 14301,
+      "tiny_lt_10": 0,
+      "tiny_lt_10_pct": 0.0,
+      "small_lt_30": 1,
+      "small_lt_30_pct": 0.0001,
+      "p50_words": 512,
+      "p95_words": 512,
+      "examples": [
+        {
+          "chunk_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes::texto::fixed-size::0000",
+          "document_id": "manual-licitacoes-e-contratos-modelo-de-formulario-de-ciencias-declaracoes-requerimentos-e-autorizacoes",
+          "n_words": 13,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "MODELO DE DOCUMENTO FORMULÁRIO DE CIÊNCIAS, DECLARAÇÕES, REQUERIMENTOS E AUTORIZAÇÕES– COLABORADORES DO CONTRATADO"
+        }
+      ]
+    },
+    {
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 84653,
+      "tiny_lt_10": 25600,
+      "tiny_lt_10_pct": 0.3024,
+      "small_lt_30": 51744,
+      "small_lt_30_pct": 0.6112,
+      "p50_words": 21,
+      "p95_words": 335,
+      "examples": [
+        {
+          "chunk_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima::markdown::article-aware::0007",
+          "document_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "48547.001672/2019-00"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0012",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0018",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "______________________________"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::article-aware::0024",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui::markdown::article-aware::0005",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        }
+      ]
+    },
+    {
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 34203,
+      "tiny_lt_10": 3388,
+      "tiny_lt_10_pct": 0.0991,
+      "small_lt_30": 11309,
+      "small_lt_30_pct": 0.3306,
+      "p50_words": 52,
+      "p95_words": 800,
+      "examples": [
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0007",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "SUMÁRIO"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0013",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::article-aware::0029",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "“APLGEO9999OPERACAO_MMAAAA_S999.rar”"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::article-aware::0000",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::article-aware::0041",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "103"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "kind": "chunks",
+      "n_chunks": 92565,
+      "tiny_lt_10": 25600,
+      "tiny_lt_10_pct": 0.2766,
+      "small_lt_30": 51744,
+      "small_lt_30_pct": 0.559,
+      "p50_words": 24,
+      "p95_words": 300,
+      "examples": [
+        {
+          "chunk_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima::markdown::hierarchical-child::0007",
+          "document_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "48547.001672/2019-00"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0012",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0019",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "______________________________"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical-child::0025",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui::markdown::hierarchical-child::0005",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "kind": "parents",
+      "n_chunks": 84653,
+      "tiny_lt_10": 25600,
+      "tiny_lt_10_pct": 0.3024,
+      "small_lt_30": 51744,
+      "small_lt_30_pct": 0.6112,
+      "p50_words": 21,
+      "p95_words": 335,
+      "examples": [
+        {
+          "chunk_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima::markdown::hierarchical::0007",
+          "document_id": "manual-air-modelo-de-air-srm-leilao-ee-roraima",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "48547.001672/2019-00"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical::0012",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical::0018",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "______________________________"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::markdown::hierarchical::0024",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui::markdown::hierarchical::0005",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-da-base-de-dados-de-ocorrencias-e-interrupcoes-da-distribui",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "kind": "chunks",
+      "n_chunks": 44550,
+      "tiny_lt_10": 3388,
+      "tiny_lt_10_pct": 0.076,
+      "small_lt_30": 11309,
+      "small_lt_30_pct": 0.2538,
+      "p50_words": 89,
+      "p95_words": 300,
+      "examples": [
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0007",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "SUMÁRIO"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0013",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical-child::0030",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "“APLGEO9999OPERACAO_MMAAAA_S999.rar”"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical-child::0000",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical-child::0042",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "103"
+        }
+      ]
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "kind": "parents",
+      "n_chunks": 34203,
+      "tiny_lt_10": 3388,
+      "tiny_lt_10_pct": 0.0991,
+      "small_lt_30": 11309,
+      "small_lt_30_pct": 0.3306,
+      "p50_words": 52,
+      "p95_words": 800,
+      "examples": [
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical::0007",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "cabecalho_isolado",
+          "texto": "SUMÁRIO"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical::0013",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "Exemplo:"
+        },
+        {
+          "chunk_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao::texto::hierarchical::0029",
+          "document_id": "manual-cartografia-e-geoprocessamento-manual-para-registro-dos-arquivos-cartograficos-areas-de-concessao",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "“APLGEO9999OPERACAO_MMAAAA_S999.rar”"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical::0000",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "1"
+        },
+        {
+          "chunk_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2::texto::hierarchical::0041",
+          "document_id": "manual-distribuicao-manual-de-instrucoes-para-envio-de-dados-referentes-ao-primeiro-nivel-de-tratame-2",
+          "n_words": 1,
+          "noise_kind": "outro",
+          "texto": "103"
+        }
+      ]
+    }
+  ],
+  "markdown_noise_counts": [
+    {
+      "strategy": "fixed-size",
+      "metodo_extracao": "markdown",
+      "n_tiny_lt_30": 1,
+      "noise_counts": {
+        "outro": 1
+      }
+    },
+    {
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "n_tiny_lt_30": 51744,
+      "noise_counts": {
+        "cabecalho_isolado": 6912,
+        "fragmento_referencia_cruzada": 2195,
+        "item_lista_curto": 5699,
+        "marcador_imagem_omitida": 3798,
+        "numero_pagina": 2278,
+        "outro": 27693,
+        "tabela_markdown": 1785,
+        "url_footer": 1384
+      }
+    },
+    {
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "n_tiny_lt_30": 51744,
+      "noise_counts": {
+        "cabecalho_isolado": 6912,
+        "fragmento_referencia_cruzada": 2195,
+        "item_lista_curto": 5699,
+        "marcador_imagem_omitida": 3798,
+        "numero_pagina": 2278,
+        "outro": 27693,
+        "tabela_markdown": 1785,
+        "url_footer": 1384
+      }
+    }
+  ],
+  "doc_hit_without_passage_hit": [
+    {
+      "label": "text-embedding-3-large|article-aware|markdown|flat",
+      "model": "text-embedding-3-large",
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": false,
+      "count": 19,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0032",
+          "question": "No Módulo 3 das Regras de Transmissão, quais critérios devem orientar a integração de novos equipamentos à Rede Básica?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0039",
+          "question": "Quais elementos do Sistema de Medição para Faturamento são abrangidos pelo Submódulo 2.14-RQ?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|markdown|flat",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": false,
+      "count": 18,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0039",
+          "question": "Quais elementos do Sistema de Medição para Faturamento são abrangidos pelo Submódulo 2.14-RQ?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|markdown|hierarchical",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "hierarchical",
+      "rerank": false,
+      "count": 18,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0039",
+          "question": "Quais elementos do Sistema de Medição para Faturamento são abrangidos pelo Submódulo 2.14-RQ?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|article-aware|texto|flat",
+      "model": "text-embedding-3-large",
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": false,
+      "count": 10,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0027",
+          "question": "Qual é a finalidade metodológica do PRORET Submódulo 2.4 na revisão tarifária de distribuidoras?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0033",
+          "question": "Quem deve observar o Módulo 4 das Regras de Transmissão sobre prestação do serviço?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|texto|flat",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": false,
+      "count": 13,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0027",
+          "question": "Qual é a finalidade metodológica do PRORET Submódulo 2.4 na revisão tarifária de distribuidoras?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|texto|hierarchical",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "hierarchical",
+      "rerank": false,
+      "count": 11,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0027",
+          "question": "Qual é a finalidade metodológica do PRORET Submódulo 2.4 na revisão tarifária de distribuidoras?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|article-aware|markdown|flat",
+      "model": "text-embedding-3-small",
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": false,
+      "count": 15,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0018",
+          "question": "Para quais finalidades regulatórias o PRODIST Módulo 5 estabelece requisitos de medição?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|markdown|flat",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": false,
+      "count": 18,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0018",
+          "question": "Para quais finalidades regulatórias o PRODIST Módulo 5 estabelece requisitos de medição?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0047",
+          "question": "Qual é a finalidade institucional da ANEEL segundo a Lei 9.427/1996?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|markdown|hierarchical",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "hierarchical",
+      "rerank": false,
+      "count": 17,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0018",
+          "question": "Para quais finalidades regulatórias o PRODIST Módulo 5 estabelece requisitos de medição?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0021",
+          "question": "Qual é a finalidade da etapa de análise de uma solicitação de ressarcimento por danos elétricos no PRODIST Módulo 9?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|article-aware|texto|flat",
+      "model": "text-embedding-3-small",
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": false,
+      "count": 9,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0035",
+          "question": "Qual é o escopo do Módulo 6 das Regras de Transmissão?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|texto|flat",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": false,
+      "count": 14,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|texto|hierarchical",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "hierarchical",
+      "rerank": false,
+      "count": 11,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|article-aware|markdown|flat+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": true,
+      "count": 14,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|markdown|flat+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": true,
+      "count": 15,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|markdown|hierarchical+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "hierarchical",
+      "rerank": true,
+      "count": 14,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0022",
+          "question": "O que a BDGD representa no PRODIST Módulo 10?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|article-aware|texto|flat+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": true,
+      "count": 8,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|texto|flat+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": true,
+      "count": 12,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0009",
+          "question": "Em quais ambientes de contratação a REN 1009/2022 disciplina as regras de contratação de energia?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0033",
+          "question": "Quem deve observar o Módulo 4 das Regras de Transmissão sobre prestação do serviço?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-large|hierarchical-child|texto|hierarchical+rerank",
+      "model": "text-embedding-3-large",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "hierarchical",
+      "rerank": true,
+      "count": 9,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0034",
+          "question": "O livre acesso ao sistema de transmissão assegurado no Módulo 5 equivale a acesso irrestrito ou a qualquer tempo?",
+          "tipo": "procedimento",
+          "subtipo": "regras_transmissao"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|article-aware|markdown|flat+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "article-aware",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": true,
+      "count": 13,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0015",
+          "question": "Para interpretar termos usados nos módulos do PRODIST, qual é a finalidade da Seção 1.1 do Módulo 1?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|markdown|flat+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "flat",
+      "rerank": true,
+      "count": 13,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|markdown|hierarchical+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "markdown",
+      "mode": "hierarchical",
+      "rerank": true,
+      "count": 12,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0016",
+          "question": "No planejamento da expansão do SDAT pelo PRODIST Módulo 2, qual horizonte deve ser usado nos estudos de previsão de demanda?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0023",
+          "question": "No PRORET Submódulo 2.1, como é calculado o Valor da Parcela A?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0024",
+          "question": "Quais componentes de custo compõem a Parcela A no PRORET Submódulo 2.1?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0041",
+          "question": "Na apuração mensal do Submódulo 8.3-PR, quais parcelas são consideradas no VMEuRB?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|article-aware|texto|flat+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "article-aware",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": true,
+      "count": 12,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0020",
+          "question": "Como o PRODIST Módulo 8 diferencia DIC, FIC e DMIC?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|texto|flat+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "flat",
+      "rerank": true,
+      "count": 11,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0042",
+          "question": "Qual é o prazo ordinário para envio da BDO segundo o manual de interrupções e ocorrências emergenciais?",
+          "tipo": "manual",
+          "subtipo": "distribuicao"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    },
+    {
+      "label": "text-embedding-3-small|hierarchical-child|texto|hierarchical+rerank",
+      "model": "text-embedding-3-small",
+      "strategy": "hierarchical-child",
+      "metodo_extracao": "texto",
+      "mode": "hierarchical",
+      "rerank": true,
+      "count": 10,
+      "questions": [
+        {
+          "question_id": "gt-0002",
+          "question": "Para fins da REN 1000/2021, o que são bandeiras tarifárias?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0006",
+          "question": "O que a REN 956/2021 estabelece em relação ao PRODIST?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0007",
+          "question": "Qual é o objeto regulatório central da REN 905/2020?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0010",
+          "question": "Qual instrumento de governança do mercado de energia elétrica é instituído pela REN 957/2021?",
+          "tipo": "ato_normativo",
+          "subtipo": "ren"
+        },
+        {
+          "question_id": "gt-0019",
+          "question": "Na apuração de perdas regulatórias pelo PRODIST Módulo 7, quais perdas técnicas entram no cálculo sob responsabilidade da distribuidora?",
+          "tipo": "procedimento",
+          "subtipo": "prodist"
+        },
+        {
+          "question_id": "gt-0025",
+          "question": "No PRORET Submódulo 2.3, quando imóveis sem título definitivo podem ser considerados na base de ativos?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0029",
+          "question": "Que obrigação informacional é definida no PRORET Submódulo 10.6?",
+          "tipo": "procedimento",
+          "subtipo": "proret"
+        },
+        {
+          "question_id": "gt-0036",
+          "question": "Para interpretar termos técnicos usados nos Procedimentos de Rede, qual é a finalidade do Submódulo 1.2-PR?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0037",
+          "question": "Além da conexão às instalações de transmissão, que conexão de geração também é coberta pelo Submódulo 2.10-RQ dos Procedimentos de Rede?",
+          "tipo": "procedimento",
+          "subtipo": "procedimento_rede"
+        },
+        {
+          "question_id": "gt-0049",
+          "question": "Nos serviços de energia elétrica, como a Lei 9.074/1995 enquadra concessões, permissões e autorizações?",
+          "tipo": "lei",
+          "subtipo": "lei_federal"
+        }
+      ]
+    }
+  ],
+  "text_vs_markdown": {
+    "retrieval_fixed_size_rerank": [
+      {
+        "model": "text-embedding-3-large",
+        "chunk_strategy": "fixed-size",
+        "metodo_extracao": "markdown",
+        "mode": "flat",
+        "rerank": true,
+        "recall_at_k": 0.958,
+        "doc_recall_at_k": 0.979,
+        "precision_at_k": 0.196,
+        "mrr_at_k": 0.875,
+        "ndcg_at_k": 0.867,
+        "latency_avg_ms": 5397.9
+      },
+      {
+        "model": "text-embedding-3-large",
+        "chunk_strategy": "fixed-size",
+        "metodo_extracao": "texto",
+        "mode": "flat",
+        "rerank": true,
+        "recall_at_k": 0.958,
+        "doc_recall_at_k": 0.958,
+        "precision_at_k": 0.21,
+        "mrr_at_k": 0.898,
+        "ndcg_at_k": 0.872,
+        "latency_avg_ms": 6497.9
+      }
+    ],
+    "rag_fixed_size_rerank": [
+      {
+        "model": "text-embedding-3-large",
+        "metodo_extracao": "markdown",
+        "rerank": true,
+        "answer_usable_rate": 0.771,
+        "citation_accuracy_avg": 0.723,
+        "answer_correctness_avg": 0.915,
+        "faithfulness_avg": 0.978,
+        "recall_at_k": 0.958,
+        "doc_recall_at_k": 0.979,
+        "ndcg_at_k": 0.867,
+        "latency_avg_ms": 5186.0
+      },
+      {
+        "model": "text-embedding-3-large",
+        "metodo_extracao": "texto",
+        "rerank": true,
+        "answer_usable_rate": 0.812,
+        "citation_accuracy_avg": 0.773,
+        "answer_correctness_avg": 0.922,
+        "faithfulness_avg": 0.976,
+        "recall_at_k": 0.958,
+        "doc_recall_at_k": 0.958,
+        "ndcg_at_k": 0.872,
+        "latency_avg_ms": 4574.0
+      }
+    ],
+    "interpretation": "Markdown lidera doc_recall no retrieval puro, mas texto vence o gate RAG por citation_accuracy e answer_usable_rate. A auditoria deve tratar essas conclusões como métricas diferentes."
+  }
+}

@@ -90,6 +90,40 @@ def test_article_aware_identifica_estrutura_normativa_e_citacao():
     assert chunks[1]["artigo"] == "Art. 2o"
 
 
+def test_article_aware_nao_fragmenta_referencia_cruzada_no_meio_do_texto():
+    from src.chunking.article_aware import chunk_article_aware
+
+    doc = _documento(
+        "Art. 1o A Resolucao estabelece regras gerais e altera o "
+        "art. 5o da Resolucao Normativa no 547, de 2013.\n"
+        "Art. 2o A ANEEL fiscalizara o cumprimento."
+    )
+
+    chunks = chunk_article_aware(doc)
+
+    assert len(chunks) == 2
+    assert chunks[0]["artigo"] == "Art. 1o"
+    assert "art. 5o da Resolucao" in chunks[0]["texto"]
+    assert chunks[1]["artigo"] == "Art. 2o"
+
+
+def test_article_aware_aceita_cabecalho_markdown_de_artigo():
+    from src.chunking.article_aware import chunk_article_aware
+
+    doc = _documento(
+        "## **Art. 1o**\n"
+        "Esta Resolucao estabelece regras gerais.\n"
+        "## **Art. 2o**\n"
+        "A ANEEL fiscalizara o cumprimento."
+    )
+
+    chunks = chunk_article_aware(doc)
+
+    assert len(chunks) == 2
+    assert chunks[0]["artigo"] == "Art. 1o"
+    assert chunks[1]["artigo"] == "Art. 2o"
+
+
 def test_article_aware_usa_fallback_por_paragrafo_quando_nao_ha_artigos():
     from src.chunking.article_aware import chunk_article_aware
 
@@ -114,6 +148,25 @@ def test_article_aware_quebra_bloco_estrutural_muito_longo():
     assert len(chunks) == 2
     assert all(chunk["artigo"] == "Art. 1o" for chunk in chunks)
     assert all(len(chunk["texto"].split()) <= 800 for chunk in chunks)
+
+
+def test_hierarchical_herda_parser_que_nao_fragmenta_referencia_cruzada():
+    from src.chunking.hierarchical import chunk_parent_child
+
+    doc = _documento(
+        "Art. 1o A Resolucao estabelece regras gerais e altera o "
+        "art. 5o da Resolucao Normativa no 547, de 2013.\n"
+        "Art. 2o A ANEEL fiscalizara o cumprimento."
+    )
+
+    chunks = chunk_parent_child(doc, child_size=40, overlap=5)
+    parents = [
+        chunk for chunk in chunks if chunk["chunk_strategy"] == "hierarchical"
+    ]
+
+    assert len(parents) == 2
+    assert "art. 5o da Resolucao" in parents[0]["texto"]
+    assert parents[1]["artigo"] == "Art. 2o"
 
 
 def test_hierarchical_cria_pais_e_filhos_com_parent_chunk_id_real():
