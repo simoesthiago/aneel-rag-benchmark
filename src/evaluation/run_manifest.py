@@ -29,6 +29,14 @@ MANIFEST_SCHEMA_VERSION = 1
 # de organização de `data/`, não uma configuração de execução.
 RUNS_ROOT = Path("data/evaluation/runs")
 
+# Arquivos novos nestes prefixos são efeito colateral normal de um run. Eles não
+# tornam o código irreprodutível por si só; qualquer outro untracked relevante
+# deve marcar o manifesto como dirty.
+IGNORABLE_UNTRACKED_PREFIXES = (
+    "data/evaluation/runs/",
+    "data/evaluation/cache/",
+)
+
 
 def make_run_id(now: datetime | None = None) -> str:
     """Gera um run_id ordenável e único: `<timestamp>-<commit_curto>`.
@@ -72,17 +80,33 @@ def _git_state() -> tuple[str | None, bool]:
     except (subprocess.SubprocessError, FileNotFoundError):
         return None, False
     try:
-        # `--untracked-files=no`: dirty significa "código RASTREADO difere do
-        # HEAD". Arquivos não rastreados não contam — senão o próprio diretório
-        # de saída do run (criado antes de escrever o manifesto) auto-marcaria
-        # todo run como dirty.
+        # `--untracked-files=all`: untracked relevante conta como dirty. O filtro
+        # abaixo remove só outputs/cache criados pelo próprio benchmark.
         status = subprocess.check_output(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
+            ["git", "status", "--porcelain", "--untracked-files=all"],
             stderr=subprocess.DEVNULL,
         ).decode()
     except (subprocess.SubprocessError, FileNotFoundError):
         status = ""
-    return commit, bool(status.strip())
+    relevant = [
+        line
+        for line in status.splitlines()
+        if line.strip() and not _is_ignorable_untracked_status(line)
+    ]
+    return commit, bool(relevant)
+
+
+def get_git_state() -> tuple[str | None, bool]:
+    """Retorna o estado Git usado por manifestos e checkpoints."""
+    return _git_state()
+
+
+def _is_ignorable_untracked_status(line: str) -> bool:
+    """True só para arquivos novos em diretórios de output/cache do benchmark."""
+    if not line.startswith("?? "):
+        return False
+    path = line[3:].strip()
+    return any(path.startswith(prefix) for prefix in IGNORABLE_UNTRACKED_PREFIXES)
 
 
 def _aggregate_records(aggregate: pd.DataFrame) -> list[dict[str, Any]]:

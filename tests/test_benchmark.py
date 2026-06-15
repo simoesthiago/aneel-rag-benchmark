@@ -325,6 +325,63 @@ def test_run_full_benchmark_checkpoint_top_k_divergente_nao_reaproveita(tmp_path
     assert chamadas["n"] == 2
 
 
+def test_run_full_benchmark_checkpoint_contexto_divergente_nao_reaproveita(tmp_path):
+    """Checkpoint de outro GT/hash/modelo não é comparável → recomputa."""
+    chunks = [{"chunk_id": "doc-a::0", "document_id": "d", "texto": "t"}]
+    chamadas = {"n": 0}
+
+    def factory(config, repo_id, query_cache=None):
+        chamadas["n"] += 1
+        return _FakeRetriever(chunks)
+
+    config = StoreConfig(
+        provider="openai",
+        model="text-embedding-3-large",
+        chunk_strategy="article-aware",
+        metodo_extracao="markdown",
+        mode="flat",
+    )
+    checkpoint = tmp_path / "ckpt.jsonl"
+    run_full_benchmark(
+        [_question("gt-0001")],
+        top_k=1,
+        configs=[config],
+        retriever_factory=factory,
+        checkpoint_path=checkpoint,
+        checkpoint_context={
+            "ground_truth_version": "retrieval-50-v1",
+            "models": {"embedding_model": "text-embedding-3-large"},
+        },
+    )
+    assert chamadas["n"] == 1
+
+    run_full_benchmark(
+        [_question("gt-0001")],
+        top_k=1,
+        configs=[config],
+        retriever_factory=factory,
+        checkpoint_path=checkpoint,
+        checkpoint_context={
+            "ground_truth_version": "retrieval-50-v2",
+            "models": {"embedding_model": "text-embedding-3-large"},
+        },
+    )
+    assert chamadas["n"] == 2
+
+    run_full_benchmark(
+        [_question("gt-0001-alterada")],
+        top_k=1,
+        configs=[config],
+        retriever_factory=factory,
+        checkpoint_path=checkpoint,
+        checkpoint_context={
+            "ground_truth_version": "retrieval-50-v2",
+            "models": {"embedding_model": "text-embedding-3-large"},
+        },
+    )
+    assert chamadas["n"] == 3
+
+
 def test_run_full_benchmark_devolve_dataframe_com_colunas_esperadas():
     chunks = [
         {

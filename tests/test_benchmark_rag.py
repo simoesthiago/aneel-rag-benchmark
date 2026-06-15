@@ -371,8 +371,10 @@ def test_replay_factory_usa_contextos_congelados():
     resp = rag.query("pergunta X", top_k=10)
     # Contextos vêm congelados, não de FAISS/Cohere.
     assert resp["contexts"] == frozen["pergunta X"]
-    # Pergunta sem contexto congelado devolve vazio (sem retrieval real).
-    assert rag.query("pergunta ausente", top_k=10)["contexts"] == []
+    # Pergunta sem contexto congelado é erro de experimento, não ausência
+    # legítima de evidência.
+    with pytest.raises(RuntimeError, match="replay sem contexto congelado"):
+        rag.query("pergunta ausente", top_k=10)
 
 
 def test_run_rag_benchmark_persist_contexts_grava_sidecar(tmp_path):
@@ -446,6 +448,28 @@ def test_run_rag_benchmark_replay_congela_retrieval():
     assert row["recall_at_k"] > 0
 
 
+def test_run_rag_benchmark_replay_falha_se_faltar_pergunta():
+    frozen = {
+        "outra pergunta": [
+            _context(
+                "doc-a::0",
+                document_id="ren-2021-1000",
+                artigo="Art. 1º",
+                citation_label="REN 1000/2021, Art. 1º",
+            )
+        ]
+    }
+
+    with pytest.raises(RuntimeError, match="Replay sem contextos congelados"):
+        run_rag_benchmark(
+            [_question("gt-0001")],
+            top_k=10,
+            configs=[_config(rerank=True)],
+            llm_metrics_fn=_llm_metrics_usable,
+            replay_contexts=frozen,
+        )
+
+
 def test_run_rag_benchmark_checkpoint_reaproveita(tmp_path):
     """Resume RAG: re-rodar com o mesmo checkpoint não re-invoca o factory."""
     contexts = [
@@ -490,6 +514,60 @@ def test_run_rag_benchmark_checkpoint_reaproveita(tmp_path):
         segundo.metrics["answer_usable_rate"].tolist()
         == primeiro.metrics["answer_usable_rate"].tolist()
     )
+
+
+def test_run_rag_benchmark_checkpoint_contexto_divergente_nao_reaproveita(tmp_path):
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+    chamadas = {"n": 0}
+
+    def rag_factory(config, repo_id, query_cache=None):
+        chamadas["n"] += 1
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    config = _config(rerank=True)
+    checkpoint = tmp_path / "rag_ckpt.jsonl"
+    run_rag_benchmark(
+        [_question("gt-0001")],
+        top_k=1,
+        configs=[config],
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+        checkpoint_path=checkpoint,
+        checkpoint_context={
+            "ground_truth_version": "retrieval-50-v2",
+            "models": {
+                "embedding_model": "text-embedding-3-large",
+                "llm_model": "gpt-a",
+                "llm_judge_model": "gpt-a",
+            },
+        },
+    )
+    assert chamadas["n"] == 1
+
+    run_rag_benchmark(
+        [_question("gt-0001")],
+        top_k=1,
+        configs=[config],
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+        checkpoint_path=checkpoint,
+        checkpoint_context={
+            "ground_truth_version": "retrieval-50-v2",
+            "models": {
+                "embedding_model": "text-embedding-3-large",
+                "llm_model": "gpt-b",
+                "llm_judge_model": "gpt-a",
+            },
+        },
+    )
+    assert chamadas["n"] == 2
 
 
 def test_cached_default_rag_factory_reusa_bundle_da_mesma_store(monkeypatch):

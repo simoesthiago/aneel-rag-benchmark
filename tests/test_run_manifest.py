@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
@@ -47,6 +49,28 @@ def _fake_aggregate() -> pd.DataFrame:
                 "doc_recall_at_k": 0.979,
             },
         ]
+    )
+
+
+def _init_git_repo(path: Path) -> None:
+    """Cria repo Git mínimo com um commit para testes de proveniência."""
+    subprocess.run(["git", "init"], cwd=path, check=True, capture_output=True)
+    (path / "tracked.txt").write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=path, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Teste",
+            "-c",
+            "user.email=teste@example.com",
+            "commit",
+            "-m",
+            "init",
+        ],
+        cwd=path,
+        check=True,
+        capture_output=True,
     )
 
 
@@ -108,6 +132,56 @@ def test_build_run_manifest_campos_obrigatorios() -> None:
     assert manifest["cache_stats"] == {"hits": 3, "misses": 1}
     # O manifesto inteiro precisa ser serializável em JSON.
     json.dumps(manifest)
+
+
+def test_build_run_manifest_marca_untracked_relevante_como_dirty(
+    tmp_path, monkeypatch
+) -> None:
+    _init_git_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "novo_script.py").write_text("print('novo')\n", encoding="utf-8")
+
+    manifest = build_run_manifest(
+        mode="retrieval",
+        run_id="r1",
+        aggregate=_fake_aggregate(),
+        top_k=10,
+        ground_truth_version="retrieval-50-v2",
+        ground_truth_source="hub",
+        num_questions=50,
+        num_skipped=2,
+        cache_stats=None,
+        models={"embedding_model": "text-embedding-3-large"},
+        artifact_paths={"results_csv": "results.csv"},
+    )
+
+    assert manifest["git_dirty"] is True
+
+
+def test_build_run_manifest_ignora_untracked_de_runs(
+    tmp_path, monkeypatch
+) -> None:
+    _init_git_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    output = tmp_path / "data" / "evaluation" / "runs" / "rag" / "run1"
+    output.mkdir(parents=True)
+    (output / "results.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+
+    manifest = build_run_manifest(
+        mode="rag",
+        run_id="r1",
+        aggregate=_fake_aggregate(),
+        top_k=10,
+        ground_truth_version="retrieval-50-v2",
+        ground_truth_source="hub",
+        num_questions=50,
+        num_skipped=2,
+        cache_stats=None,
+        models={"embedding_model": "text-embedding-3-large", "llm_model": "gpt"},
+        artifact_paths={"results_csv": "results.csv"},
+    )
+
+    assert manifest["git_dirty"] is False
 
 
 def test_build_run_manifest_mescla_config_flags() -> None:

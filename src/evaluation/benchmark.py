@@ -17,10 +17,11 @@ Total: 16 medições. Cada uma roda as 50 perguntas do `retrieval-50`.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from statistics import mean
 from time import perf_counter
@@ -41,6 +42,7 @@ from src.evaluation.metrics import (
     ndcg_at_k,
     optional_llm_metrics,
 )
+from src.evaluation.run_manifest import get_git_state
 from src.rag.generator import generate_llm_answer
 from src.rag.naive import NaiveRAG
 from src.rag.query_expander import QueryExpander
@@ -55,6 +57,7 @@ HIERARCHICAL_STRATEGY = "hierarchical-child"
 EVALUATED_ANSWERABILITIES = frozenset({"corpus_supported"})
 ANSWER_USABLE_MIN_CITATION_ACCURACY = 0.5
 ANSWER_USABLE_MIN_ANSWER_CORRECTNESS = 0.8
+CHECKPOINT_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -108,6 +111,67 @@ class BenchmarkResult:
     metrics: pd.DataFrame
     skipped_questions: list[dict[str, Any]]
     cache_stats: dict[str, int]
+
+
+def _json_normalized(value: Any) -> Any:
+    """Normaliza dict/list para comparação e hash JSON estáveis."""
+    return json.loads(json.dumps(value, ensure_ascii=False, sort_keys=True, default=str))
+
+
+def _hash_json(value: Any) -> str:
+    """Hash estável para perguntas/assinaturas sem depender de formatação."""
+    payload = json.dumps(
+        _json_normalized(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _checkpoint_signature(
+    *,
+    mode: str,
+    config: StoreConfig,
+    questions: list[dict[str, Any]],
+    top_k: int,
+    checkpoint_context: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Assinatura completa que define quando uma config pode ser reaproveitada."""
+    commit, dirty = get_git_state()
+    return _json_normalized(
+        {
+            "schema_version": CHECKPOINT_SCHEMA_VERSION,
+            "mode": mode,
+            "top_k": top_k,
+            "questions_hash": _hash_json(questions),
+            "config": asdict(config),
+            "git_commit": commit,
+            "git_dirty": dirty,
+            "context": checkpoint_context or {},
+        }
+    )
+
+
+def _checkpoint_signatures(
+    *,
+    mode: str,
+    configs: list[StoreConfig],
+    questions: list[dict[str, Any]],
+    top_k: int,
+    checkpoint_context: dict[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
+    """Monta assinatura esperada por label de config."""
+    return {
+        config.label: _checkpoint_signature(
+            mode=mode,
+            config=config,
+            questions=questions,
+            top_k=top_k,
+            checkpoint_context=checkpoint_context,
+        )
+        for config in configs
+    }
 
 
 def build_store_configs(
@@ -709,7 +773,32 @@ class _FrozenRetriever:
         self.frozen = frozen
 
     def retrieve(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
+        if query not in self.frozen:
+            preview = " ".join(query.split())[:120]
+            raise RuntimeError(
+                "replay sem contexto congelado para pergunta: "
+                f"{preview!r}. Refaça a captura com o mesmo ground truth."
+            )
         return list(self.frozen.get(query, []))[:top_k]
+
+
+def _validate_replay_contexts(
+    replay_contexts: dict[str, list[dict[str, Any]]],
+    questions: list[dict[str, Any]],
+) -> None:
+    """Falha cedo se o sidecar de replay não cobre todas as perguntas avaliáveis."""
+    missing = [
+        str(question.get("question_id") or question.get("question") or "")
+        for question in questions
+        if question.get("question") not in replay_contexts
+    ]
+    if missing:
+        sample = ", ".join(missing[:5])
+        suffix = "" if len(missing) <= 5 else f" (+{len(missing) - 5})"
+        raise RuntimeError(
+            "Replay sem contextos congelados para pergunta(s): "
+            f"{sample}{suffix}. Refaça a captura com o mesmo ground truth."
+        )
 
 
 def _make_replay_factory(
@@ -1360,6 +1449,7 @@ def run_rag_benchmark(
     query_cache: QueryEmbeddingCache | None = None,
     llm_metrics_fn=optional_llm_metrics,
     checkpoint_path: Path | None = None,
+    checkpoint_context: dict[str, Any] | None = None,
     persist_contexts_path: Path | None = None,
     replay_contexts: dict[str, list[dict[str, Any]]] | None = None,
 ) -> BenchmarkResult:
@@ -1367,9 +1457,10 @@ def run_rag_benchmark(
 
     `checkpoint_path` (opcional) liga resume por config, igual ao retrieval:
     cada config concluída é gravada num JSONL assim que termina; re-rodar com o
-    mesmo caminho reaproveita as já feitas sem refazer geração/juiz/Cohere. Vale
-    ainda mais no RAG, onde cada config custa geração + juiz LLM por pergunta
-    (além de Cohere nas configs com rerank). Chave: `config.label` + `top_k`.
+    mesmo caminho reaproveita só registros com assinatura compatível
+    (GT/perguntas, commit, modelos, config e top_k). Vale ainda mais no RAG,
+    onde cada config custa geração + juiz LLM por pergunta (além de Cohere nas
+    configs com rerank).
 
     `replay_contexts` (Marco D): quando fornecido, o retrieval é congelado —
     cada config usa contextos pré-capturados (`{pergunta: contexts}`) e só
@@ -1389,6 +1480,7 @@ def run_rag_benchmark(
         query_cache = QueryEmbeddingCache()
 
     if replay_contexts is not None:
+        _validate_replay_contexts(replay_contexts, evaluation_questions)
         effective_rag_factory = _make_replay_factory(replay_contexts)
     else:
         effective_rag_factory = rag_factory
@@ -1400,7 +1492,14 @@ def run_rag_benchmark(
         capture_sink = {}
         effective_rag_factory = _capturing_factory(effective_rag_factory, capture_sink)
 
-    done = _load_checkpoint(checkpoint_path, top_k)
+    signatures = _checkpoint_signatures(
+        mode="rag",
+        configs=configs_list,
+        questions=evaluation_questions,
+        top_k=top_k,
+        checkpoint_context=checkpoint_context,
+    )
+    done = _load_checkpoint(checkpoint_path, signatures)
 
     linhas = []
     for config in configs_list:
@@ -1422,7 +1521,12 @@ def run_rag_benchmark(
         linha["num_questions_evaluated"] = len(evaluation_questions)
         linha["num_questions_skipped"] = len(skipped_questions)
         if checkpoint_path is not None:
-            _append_checkpoint(checkpoint_path, config.label, top_k, linha)
+            _append_checkpoint(
+                checkpoint_path,
+                config.label,
+                signatures[config.label],
+                linha,
+            )
         linhas.append(linha)
 
     if capture_sink is not None and persist_contexts_path is not None:
@@ -1445,39 +1549,53 @@ def run_rag_benchmark(
 
 
 def _load_checkpoint(
-    checkpoint_path: Path | None, top_k: int
+    checkpoint_path: Path | None,
+    expected_signatures: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     """Lê o checkpoint JSONL e devolve {label: linha} das configs já avaliadas.
 
-    Só reaproveita registros com o mesmo `top_k` do run atual (um checkpoint de
-    outro top_k não é comparável). Em colisão de label, o último registro vence.
-    Arquivo inexistente => dict vazio (primeiro run).
+    Só reaproveita registros cuja assinatura completa bate com a execução atual.
+    Checkpoints antigos (sem assinatura) ou incompatíveis são ignorados; em
+    colisão de label, o último registro compatível vence.
     """
     if checkpoint_path is None or not checkpoint_path.exists():
         return {}
     done: dict[str, dict[str, Any]] = {}
+    skipped = 0
     for line in checkpoint_path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
             continue
         record = json.loads(line)
-        if record.get("top_k") != top_k:
+        label = str(record.get("label") or "")
+        expected = expected_signatures.get(label)
+        if expected is None or record.get("signature") != expected:
+            skipped += 1
             continue
-        done[record["label"]] = record["linha"]
+        done[label] = record["linha"]
+    if skipped:
+        print(
+            "  [checkpoint] "
+            f"{skipped} registro(s) ignorado(s) por assinatura divergente "
+            f"em {checkpoint_path}"
+        )
     if done:
         print(f"  [checkpoint] {len(done)} config(s) reaproveitável(is) de {checkpoint_path}")
     return done
 
 
 def _append_checkpoint(
-    checkpoint_path: Path, label: str, top_k: int, linha: dict[str, Any]
+    checkpoint_path: Path,
+    label: str,
+    signature: dict[str, Any],
+    linha: dict[str, Any],
 ) -> None:
     """Anexa uma config concluída ao checkpoint JSONL (uma linha por config)."""
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     with checkpoint_path.open("a", encoding="utf-8") as fh:
         fh.write(
             json.dumps(
-                {"label": label, "top_k": top_k, "linha": linha},
+                {"label": label, "signature": signature, "linha": linha},
                 ensure_ascii=False,
             )
             + "\n"
@@ -1494,6 +1612,7 @@ def run_full_benchmark(
     query_cache: QueryEmbeddingCache | None = None,
     max_workers: int = 1,
     checkpoint_path: Path | None = None,
+    checkpoint_context: dict[str, Any] | None = None,
 ) -> BenchmarkResult:
     """Roda todas as configs e devolve o resultado completo do benchmark.
 
@@ -1517,10 +1636,10 @@ def run_full_benchmark(
 
     `checkpoint_path` (opcional) liga resume por config: cada config concluída
     é gravada (JSONL, append) assim que termina; ao re-rodar com o mesmo
-    caminho, configs já presentes são reaproveitadas sem refazer a chamada
-    (crucial num run de rerank, onde cada config custa ~48 chamadas Cohere e a
-    quota é limitada). A chave é `config.label` + `top_k`; mude o GT/top_k e
-    apague o checkpoint para forçar recomputo.
+    caminho, só configs com assinatura compatível são reaproveitadas sem refazer
+    a chamada (crucial num run de rerank, onde cada config custa ~48 chamadas
+    Cohere e a quota é limitada). A assinatura inclui GT/perguntas, commit,
+    modelos, config completa e top_k.
     """
     if configs is None:
         configs = build_store_configs()
@@ -1537,7 +1656,14 @@ def run_full_benchmark(
         linha["num_questions_skipped"] = len(skipped_questions)
         return linha
 
-    done = _load_checkpoint(checkpoint_path, top_k)
+    signatures = _checkpoint_signatures(
+        mode="retrieval",
+        configs=configs_list,
+        questions=evaluation_questions,
+        top_k=top_k,
+        checkpoint_context=checkpoint_context,
+    )
+    done = _load_checkpoint(checkpoint_path, signatures)
     checkpoint_lock = threading.Lock()
 
     def _run(config: StoreConfig) -> dict[str, Any]:
@@ -1558,7 +1684,7 @@ def run_full_benchmark(
         )
         if checkpoint_path is not None:
             with checkpoint_lock:
-                _append_checkpoint(checkpoint_path, label, top_k, linha)
+                _append_checkpoint(checkpoint_path, label, signatures[label], linha)
         return linha
 
     if max_workers <= 1:

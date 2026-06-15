@@ -126,10 +126,10 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Liga resume por config (retrieval e rag): cada config concluída é "
-            "gravada num JSONL; re-rodar com o mesmo caminho reaproveita as já "
-            "feitas sem refazer chamadas (essencial para rerank/geração, onde "
-            "cada config custa dezenas de chamadas pagas). Apague o arquivo "
-            "para forçar recomputo (ex.: trocou GT/top_k)."
+            "gravada num JSONL; re-rodar com o mesmo caminho reaproveita apenas "
+            "registros com assinatura compatível (GT, perguntas, commit, modelos, "
+            "top_k e config). Essencial para rerank/geração, onde cada config "
+            "custa chamadas pagas."
         ),
     )
     parser.add_argument(
@@ -354,6 +354,21 @@ def main() -> None:
             configs = configs[: args.limit_configs]
         print(f"  {len(configs)} configurações a avaliar.")
 
+        models = {
+            "embedding_model": settings.EMBEDDING_MODEL,
+            "rerank_model": settings.COHERE_RERANK_MODEL,
+        }
+        if args.mode == "rag":
+            models["llm_model"] = settings.LLM_MODEL
+            models["llm_judge_model"] = settings.LLM_JUDGE_MODEL
+        checkpoint_context = {
+            "ground_truth_version": gt_version,
+            "ground_truth_source": gt_source,
+            "models": models,
+            "replay_contexts": args.replay_contexts is not None,
+            "persist_contexts": args.persist_contexts is not None,
+        }
+
         query_cache = (
             QueryEmbeddingCache(persist_path=args.cache_path)
             if args.cache_path is not None
@@ -377,6 +392,7 @@ def main() -> None:
                 repo_id=args.repo_id,
                 query_cache=query_cache,
                 checkpoint_path=args.checkpoint,
+                checkpoint_context=checkpoint_context,
                 persist_contexts_path=args.persist_contexts,
                 replay_contexts=replay_contexts,
             )
@@ -389,6 +405,7 @@ def main() -> None:
                 query_cache=query_cache,
                 max_workers=args.max_workers,
                 checkpoint_path=args.checkpoint,
+                checkpoint_context=checkpoint_context,
             )
 
         if query_cache is not None and args.cache_path is not None:
@@ -680,15 +697,9 @@ def main() -> None:
             "results_csv": "results.csv",
             "per_question": "per_question.json",
         }
-        models = {
-            "embedding_model": settings.EMBEDDING_MODEL,
-            "rerank_model": settings.COHERE_RERANK_MODEL,
-        }
         if args.mode == "rag":
             artifact_paths["failure_analysis_json"] = "failure_analysis.json"
             artifact_paths["failure_analysis_md"] = "failure_analysis.md"
-            models["llm_model"] = settings.LLM_MODEL
-            models["llm_judge_model"] = settings.LLM_JUDGE_MODEL
         # Flags por config (na ordem das linhas do agregado) para o manifesto
         # registrar filtros de higiene/rerank — o agregado do retrieval não
         # materializa essas colunas. `label` ajuda a leitura no relatório.

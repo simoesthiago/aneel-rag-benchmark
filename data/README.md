@@ -59,6 +59,10 @@ timestampada** `runs/<mode>/<run_id>/`, então um run nunca sobrescreve outro.
 
 `<run_id>` = `<timestamp_utc>-<commit_curto>[-dirty]` (ex.:
 `20260612T143000Z-9b3fe6f`). Gerado por `src/evaluation/run_manifest.py`.
+`dirty=false` significa que não havia alterações rastreadas nem arquivos novos
+relevantes fora do Git; arquivos novos criados pelo próprio run em
+`data/evaluation/runs/` e cache em `data/evaluation/cache/` não contam como
+sujeira.
 
 Cada run contém:
 
@@ -72,6 +76,19 @@ Cada run contém:
 Um `results.csv` solto não diz qual GT, commit ou filtros o geraram — por isso
 **todo run carrega um `manifest.json`**. Runs são gerados por
 `scripts/run_benchmark.py` (via `make benchmark-retrieval` / `make benchmark-rag`).
+
+### Checkpoint e replay
+
+`--checkpoint` pode ser usado para retomar benchmarks caros sem repetir chamadas
+OpenAI/Cohere. Cada linha do checkpoint carrega uma assinatura da execução:
+modo, `top_k`, hash das perguntas avaliadas, config completa, commit, estado
+dirty, modelos e versão/fonte do ground truth. Um registro só é reaproveitado
+quando essa assinatura bate exatamente; checkpoints antigos ou incompatíveis são
+ignorados com aviso.
+
+No modo RAG, `--replay-contexts` congela o retrieval a partir de um sidecar de
+contextos capturados. Replay é estrito: se alguma pergunta avaliável não existir
+no sidecar, o run falha cedo em vez de tratar a ausência como "sem contexto".
 
 ### 3. Auditoria — `audit/`
 
