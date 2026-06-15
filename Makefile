@@ -28,6 +28,7 @@
         validate-vectorstore validate-vectorstore-all \
         benchmark-retrieval benchmark-retrieval-smoke \
         benchmark-retrieval-rerank benchmark-rag benchmark-rag-finalists \
+        benchmark-rag-capture benchmark-rag-replay \
         ingest-atos ingest-leis ingest-procedimentos ingest-rede ingest-manuais
 
 # ------------------------------------------------------------------------------
@@ -247,6 +248,23 @@ benchmark-rag-finalists:
 		--finalists \
 		--cache-path data/evaluation/cache/query_embeddings.json \
 		--checkpoint data/evaluation/cache/rag_finalists_checkpoint.jsonl
+
+# Marco D — captura: roda 1× a config promovida (texto+rerank) e congela os
+# contextos recuperados em replay_contexts_promoted.json (~48 Cohere). Esse
+# arquivo vira o "retrieval congelado" para os replays do gerador.
+benchmark-rag-capture:
+	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10 \
+		--promoted-only \
+		--cache-path data/evaluation/cache/query_embeddings.json \
+		--persist-contexts data/evaluation/cache/replay_contexts_promoted.json
+
+# Marco D — replay: re-roda só gerador+juiz sobre os contextos congelados
+# (ZERO Cohere, determinístico no retrieval). Use para iterar prompt/citação do
+# gerador e parear A/B com scripts/build_rag_ab_pairing.py.
+benchmark-rag-replay:
+	$(PYTHON) scripts/run_benchmark.py --mode rag --top-k 10 \
+		--promoted-only \
+		--replay-contexts data/evaluation/cache/replay_contexts_promoted.json
 
 # ------------------------------------------------------------------------------
 # PROCESSAMENTO — CAMADA 2

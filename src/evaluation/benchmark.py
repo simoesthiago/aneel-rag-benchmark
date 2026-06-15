@@ -185,6 +185,7 @@ def build_rag_baseline_configs(
     version_hygiene_comparison: bool = False,
     boost_identificador_comparison: bool = False,
     finalists: bool = False,
+    promoted_only: bool = False,
 ) -> list[StoreConfig]:
     """Escopo deliberado do smoke RAG: baseline atual + baseline com rerank.
 
@@ -221,6 +222,7 @@ def build_rag_baseline_configs(
     demais modos.
     """
     _exclusive = [
+        ("promoted_only", promoted_only),
         ("finalists", finalists),
         ("query_expansion", query_expansion),
         ("rerank_pools", rerank_pools is not None),
@@ -271,6 +273,10 @@ def build_rag_baseline_configs(
         exclude_superseded_versions=True,
         restrict_to_query_submodulo=True,
     )
+    if promoted_only:
+        # Só o pipeline promovido (texto+rerank+higiene). Usado na captura de
+        # contextos e nos replays do Marco D, onde só essa config interessa.
+        return [rerank]
     if rerank_pools is not None:
         return [baseline] + [
             StoreConfig(
@@ -662,6 +668,72 @@ def _default_rag_factory(
         generator=generate_llm_answer,
         query_expander=expander,
     )
+
+
+class _CapturingRAG:
+    """Envolve um RAG real e registra os contextos recuperados por pergunta.
+
+    Usado na captura do Marco D: rodamos a config promovida uma vez e gravamos
+    `{pergunta: contexts}` para congelar o retrieval. Não altera a resposta —
+    só observa.
+    """
+
+    def __init__(self, inner: Any, sink: dict[str, Any]):
+        self.inner = inner
+        self.sink = sink
+        self.strategy = getattr(inner, "strategy", "captured")
+
+    def query(self, pergunta: str, top_k: int = 5) -> dict[str, Any]:
+        response = self.inner.query(pergunta, top_k=top_k)
+        self.sink[pergunta] = list(response.get("contexts") or [])
+        return response
+
+
+def _capturing_factory(inner_factory, sink: dict[str, Any]):
+    """Factory que envolve `inner_factory` para capturar contextos no `sink`."""
+
+    def factory(config, repo_id, query_cache=None):
+        return _CapturingRAG(inner_factory(config, repo_id, query_cache), sink)
+
+    return factory
+
+
+class _FrozenRetriever:
+    """Retriever que devolve contextos congelados por texto da pergunta.
+
+    Substitui FAISS+Cohere no replay do Marco D: o retrieval foi congelado num
+    run de captura, então iterar o gerador não custa Cohere nem é não-determinístico.
+    """
+
+    def __init__(self, frozen: dict[str, list[dict[str, Any]]]):
+        self.frozen = frozen
+
+    def retrieve(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
+        return list(self.frozen.get(query, []))[:top_k]
+
+
+def _make_replay_factory(
+    frozen: dict[str, list[dict[str, Any]]],
+    *,
+    generator=generate_llm_answer,
+):
+    """Factory de replay: NaiveRAG real (gerador) sobre contextos congelados.
+
+    Reusa o `NaiveRAG` de produção (mesma seleção de citações e formato de
+    resposta), só trocando o retriever pelo `_FrozenRetriever`. `query_expander`
+    fica desligado — a query de retrieval foi congelada na captura. `generator`
+    é injetável para testes offline.
+    """
+
+    def factory(config, repo_id, query_cache=None):
+        return NaiveRAG(
+            _FrozenRetriever(frozen),
+            strategy=config.label,
+            generator=generator,
+            query_expander=None,
+        )
+
+    return factory
 
 
 def _vectorstore_cache_key(
@@ -1288,6 +1360,8 @@ def run_rag_benchmark(
     query_cache: QueryEmbeddingCache | None = None,
     llm_metrics_fn=optional_llm_metrics,
     checkpoint_path: Path | None = None,
+    persist_contexts_path: Path | None = None,
+    replay_contexts: dict[str, list[dict[str, Any]]] | None = None,
 ) -> BenchmarkResult:
     """Roda o smoke RAG nas configs selecionadas.
 
@@ -1296,6 +1370,14 @@ def run_rag_benchmark(
     mesmo caminho reaproveita as já feitas sem refazer geração/juiz/Cohere. Vale
     ainda mais no RAG, onde cada config custa geração + juiz LLM por pergunta
     (além de Cohere nas configs com rerank). Chave: `config.label` + `top_k`.
+
+    `replay_contexts` (Marco D): quando fornecido, o retrieval é congelado —
+    cada config usa contextos pré-capturados (`{pergunta: contexts}`) e só
+    re-roda geração + juiz (zero Cohere, determinístico). Use com a config
+    promovida (`promoted_only`), pois os contextos foram capturados dela.
+
+    `persist_contexts_path` (Marco D): grava `{pergunta: contexts}` ao fim,
+    congelando o retrieval do run para replays futuros. Use com 1 config.
     """
     if configs is None:
         configs = build_rag_baseline_configs()
@@ -1306,9 +1388,17 @@ def run_rag_benchmark(
     if query_cache is None:
         query_cache = QueryEmbeddingCache()
 
-    effective_rag_factory = rag_factory
-    if rag_factory is _default_rag_factory:
-        effective_rag_factory = _cached_default_rag_factory({})
+    if replay_contexts is not None:
+        effective_rag_factory = _make_replay_factory(replay_contexts)
+    else:
+        effective_rag_factory = rag_factory
+        if rag_factory is _default_rag_factory:
+            effective_rag_factory = _cached_default_rag_factory({})
+
+    capture_sink: dict[str, Any] | None = None
+    if persist_contexts_path is not None:
+        capture_sink = {}
+        effective_rag_factory = _capturing_factory(effective_rag_factory, capture_sink)
 
     done = _load_checkpoint(checkpoint_path, top_k)
 
@@ -1334,6 +1424,17 @@ def run_rag_benchmark(
         if checkpoint_path is not None:
             _append_checkpoint(checkpoint_path, config.label, top_k, linha)
         linhas.append(linha)
+
+    if capture_sink is not None and persist_contexts_path is not None:
+        persist_contexts_path.parent.mkdir(parents=True, exist_ok=True)
+        persist_contexts_path.write_text(
+            json.dumps(capture_sink, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print(
+            f"  Contextos congelados ({len(capture_sink)} perguntas) salvos: "
+            f"{persist_contexts_path}"
+        )
 
     print(f"  Query cache: {query_cache.stats}")
     return BenchmarkResult(

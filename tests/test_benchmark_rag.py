@@ -327,6 +327,125 @@ def test_run_rag_benchmark_devolve_dataframe_e_pula_source_only():
     assert result.skipped_questions[0]["question_id"] == "gt-9999"
 
 
+def test_build_rag_baseline_configs_promoted_only():
+    configs = build_rag_baseline_configs(promoted_only=True)
+    assert len(configs) == 1
+    c = configs[0]
+    assert c.rerank is True
+    assert c.metodo_extracao == "texto"
+    assert c.candidates_k_override == 100
+    assert c.exclude_revogadas
+    assert c.exclude_superseded_versions
+    assert c.restrict_to_query_submodulo
+
+
+def test_capturing_factory_registra_contextos():
+    contexts = [_context("doc-a::0", document_id="ren-2021-1000")]
+    sink: dict = {}
+
+    def inner_factory(config, repo_id, query_cache=None):
+        return _FakeRAG(contexts, citations=[])
+
+    factory = benchmark_module._capturing_factory(inner_factory, sink)
+    rag = factory(_config(), None)
+    resp = rag.query("pergunta X", top_k=5)
+    assert sink["pergunta X"] == resp["contexts"]
+    assert sink["pergunta X"] == contexts
+
+
+def test_replay_factory_usa_contextos_congelados():
+    frozen = {
+        "pergunta X": [_context("doc-a::0", document_id="ren-2021-1000")],
+    }
+    # Gerador fake injetado: replay não deve tocar a rede.
+    def fake_generator(query, contexts):
+        return {
+            "answer": "resposta [1].",
+            "citations_used": [1],
+            "llm_status": "ok",
+            "llm_error": None,
+        }
+
+    factory = benchmark_module._make_replay_factory(frozen, generator=fake_generator)
+    rag = factory(_config(rerank=True), None)
+    resp = rag.query("pergunta X", top_k=10)
+    # Contextos vêm congelados, não de FAISS/Cohere.
+    assert resp["contexts"] == frozen["pergunta X"]
+    # Pergunta sem contexto congelado devolve vazio (sem retrieval real).
+    assert rag.query("pergunta ausente", top_k=10)["contexts"] == []
+
+
+def test_run_rag_benchmark_persist_contexts_grava_sidecar(tmp_path):
+    contexts = [
+        _context(
+            "doc-a::0",
+            document_id="ren-2021-1000",
+            artigo="Art. 1º",
+            citation_label="REN 1000/2021, Art. 1º",
+        )
+    ]
+
+    def rag_factory(config, repo_id, query_cache=None):
+        return _FakeRAG(contexts, citations=["REN 1000/2021, Art. 1º"])
+
+    sidecar = tmp_path / "frozen.json"
+    run_rag_benchmark(
+        [_question("gt-0001")],
+        top_k=1,
+        configs=[_config(rerank=True)],
+        rag_factory=rag_factory,
+        llm_metrics_fn=_llm_metrics,
+        persist_contexts_path=sidecar,
+    )
+    assert sidecar.exists()
+    frozen = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert "pergunta regulatoria" in frozen
+    assert frozen["pergunta regulatoria"] == contexts
+
+
+def test_run_rag_benchmark_replay_congela_retrieval():
+    frozen = {
+        "pergunta regulatoria": [
+            _context(
+                "doc-a::0",
+                document_id="ren-2021-1000",
+                artigo="Art. 1º",
+                citation_label="REN 1000/2021, Art. 1º",
+            )
+        ]
+    }
+
+    def fake_generator(query, contexts):
+        return {
+            "answer": "resposta [1].",
+            "citations_used": [1],
+            "llm_status": "ok",
+            "llm_error": None,
+        }
+
+    # rag_factory NÃO é usado no replay (retrieval congelado); injetamos o
+    # gerador fake via replay factory e passamos o resultado pronto.
+    import src.evaluation.benchmark as bm
+
+    original = bm._make_replay_factory
+    bm._make_replay_factory = lambda fz: original(fz, generator=fake_generator)
+    try:
+        result = run_rag_benchmark(
+            [_question("gt-0001")],
+            top_k=10,
+            configs=[_config(rerank=True)],
+            llm_metrics_fn=_llm_metrics_usable,
+            replay_contexts=frozen,
+        )
+    finally:
+        bm._make_replay_factory = original
+
+    assert len(result.metrics) == 1
+    row = result.metrics.iloc[0]
+    # recall > 0 porque o contexto congelado casa a fonte esperada do GT.
+    assert row["recall_at_k"] > 0
+
+
 def test_run_rag_benchmark_checkpoint_reaproveita(tmp_path):
     """Resume RAG: re-rodar com o mesmo checkpoint não re-invoca o factory."""
     contexts = [

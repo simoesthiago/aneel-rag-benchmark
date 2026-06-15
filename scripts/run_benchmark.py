@@ -142,6 +142,35 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--promoted-only",
+        action="store_true",
+        help=(
+            "Em --mode rag, roda apenas o pipeline promovido "
+            "(texto+rerank+higiene). Usado na captura de contextos e nos "
+            "replays do Marco D."
+        ),
+    )
+    parser.add_argument(
+        "--persist-contexts",
+        type=Path,
+        default=None,
+        help=(
+            "Em --mode rag, grava {pergunta: contexts} ao fim (congela o "
+            "retrieval do run para replays do Marco D). Use com 1 config "
+            "(ex.: --promoted-only)."
+        ),
+    )
+    parser.add_argument(
+        "--replay-contexts",
+        type=Path,
+        default=None,
+        help=(
+            "Em --mode rag, congela o retrieval: lê {pergunta: contexts} de um "
+            "arquivo de captura e re-roda só geração + juiz (zero Cohere, "
+            "determinístico). Use com --promoted-only. Marco D."
+        ),
+    )
+    parser.add_argument(
         "--max-workers",
         type=int,
         default=1,
@@ -277,12 +306,19 @@ def main() -> None:
                 args.rerank_pool_comparison,
                 args.exclude_revogadas_comparison,
                 args.finalists,
+                args.promoted_only,
             ]
             if sum(bool(m) for m in _modos_exp) > 1:
                 raise SystemExit(
                     "--query-expansion, --rerank-pool-comparison, "
-                    "--exclude-revogadas-comparison e --finalists são "
-                    "mutuamente exclusivos (escopos experimentais distintos)."
+                    "--exclude-revogadas-comparison, --finalists e "
+                    "--promoted-only são mutuamente exclusivos (escopos "
+                    "experimentais distintos)."
+                )
+            if args.replay_contexts is not None and not args.promoted_only:
+                raise SystemExit(
+                    "--replay-contexts exige --promoted-only: os contextos "
+                    "foram capturados da config promovida."
                 )
             if args.rerank_pool_comparison:
                 configs = build_rag_baseline_configs(rerank_pools=(50, 100))
@@ -292,6 +328,8 @@ def main() -> None:
                 )
             elif args.finalists:
                 configs = build_rag_baseline_configs(finalists=True)
+            elif args.promoted_only:
+                configs = build_rag_baseline_configs(promoted_only=True)
             else:
                 configs = build_rag_baseline_configs(
                     query_expansion=args.query_expansion,
@@ -323,6 +361,15 @@ def main() -> None:
         )
 
         if args.mode == "rag":
+            replay_contexts = None
+            if args.replay_contexts is not None:
+                replay_contexts = json.loads(
+                    args.replay_contexts.read_text(encoding="utf-8")
+                )
+                print(
+                    f"  Replay: retrieval congelado de {args.replay_contexts} "
+                    f"({len(replay_contexts)} perguntas) — zero Cohere."
+                )
             result = run_rag_benchmark(
                 questions,
                 top_k=args.top_k,
@@ -330,6 +377,8 @@ def main() -> None:
                 repo_id=args.repo_id,
                 query_cache=query_cache,
                 checkpoint_path=args.checkpoint,
+                persist_contexts_path=args.persist_contexts,
+                replay_contexts=replay_contexts,
             )
         else:
             result = run_full_benchmark(
