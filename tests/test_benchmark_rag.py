@@ -111,7 +111,9 @@ def test_build_rag_baseline_configs_limita_escopo_a_baseline_e_rerank():
     assert [config.rerank for config in configs] == [False, True]
     assert {config.model for config in configs} == {"text-embedding-3-large"}
     assert {config.chunk_strategy for config in configs} == {"fixed-size"}
-    assert {config.metodo_extracao for config in configs} == {"markdown"}
+    # Marco C: `texto` promovido a default sobre `markdown` (texto+rerank
+    # liderou answer_usable/citação/correção no RAG end-to-end dos finalistas).
+    assert {config.metodo_extracao for config in configs} == {"texto"}
     assert {config.mode for config in configs} == {"flat"}
     # Fase 2: pool 100 é o default do rerank (promovido pelo pareamento).
     assert configs[0].candidates_k_override is None

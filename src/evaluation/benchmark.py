@@ -237,11 +237,16 @@ def build_rag_baseline_configs(
             "Modos experimentais mutuamente exclusivos em "
             f"build_rag_baseline_configs: {_ativos} (use apenas um)."
         )
+    # Marco C (2026-06-15): `texto` promovido a default sobre `markdown`. No RAG
+    # end-to-end dos finalistas, `texto+rerank` liderou o gate answer_usable
+    # (39/48 vs 37/48), citação (0.77 vs 0.72) e correção, com pareamento mais
+    # limpo (1 quebrada vs 3). `markdown` só vencia em doc_recall (retrieval
+    # puro), que não se traduziu em resposta final melhor.
     baseline = StoreConfig(
         provider=PROVIDER,
         model="text-embedding-3-large",
         chunk_strategy="fixed-size",
-        metodo_extracao="markdown",
+        metodo_extracao="texto",
         mode="flat",
     )
     # Fase 2 do roadmap (rerank_pool_pairing): o pareamento pool50 vs pool100
@@ -307,14 +312,14 @@ def build_rag_baseline_configs(
         com_boost = replace(rerank, boost_identificador=True)
         return [sem_boost, com_boost]
     if finalists:
-        # Marco C: os 4 finalistas do Marco B. markdown (defaults atuais) +
-        # texto, cada um com e sem rerank+higiene. Ordem deliberada: as 2 sem
-        # rerank (sem custo Cohere) primeiro, as 2 com rerank por último — assim,
-        # com checkpoint, um kill durante o rerank não desperdiça o trabalho
-        # livre já gravado.
-        baseline_texto = replace(baseline, metodo_extracao="texto")
-        rerank_texto = replace(rerank, metodo_extracao="texto")
-        return [baseline, baseline_texto, rerank, rerank_texto]
+        # Marco C: os 4 finalistas do Marco B. O default agora é `texto`
+        # (baseline/rerank acima); aqui derivamos as variantes `markdown` para
+        # comparar as duas extrações. Ordem deliberada: as 2 sem rerank (sem
+        # custo Cohere) primeiro, as 2 com rerank por último — assim, com
+        # checkpoint, um kill durante o rerank não desperdiça o trabalho livre.
+        baseline_md = replace(baseline, metodo_extracao="markdown")
+        rerank_md = replace(rerank, metodo_extracao="markdown")
+        return [baseline, baseline_md, rerank, rerank_md]
     if not query_expansion:
         return [baseline, rerank]
     baseline_qe = StoreConfig(
