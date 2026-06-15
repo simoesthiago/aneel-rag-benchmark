@@ -1,0 +1,63 @@
+{
+  "provider": "openai",
+  "model": "text-embedding-3-large",
+  "metodo_extracao": "texto",
+  "ground_truth_version": "retrieval-50-v2",
+  "top_k": 10,
+  "amostra": null,
+  "published_to": null,
+  "note": "Relatório reconstruído dos números do run real pago (log blng9qdao); o publish ao staging abortou (repo inexistente) ANTES da escrita original, mas a pontuação já estava feita. Nada foi publicado no Hub.",
+  "fixed_size_target": {
+    "recall_at_k": 0.896,
+    "doc_recall_at_k": 0.938
+  },
+  "recall_promote_threshold": 0.8,
+  "results": [
+    {
+      "chunk_strategy": "article-aware",
+      "mode": "flat",
+      "antes": {
+        "recall_at_k": 0.625,
+        "doc_recall_at_k": 0.833,
+        "ndcg_at_k": 0.465
+      },
+      "depois": {
+        "recall_at_k": 0.68,
+        "doc_recall_at_k": 0.8,
+        "ndcg_at_k": 0.524
+      },
+      "delta_recall": 0.055
+    },
+    {
+      "chunk_strategy": "hierarchical-child",
+      "mode": "flat",
+      "antes": {
+        "recall_at_k": 0.542,
+        "doc_recall_at_k": 0.812,
+        "ndcg_at_k": 0.401
+      },
+      "depois": {
+        "recall_at_k": 0.62,
+        "doc_recall_at_k": 0.82,
+        "ndcg_at_k": 0.451
+      },
+      "delta_recall": 0.078
+    },
+    {
+      "chunk_strategy": "hierarchical-child",
+      "mode": "hierarchical",
+      "antes": {
+        "recall_at_k": 0.583,
+        "doc_recall_at_k": 0.812,
+        "ndcg_at_k": 0.459
+      },
+      "depois": {
+        "recall_at_k": 0.7,
+        "doc_recall_at_k": 0.82,
+        "ndcg_at_k": 0.537
+      },
+      "delta_recall": 0.117
+    }
+  ],
+  "verdict": "NÃO PROMOVER: article-aware·texto recall 0.680 < 0.8 — o fix não fecha a lacuna. Documentar que fixed-size venceu por robustez; sem re-embedding oficial."
+}
