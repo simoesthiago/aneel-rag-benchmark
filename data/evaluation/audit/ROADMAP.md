@@ -8,6 +8,15 @@
 
 ## TL;DR para quem chega agora
 
+> **Atualização chunking H12 (2026-06-16):** corrigido o splitter das estratégias
+> estruturais (sectioning markdown-aware + merge de fragmentos) e re-embeddadas
+> todas as configs estruturais (texto+markdown, large+small) no repo
+> `aneel-vectorstores-h12`. Ganho grande (markdown `hierarchical-child` recall
+> 0.479→0.833), **mas `fixed-size` segue líder** (recall 0.958 / doc_recall 0.979
+> / nDCG 0.872) — vitória robusta. Detalhe em
+> `report/tables/retrieval_matrix_v2.*` e `results/diagnostic/chunking_markdown_fallback.md`.
+> Pipeline promovido inalterado.
+
 > **Atualização Marcos B–D (2026-06-15):** o default promovido passou a ser
 > `large·fixed-size·texto·flat + rerank@100 + higiene` (Marco C). O Marco D
 > (D1: citação parcimoniosa no gerador) elevou o pipeline a **41/48 (0.854)**

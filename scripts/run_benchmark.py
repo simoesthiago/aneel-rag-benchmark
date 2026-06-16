@@ -104,6 +104,24 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--only-strategies",
+        default=None,
+        help=(
+            "Lista separada por vírgula de chunk_strategy a manter (ex.: "
+            "article-aware,hierarchical-child). Filtra a matriz por estratégia."
+        ),
+    )
+    parser.add_argument(
+        "--only-metodos",
+        default=None,
+        help="Lista separada por vírgula de metodo_extracao a manter (texto,markdown).",
+    )
+    parser.add_argument(
+        "--only-models",
+        default=None,
+        help="Lista separada por vírgula de modelo de embedding a manter.",
+    )
+    parser.add_argument(
         "--limit-questions",
         "--limit",
         type=int,
@@ -350,8 +368,19 @@ def main() -> None:
                 rerank_candidates_k=args.rerank_candidates_k,
                 apply_hygiene=args.apply_hygiene,
             )
+        if args.only_strategies:
+            alvo = {s.strip() for s in args.only_strategies.split(",")}
+            configs = [c for c in configs if c.chunk_strategy in alvo]
+        if args.only_metodos:
+            alvo = {m.strip() for m in args.only_metodos.split(",")}
+            configs = [c for c in configs if c.metodo_extracao in alvo]
+        if args.only_models:
+            alvo = {m.strip() for m in args.only_models.split(",")}
+            configs = [c for c in configs if c.model in alvo]
         if args.limit_configs:
             configs = configs[: args.limit_configs]
+        if not configs:
+            raise SystemExit("Nenhuma configuração após os filtros --only-*.")
         print(f"  {len(configs)} configurações a avaliar.")
 
         models = {

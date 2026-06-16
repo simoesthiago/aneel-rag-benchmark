@@ -15,6 +15,10 @@ leves** (ground truth pequeno, CSVs agregados, manifestos, auditorias). Os
 - PDFs, Parquets, índices FAISS, dumps brutos → **Hub** (`simoesthiago/aneel-corpus`).
 - `data/documentos_corpus.csv`, `data/chunks/`, `data/vectorstores/`, `data/raw/`
   → **gitignored** (ver `.gitignore`); são materializados localmente ou lidos do Hub.
+- Vector stores **v2 das estratégias estruturais** (parser/splitter de chunking
+  corrigidos — H12) ficam num repo separado, `simoesthiago/aneel-vectorstores-h12`,
+  para preservar intactas as v1 do Marco B em `aneel-corpus`. Comparativo em
+  `data/evaluation/report/tables/retrieval_matrix_v2.*`.
 
 Regra prática em caso de dúvida: **metodologia no Git, dado grande no Hub.**
 

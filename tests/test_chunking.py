@@ -131,10 +131,52 @@ def test_article_aware_usa_fallback_por_paragrafo_quando_nao_ha_artigos():
 
     chunks = chunk_article_aware(doc)
 
-    assert len(chunks) == 2
+    # Fragmentos curtos (< MIN_MERGE_WORDS) são fundidos num único bloco, em vez
+    # de virarem chunks minúsculos separados.
+    assert len(chunks) == 1
     assert chunks[0]["chunk_level"] == "paragraph"
     assert chunks[0]["artigo"] is None
-    assert chunks[0]["texto"] == "Primeiro bloco sem artigo."
+    assert "Primeiro bloco sem artigo." in chunks[0]["texto"]
+    assert "Segundo bloco sem artigo." in chunks[0]["texto"]
+
+
+def test_article_aware_fallback_funde_fragmentos_pequenos():
+    from src.chunking.article_aware import chunk_article_aware
+
+    paragrafo = "uma duas tres quatro cinco seis sete oito nove dez"  # 10 palavras
+    doc = _documento("\n\n".join([paragrafo] * 12))  # 12 fragmentos de 10 palavras
+
+    chunks = chunk_article_aware(doc)
+
+    # Sem merge seriam 12 chunks minúsculos; com merge, poucos blocos saudáveis.
+    assert len(chunks) <= 3
+    assert all(len(chunk["texto"].split()) >= 40 for chunk in chunks)
+
+
+def test_article_aware_fallback_corta_por_cabecalho_markdown():
+    from src.chunking.article_aware import chunk_article_aware
+
+    bloco = " ".join(["palavra"] * 60)  # 60 palavras por seção (>= MIN_MERGE_WORDS)
+    doc = _documento(f"## Secao A\n\n{bloco}\n\n## Secao B\n\n{bloco}")
+
+    chunks = chunk_article_aware(doc)
+
+    # Cortado pelos cabeçalhos markdown em 2 seções coerentes, não estilhaçado.
+    assert len(chunks) == 2
+    assert chunks[0]["texto"].startswith("## Secao A")
+    assert chunks[1]["texto"].startswith("## Secao B")
+
+
+def test_article_aware_fallback_respeita_teto_de_palavras():
+    from src.chunking.article_aware import chunk_article_aware
+
+    texto_longo = " ".join(f"palavra{i}" for i in range(900))
+    doc = _documento(texto_longo)  # sem artigos, sem cabeçalhos
+
+    chunks = chunk_article_aware(doc)
+
+    assert len(chunks) >= 2
+    assert all(len(chunk["texto"].split()) <= 800 for chunk in chunks)
 
 
 def test_article_aware_quebra_bloco_estrutural_muito_longo():
@@ -167,6 +209,22 @@ def test_hierarchical_herda_parser_que_nao_fragmenta_referencia_cruzada():
     assert len(parents) == 2
     assert "art. 5o da Resolucao" in parents[0]["texto"]
     assert parents[1]["artigo"] == "Art. 2o"
+
+
+def test_hierarchical_herda_merge_no_fallback_markdown():
+    from src.chunking.hierarchical import chunk_parent_child
+
+    bloco = " ".join(["palavra"] * 60)
+    doc = _documento(f"## Secao A\n\n{bloco}\n\n## Secao B\n\n{bloco}")
+
+    parents = [
+        chunk
+        for chunk in chunk_parent_child(doc)
+        if chunk["chunk_strategy"] == "hierarchical"
+    ]
+
+    # hierarchical-child deriva de article-aware: herda o corte markdown + merge.
+    assert len(parents) == 2
 
 
 def test_hierarchical_cria_pais_e_filhos_com_parent_chunk_id_real():
