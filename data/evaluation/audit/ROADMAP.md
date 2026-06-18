@@ -12,8 +12,10 @@
 > estruturais (sectioning markdown-aware + merge de fragmentos) e re-embeddadas
 > todas as configs estruturais (texto+markdown, large+small) no repo
 > `aneel-vectorstores-h12`. Ganho grande (markdown `hierarchical-child` recall
-> 0.479→0.833), **mas `fixed-size` segue líder** (recall 0.958 / doc_recall 0.979
-> / nDCG 0.872) — vitória robusta. Detalhe em
+> 0.479→0.833), **mas a família `fixed-size` segue líder**: no modelo large com
+> rerank, `fixed-size·markdown` lidera `doc_recall` (0.979, nDCG 0.867) e
+> `fixed-size·texto` lidera nDCG (0.872, doc_recall 0.958). Vitória robusta.
+> Detalhe em
 > `report/tables/retrieval_matrix_v2.*` e `results/diagnostic/chunking_markdown_fallback.md`.
 > Pipeline promovido inalterado.
 

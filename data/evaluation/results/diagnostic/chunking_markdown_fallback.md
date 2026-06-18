@@ -31,6 +31,12 @@ Em `src/chunking/article_aware.py`, só no caminho fallback:
 
 ## 3. Shape dos chunks — antes vs depois (corpus completo)
 
+Para não misturar escopos: o "antes" desta tabela isola o efeito do fallback
+antigo depois da correção do regex de artigo. A auditoria H12 inicial das stores
+v1 publicadas registrava outro denominador (`article-aware` markdown: 84.653
+chunks, p50 21, 61,1% <30). Aqui a comparação mede o que muda quando o fallback
+passa a respeitar cabeçalhos markdown e fundir fragmentos curtos.
+
 | | antes (fallback antigo) | depois (markdown-aware + merge) |
 |---|---|---|
 | markdown `article-aware` — nº chunks | 162.651 | **22.372** |
@@ -54,11 +60,13 @@ usa a estrutura que o markdown preserva.
 ## 5. Conclusão
 
 Mesmo no seu melhor caso honesto, as estratégias estruturais **continuam atrás
-do `fixed-size`** (large, +rerank): melhor estrutural recall 0.833 / doc_recall
-0.917 / nDCG 0.660 vs `fixed-size` recall **0.958** / doc_recall **0.979** /
-nDCG **0.872**. A vitória da janela fixa é **robusta**, não artefato de uma
-concorrente sabotada: janela fixa com overlap evita o problema de
-detecção de estrutura em corpus regulatório heterogêneo.
+da família `fixed-size`**. No modelo large com rerank, `fixed-size·markdown`
+tem o maior `doc_recall` (recall 0.958 / doc_recall 0.979 / nDCG 0.867), e
+`fixed-size·texto` tem o maior nDCG (recall 0.958 / doc_recall 0.958 /
+nDCG 0.872). A melhor estrutural fica em recall 0.833 / doc_recall 0.917 /
+nDCG ~0.66. A vitória da janela fixa é **robusta**, não artefato de uma
+concorrente sabotada: janela fixa com overlap evita o problema de detecção de
+estrutura em corpus regulatório heterogêneo.
 
 **Trabalho futuro aberto a terceiros:** um splitter markdown ainda mais rico
 (tabelas, listas aninhadas, code blocks) poderia estreitar mais a distância —

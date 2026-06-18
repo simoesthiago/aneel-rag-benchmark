@@ -138,13 +138,14 @@ publicação. Preenchido a partir do Marco B em diante.
 **registro pré-contrato**, anterior ao Marco A. Ele é **fonte única de
 evidência** de várias decisões já tomadas (Fases F1–F1.5 do roadmap) e é
 referenciado por `PROGRESS.md` e `audit/ROADMAP.md`. Por isso **permanece no
-lugar, intocado**, até que o Marco B/C regenere a matriz oficial em `runs/` e
-promova os números canônicos para `report/`.
+lugar, intocado**. A partir do Marco A, runs novos vivem em `runs/`, e números
+promovidos para leitura de relatório vivem em `report/`.
 
-Enquanto isso:
+Estado atual de leitura:
 
-- **Leitura canônica atual** do RAG: `results/rag-50/` (35/48 usáveis,
-  `doc_recall=0.979`).
-- **Runs novos** (a partir de agora) vão para `runs/`, não para `results/`.
+- **Leitura canônica atual** do RAG promovido: `report/tables/
+  rag_promoted_post_marco_d.*` (41/48 usáveis, `answer_usable=0.854`,
+  `doc_recall=0.958`).
+- **Runs novos** vão para `runs/`, não para `results/`.
 - Nada em `results/` deve ser movido ou apagado sem antes confirmar que não é
   a única evidência de uma decisão.

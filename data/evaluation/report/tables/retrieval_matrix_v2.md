@@ -4,6 +4,10 @@
 - Filtros de higiene: `sem_revogadas + sem_versoes_antigas + submodulo_exato`.
 - `fixed-size` vem do run v1 (não usa o splitter corrigido); estratégias estruturais vêm do run v2 (parser + splitter markdown-aware + merge).
 - Ordenado por `doc_recall_at_k` (desc), desempate `ndcg_at_k`.
+- Leitura dos líderes: no modelo large com rerank, `fixed-size·markdown` lidera
+  `doc_recall` (0.979, nDCG 0.867) e `fixed-size·texto` lidera nDCG (0.872,
+  doc_recall 0.958). Portanto a liderança é da família `fixed-size`, não de uma
+  linha única que reúna todos os melhores valores.
 - Proveniência:
   - v1 `20260614T161535Z-18d8e21` (commit `18d8e21`) — fixed-size.
   - v2 `20260616T033915Z-5e61c8f-dirty` (commit `5e61c8f`) — estruturais; stores em `simoesthiago/aneel-vectorstores-h12`.
