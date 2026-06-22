@@ -72,6 +72,27 @@ def test_generate_llm_answer_parseia_json_e_filtra_indices_invalidos():
     assert call["response_format"] == {"type": "json_object"}
 
 
+def test_generate_llm_answer_permite_prompt_v3_por_variavel_de_ambiente(monkeypatch):
+    monkeypatch.setenv("RAG_PROMPT_VARIANT", "v3")
+    client = _FakeClient(
+        '{"resposta": "A resposta esta no contexto [1].", ' '"indices_citados": [1]}'
+    )
+
+    result = generate_llm_answer(
+        "pergunta",
+        [_context(1)],
+        client=client,
+        model="modelo-teste",
+    )
+
+    assert result["llm_status"] == "ok"
+    call = client.chat.completions.calls[0]
+    system_prompt = call["messages"][0]["content"]
+    assert "Antes de responder" in system_prompt
+    assert "tipo da pergunta" in system_prompt
+    assert "Nao cite bloco que apenas menciona o tema" in system_prompt
+
+
 def test_generate_llm_answer_usa_max_completion_tokens_para_gpt5():
     client = _FakeClient(
         '{"resposta": "A resposta esta no contexto [1].", ' '"indices_citados": [1]}'

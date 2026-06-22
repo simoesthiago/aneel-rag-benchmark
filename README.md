@@ -22,15 +22,16 @@ O corpus cobre cinco famílias de documentos:
 
 ## Arquitetura
 
-O pipeline de construção é organizado em 5 camadas:
+O pipeline de construção é organizado em 4 camadas e termina em um pacote de
+relatório técnico auditável:
 
 | # | Camada | Responsabilidade | Status |
 |---|---|---|---|
 | 1 | **Ingestão** | Coleta documentos públicos, extrai texto, valida schema e publica Parquet no HuggingFace Hub | ✅ |
 | 2 | **Processamento** | Gera chunks (`fixed-size`, `article-aware`, `hierarchical-child`), embeddings e índices FAISS | ✅ |
-| 3 | **RAG** | Compara Dense FAISS, Hierarchical parent-child e reranking opcional | 🔄 |
-| 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | 🔄 |
-| 5 | **Interface** | Chatbot Streamlit no HuggingFace Spaces usando a melhor estratégia validada | ⬜ |
+| 3 | **RAG** | Compara Dense FAISS, Hierarchical parent-child, reranking opcional e geração citável | ✅ |
+| 4 | **Avaliação** | Mede retrieval, citação, status normativo, latência e métricas LLM opcionais | ✅ |
+| Final | **Relatório** | Consolida tabelas, diagnósticos, limitações e conclusões do benchmark | 🔄 |
 
 Legenda: ✅ concluída · 🔄 em construção · ⬜ não iniciada.
 
@@ -118,6 +119,12 @@ granularidade de chunk.
 
 `faithfulness` e `answer_correctness` são opcionais: rodam apenas quando `LLM_API_KEY` estiver configurada. Sem chave, o benchmark registra `skipped_no_llm_key` e continua.
 
+O pipeline RAG promovido usa `text-embedding-3-large | fixed-size | texto |
+flat + rerank@100 + higiene`. No Marco D, ele alcançou **41/48 respostas
+usáveis** (`answer_usable=0.854`), com `citation_accuracy=0.837`,
+`doc_recall@10=0.958` e `nDCG@10=0.873`; a tabela canônica está em
+`data/evaluation/report/tables/rag_promoted_post_marco_d.md`.
+
 O smoke RAG ponta-a-ponta roda com `make benchmark-rag`. Ele avalia duas
 configurações controladas — baseline atual e baseline com rerank — e grava os
 resultados num run timestampado em `data/evaluation/runs/rag/<run_id>/` (com
@@ -126,6 +133,11 @@ custo de geração e de juiz LLM; sem `OPENAI_API_KEY` ou `LLM_API_KEY`, o
 gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
 `COHERE_API_KEY`; para validar apenas a mecânica local sem Cohere, use
 `--limit-configs 1`.
+
+O gerador aceita um gate experimental de prompt por variável de ambiente:
+`RAG_PROMPT_VARIANT=v3`. A variante v3 foi testada em replay A/B com contextos
+congelados e **não foi promovida** (`saved=4`, `broken=3`, `net=+1`,
+veredito `keep`); o default segue sendo o prompt parcimonioso do Marco D.
 
 ---
 
@@ -136,7 +148,7 @@ gerador cai em fallback extrativo. A segunda configuração usa rerank e exige
 | Pipeline de ingestão | Máquina local (IP residencial — cedoc/ bloqueia datacenters) |
 | PDFs, Parquet e índices FAISS | HuggingFace Hub |
 | Código-fonte | GitHub |
-| Chatbot | HuggingFace Spaces |
+| Relatório final | PDF/documento gerado a partir dos artefatos versionados |
 
 O repositório Git contém código, configuração e documentação. Dados pesados — PDFs, Parquet e índices FAISS — ficam **fora do Git** (HuggingFace Hub).
 

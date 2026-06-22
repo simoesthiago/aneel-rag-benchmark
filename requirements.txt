@@ -57,7 +57,7 @@ jupyter>=1.0             # notebooks exploratórios em notebooks/
 
 openai>=1.35                  # OpenAI embeddings API
 tiktoken>=0.7                 # contagem/truncamento seguro de tokens para OpenAI
-faiss-cpu>=1.8                # vector store: arquivo .faiss, sem servidor, portável para HF Spaces
+faiss-cpu>=1.8                # vector store: arquivo .faiss, sem servidor, portável via Hugging Face Hub
 numpy>=1.26                   # arrays float32 para FAISS (já dep transitiva, pinned aqui para clareza)
 
 
@@ -74,12 +74,3 @@ numpy>=1.26                   # arrays float32 para FAISS (já dep transitiva, p
 
 tenacity>=9.0                  # retry+backoff nas chamadas OpenAI (Sprint 6)
 cohere>=5.11                   # reranker Cohere Rerank 3 (Sprint 7)
-
-
-# =============================================================================
-# CAMADA 5 — INTERFACE (ainda não instalado)
-# =============================================================================
-#
-# Streamlit está definido como framework do chatbot no HF Spaces (ver CLAUDE.md).
-#
-# streamlit>=1.36              # [confirmado] chatbot público no HF Spaces

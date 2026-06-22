@@ -43,6 +43,24 @@ SYSTEM_PROMPT = (
     "não há base suficiente no corpus."
 )
 
+SYSTEM_PROMPT_V3 = (
+    SYSTEM_PROMPT
+    + " Antes de responder, faca uma checagem interna: identifique o tipo da "
+    "pergunta (definicao, obrigacao, criterio, excecao, prazo ou calculo), "
+    "selecione apenas os contextos diretamente necessarios e verifique se cada "
+    "afirmacao normativa esta sustentada por uma citacao. Nao cite bloco que "
+    "apenas menciona o tema; cite somente quando o trecho sustentar a frase. "
+    "Se a evidencia estiver parcial, responda apenas o que o contexto permite "
+    "e deixe explicito o que nao tem base suficiente."
+)
+
+PROMPT_VARIANT_ENV = "RAG_PROMPT_VARIANT"
+SYSTEM_PROMPTS = {
+    "default": SYSTEM_PROMPT,
+    "v1": SYSTEM_PROMPT,
+    "v3": SYSTEM_PROMPT_V3,
+}
+
 USER_PROMPT_TEMPLATE = (
     "Pergunta:\n{query}\n\n"
     "Contextos disponíveis (cite apenas estes índices, 1 a {n}):\n{contexts}\n\n"
@@ -52,6 +70,18 @@ USER_PROMPT_TEMPLATE = (
     "que sustentam diretamente a resposta, sem redundância.\n"
     "Se não houver base, devolva resposta justificando e indices_citados=[]."
 )
+
+
+def _system_prompt_from_env() -> str:
+    """Seleciona a variante de prompt sem promover v3 por padrão."""
+    variant = os.environ.get(PROMPT_VARIANT_ENV, "default").strip().lower()
+    try:
+        return SYSTEM_PROMPTS[variant]
+    except KeyError as exc:
+        valid = ", ".join(sorted(SYSTEM_PROMPTS))
+        raise ValueError(
+            f"{PROMPT_VARIANT_ENV} inválido: {variant!r}. Use um de: {valid}."
+        ) from exc
 
 
 def generate_extractive_answer(contexts: list[dict[str, Any]]) -> str:
@@ -137,7 +167,7 @@ def generate_llm_answer(
             timeout=timeout_seconds,
             response_format={"type": "json_object"},
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": _system_prompt_from_env()},
                 {"role": "user", "content": user_prompt},
             ],
         )
